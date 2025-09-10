@@ -11,7 +11,7 @@ export default defineConfig({
   ],
   build: {
     manifest: 'manifest.json',
-    outDir: 'CAFE\projects\www\ibest_root\iVentedBlast\static\iVentedBlast\dist',
+    outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
       // external: ['three'], // Externalize Three.js

@@ -38,7 +38,4 @@ dist-ssr/
 # TypeScript build info
 *.tsbuildinfo
 
-# Generated TypeScript files (should not be in src)
-src/**/*.js
-src/**/*.d.ts
-!src/**/vite-env.d.ts
+*/dist/

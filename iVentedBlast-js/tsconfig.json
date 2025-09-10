@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "../iMath" } // keep the folder name/case as on disk
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "composite": true
+  },
+  "include": ["src"]
+}

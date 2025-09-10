@@ -42,6 +42,8 @@ export const palette = {
   cyan500: 0x06b6d4,
 };
 
+export type Pallete = typeof palette;
+
 /** Semantic theme (use these names in your app) */
 export const colors = {
   // scene
@@ -90,7 +92,7 @@ export function toColor(c: ColorName | number | string): THREE.Color {
   }
 
   if (c in colors) return new THREE.Color((colors as Colors)[c]);
-  if (c in palette) return new THREE.Color((palette as Colors)[c]);
+  if (c in palette) return new THREE.Color((palette as Pallete)[c]);
 
   // fallback: default to white if nothing matches
   return new THREE.Color(0xffffff);

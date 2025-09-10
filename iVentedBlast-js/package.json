@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run sync",
     "lint": "eslint .",
     "preview": "vite preview",
-    "type-check": "tsc -b --noEmit"
+    "type-check": "tsc -b --noEmit",
+    "sync": "wsl rsync -avz --delete dist iBest:/home/projects/www/ibest_root/iVentedBlast/static/iVentedBlast/dist/" 
   },
   "dependencies": {
     "react": "^19.1.1",

@@ -10,11 +10,11 @@ export default defineConfig({
     tsconfigPaths()
   ],
   build: {
-    manifest: 'mainfest.json',
-    outDir: 'dist/tsc',
+    manifest: 'manifest.json',
+    outDir: 'CAFE\projects\www\ibest_root\iVentedBlast\static\iVentedBlast\dist',
     emptyOutDir: true,
     rollupOptions: {
-      external: ['three'], // Externalize Three.js
+      // external: ['three'], // Externalize Three.js
       output: {
         globals: {
           three: 'THREE' // Global variable name for Three.js

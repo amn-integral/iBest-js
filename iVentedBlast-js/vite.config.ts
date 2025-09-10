@@ -9,22 +9,50 @@ export default defineConfig({
     }),
     tsconfigPaths()
   ],
+
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'three'], // prebundle common deps
+  },
+  
   build: {
-    manifest: 'manifest.json',
+    target: 'es2018',
     outDir: 'dist',
     emptyOutDir: true,
+    minify: 'esbuild', // Use 'terser' for more advanced minification
+    manifest: 'manifest.json',
+    reportCompressedSize: false,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096, 
+  //   rollupOptions: {
+  //     // external: ['three'], // Externalize Three.js
+  //     output: {
+  //       globals: {
+  //         three: 'THREE' // Global variable name for Three.js
+  //       },
+  //       manualChunks: {
+  //         'react-vendor': ['react', 'react-dom']
+  //       }
+  //     }
+  //   }
+  // },
+
     rollupOptions: {
-      // external: ['three'], // Externalize Three.js
       output: {
-        globals: {
-          three: 'THREE' // Global variable name for Three.js
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'react-vendor'
+            if (id.includes('three')) return 'three-vendor'
+            const pkg = id.toString().split('node_modules/')[1].split('/')[0]
+            return `vendor-${pkg}`
+          }
         },
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom']
-        }
-      }
+      },
     }
   },
+
   css: { 
     modules: {
       scopeBehaviour: 'local',

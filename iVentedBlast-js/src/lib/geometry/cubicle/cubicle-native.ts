@@ -27,8 +27,8 @@ export function makeCubicle(opts: CubicleOptions): THREE.Group {
     const floorPlane = makePlane({
       width: l, height: b,
       normal: new THREE.Vector3(0, 0, -1),
-      pos: new THREE.Vector3(0, b, 0),
-      uHint: new THREE.Vector3(1, 0, 0),
+      pos: new THREE.Vector3(l, 0, 0),
+      uHint: new THREE.Vector3(-1, 0, 0),
       material,
       opening: hole('floor'),
       name: 'Floor'

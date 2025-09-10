@@ -34,12 +34,75 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const cameraRef = useRef< THREE.OrthographicCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const animationIdRef = useRef<number | null>(null);
   const cubicleRef = useRef<THREE.Group | null>(null);
   const hoverDisposeRef = useRef<(() => void) | null>(null);
   const hoverLabelRef = useRef<HTMLDivElement | null>(null);
+
+  // View setter
+  function resetCamera(view: string) {
+    if (!cameraRef.current || !containerRef.current) return;
+
+    const centerX = dims.l / 2;
+    const centerY = dims.b / 2;
+    const centerZ = dims.h / 2;
+    const maxDim = Math.max(dims.l, dims.b, dims.h);
+    const padding = 1.2;
+    const frustumSize = maxDim * padding;
+    const aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
+
+    cameraRef.current.left = -frustumSize * aspect / 2;
+    cameraRef.current.right = frustumSize * aspect / 2;
+    cameraRef.current.top = frustumSize / 2;
+    cameraRef.current.bottom = -frustumSize / 2;
+    cameraRef.current.near = 0.1;
+    cameraRef.current.far = maxDim * 4;
+    cameraRef.current.zoom = 1;
+    cameraRef.current.updateProjectionMatrix();
+
+    const distance = maxDim * 1.5;
+
+    switch (view) {
+      case "front":
+        cameraRef.current.position.set(centerX, -distance, centerZ);
+        break;
+      case "back":
+        cameraRef.current.position.set(centerX, dims.b + distance, centerZ);
+        break;
+      case "left":
+        cameraRef.current.position.set(-distance, centerY, centerZ);
+        break;
+      case "right":
+        cameraRef.current.position.set(dims.l + distance, centerY, centerZ);
+        break;
+      case "roof":
+        cameraRef.current.position.set(centerX, centerY, dims.h + distance);
+        break;
+      case "ground":
+        cameraRef.current.position.set(centerX, centerY, -distance);
+        break;
+      case "iso":
+      default:
+        cameraRef.current.position.set(
+          centerX + distance,
+          centerY - distance,
+          centerZ + distance
+        );
+        break;
+    }
+    cameraRef.current.up.set(0, 0, 1);
+    cameraRef.current.lookAt(centerX, centerY, centerZ);
+    if (controlsRef.current) {
+      controlsRef.current.target.set(centerX, centerY, centerZ);
+      controlsRef.current.update();
+    }
+  }
+
+  const setView = (view: string) => {
+    resetCamera(view);
+  }
 
   // Initialize scene (runs once)
   useEffect(() => {
@@ -60,9 +123,26 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
     sceneRef.current = scene;
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 200);
-    camera.position.set(6, 6, 8);
+    const maxDim = Math.max(dims.l, dims.b, dims.h);
+    const padding = 1.2;
+    const frustumSize = maxDim * padding;
+    const aspect = width / height;
+    const camera = new THREE.OrthographicCamera(
+      -frustumSize * aspect / 2, frustumSize * aspect / 2,
+      frustumSize / 2, -frustumSize / 2,
+      0.1, 200
+    );
+    const centerX = dims.l / 2;
+    const centerY = dims.b / 2;
+    const centerZ = dims.h / 2;
+    const distance = maxDim * 1.5;
+    camera.position.set(
+      centerX + distance,
+      centerY - distance,
+      centerZ + distance
+    );
     camera.up.set(0, 0, 1); // Z-up
+    camera.lookAt(centerX, centerY, centerZ);
     cameraRef.current = camera;
 
     // Controls
@@ -111,7 +191,15 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
       const w = containerRef.current.clientWidth;
       const h = containerRef.current.clientHeight;
       rendererRef.current.setSize(w, h);
-      cameraRef.current.aspect = w / h;
+      
+      const aspect = w / h;
+      const maxDim = Math.max(dims.l, dims.b, dims.h);
+      const padding = 1.2;
+      const frustumSize = maxDim * padding;
+      cameraRef.current.left = -frustumSize * aspect / 2;
+      cameraRef.current.right = frustumSize * aspect / 2;
+      cameraRef.current.top = frustumSize / 2;
+      cameraRef.current.bottom = -frustumSize / 2;
       cameraRef.current.updateProjectionMatrix();
     };
     window.addEventListener("resize", onResize);
@@ -204,6 +292,8 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
     cubicleRef.current = cubicle;
     sceneRef.current.add(cubicle);
 
+    resetCamera("iso");
+
     // Wire hover to node group
     const nodesGroup = cubicle.getObjectByName(
       "NodesFromVectors"
@@ -223,6 +313,18 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
 
   return (
     <div ref={containerRef} style={styles.cubicle}>
+      {/* View buttons */}
+      <div style={styles.viewButtons}>
+        {['front', 'back', 'left', 'right', 'roof', 'ground', 'iso'].map((view) => (
+          <button
+            key={view}
+            onClick={() => setView(view)}
+            style={styles.viewButton}
+          >
+            {view}
+          </button>
+        ))}
+      </div>
       {/* bottom-right axis legend */}
       <div style={styles.legend}>
         <span style={styles.item}>
@@ -250,6 +352,8 @@ const styles: {
   y: React.CSSProperties;
   z: React.CSSProperties;
   hoverLabel: React.CSSProperties;
+  viewButton: React.CSSProperties;
+  viewButtons: React.CSSProperties;
 } = {
   cubicle: {
     width: "100%",
@@ -295,5 +399,22 @@ const styles: {
     font: "12px/1.2 monospace",
     pointerEvents: "none",
     userSelect: "none",
+  },
+  viewButtons: {
+    position: "absolute",
+    top: "12px",
+    left: "12px",
+    display: "flex",
+    gap: "6px",
+    flexWrap: "wrap" as const,
+  },
+  viewButton: {
+    padding: "6px 12px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    background: "rgba(255, 255, 255, 0.9)",
+    cursor: "pointer",
+    fontSize: "12px",
+    textTransform: "capitalize" as const,
   },
 };

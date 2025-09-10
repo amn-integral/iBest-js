@@ -12,97 +12,119 @@ import { colors, palette } from "../lib/colors";
 type Side = "floor" | "roof" | "front" | "back" | "left" | "right";
 const ALL_SIDES: Side[] = ["floor", "roof", "front", "back", "left", "right"];
 
-interface CubicleViewerProps {
-  dims: { l: number; b: number; h: number };
-  faces: Record<Side, boolean>;
-  opening: {
-    face: Side | "";
-    w: number;
-    h: number;
-    x: number;
-    y: number;
-  };
-  plotTrigger: number; // Changes when plot should update
+// List of available camera views
+const VIEW_LIST = [
+  "front",
+  "back",
+  "left",
+  "right",
+  "roof",
+  "ground",
+  "iso",
+] as const;
+type ViewType = (typeof VIEW_LIST)[number];
+
+// Helper to set camera frustum and position for a given view
+function setCameraView(
+  camera: THREE.OrthographicCamera,
+  container: HTMLDivElement,
+  dims: { l: number; b: number; h: number },
+  view: ViewType
+) {
+  // Calculate cubicle center and max dimension
+  const maxDim = Math.max(dims.l, dims.b, dims.h);
+  const padding = 1.25;
+  const frustumSize = maxDim * padding;
+  const aspect = container.clientWidth / container.clientHeight;
+  const [cx, cy, cz] = [dims.l / 2, dims.b / 2, dims.h / 2];
+  const distance = maxDim * 1.5;
+
+  // Reset orthographic frustum and zoom
+  camera.left = (-frustumSize * aspect) / 2;
+  camera.right = (frustumSize * aspect) / 2;
+  camera.top = frustumSize / 2;
+  camera.bottom = -frustumSize / 2;
+  camera.near = 0.1;
+  camera.far = maxDim * 4;
+  camera.zoom = 1;
+  camera.updateProjectionMatrix();
+
+  // Set camera position for each view
+  switch (view) {
+    case "front":
+      // Look at Y=0 face from negative Y
+      camera.position.set(cx, -distance, cz);
+      break;
+    case "back":
+      // Look at Y=b face from positive Y
+      camera.position.set(cx, dims.b + distance, cz);
+      break;
+    case "left":
+      // Look at X=0 face from negative X
+      camera.position.set(-distance, cy, cz);
+      break;
+    case "right":
+      // Look at X=l face from positive X
+      camera.position.set(dims.l + distance, cy, cz);
+      break;
+    case "roof":
+      // Look down from above (Z+)
+      camera.position.set(cx, cy, dims.h + distance);
+      break;
+    case "ground":
+      // Look up from below (Z-)
+      camera.position.set(cx, cy, -distance);
+      break;
+    case "iso":
+    default:
+      // Isometric: diagonal from above
+      camera.position.set(cx + distance, cy - distance, cz + distance);
+      break;
+  }
+  // Always use Z-up
+  camera.up.set(0, 0, 1);
+  camera.lookAt(cx, cy, cz);
 }
 
-export const CubicleViewer: React.FC<CubicleViewerProps> = ({
-  dims,
-  faces,
-  opening,
-  plotTrigger,
-}) => {
+const removeGroup = (scene: THREE.Scene, group: THREE.Group | null) => {
+  if (!group) return;
+  scene.remove(group);
+  group.traverse((obj) => {
+    if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose?.();
+    if ((obj as THREE.Mesh).material) {
+      const mat = (obj as THREE.Mesh).material as
+        | THREE.Material
+        | THREE.Material[];
+      if (Array.isArray(mat)) mat.forEach((m) => m.dispose?.());
+      else mat.dispose?.();
+    }
+  });
+};
+
+export const CubicleViewer: React.FC<{
+  dims: { l: number; b: number; h: number };
+  faces: Record<Side, boolean>;
+  opening: { face: Side | ""; w: number; h: number; x: number; y: number };
+  plotTrigger: number;
+}> = ({ dims, faces, opening, plotTrigger }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef< THREE.OrthographicCamera | null>(null);
+  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const animationIdRef = useRef<number | null>(null);
   const cubicleRef = useRef<THREE.Group | null>(null);
   const hoverDisposeRef = useRef<(() => void) | null>(null);
   const hoverLabelRef = useRef<HTMLDivElement | null>(null);
 
-  // View setter
-  function resetCamera(view: string) {
+  // Stable camera reset callback for all views
+  const resetCamera = (view: ViewType) => {
     if (!cameraRef.current || !containerRef.current) return;
-
-    const centerX = dims.l / 2;
-    const centerY = dims.b / 2;
-    const centerZ = dims.h / 2;
-    const maxDim = Math.max(dims.l, dims.b, dims.h);
-    const padding = 1.2;
-    const frustumSize = maxDim * padding;
-    const aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
-
-    cameraRef.current.left = -frustumSize * aspect / 2;
-    cameraRef.current.right = frustumSize * aspect / 2;
-    cameraRef.current.top = frustumSize / 2;
-    cameraRef.current.bottom = -frustumSize / 2;
-    cameraRef.current.near = 0.1;
-    cameraRef.current.far = maxDim * 4;
-    cameraRef.current.zoom = 1;
-    cameraRef.current.updateProjectionMatrix();
-
-    const distance = maxDim * 1.5;
-
-    switch (view) {
-      case "front":
-        cameraRef.current.position.set(centerX, -distance, centerZ);
-        break;
-      case "back":
-        cameraRef.current.position.set(centerX, dims.b + distance, centerZ);
-        break;
-      case "left":
-        cameraRef.current.position.set(-distance, centerY, centerZ);
-        break;
-      case "right":
-        cameraRef.current.position.set(dims.l + distance, centerY, centerZ);
-        break;
-      case "roof":
-        cameraRef.current.position.set(centerX, centerY, dims.h + distance);
-        break;
-      case "ground":
-        cameraRef.current.position.set(centerX, centerY, -distance);
-        break;
-      case "iso":
-      default:
-        cameraRef.current.position.set(
-          centerX + distance,
-          centerY - distance,
-          centerZ + distance
-        );
-        break;
-    }
-    cameraRef.current.up.set(0, 0, 1);
-    cameraRef.current.lookAt(centerX, centerY, centerZ);
-    if (controlsRef.current) {
-      controlsRef.current.target.set(centerX, centerY, centerZ);
-      controlsRef.current.update();
-    }
-  }
-
-  const setView = (view: string) => {
-    resetCamera(view);
-  }
+    setCameraView(cameraRef.current, containerRef.current, dims, view);
+    const [cx, cy, cz] = [dims.l / 2, dims.b / 2, dims.h / 2];
+    controlsRef.current?.target.set(cx, cy, cz);
+    controlsRef.current?.update();
+  };
 
   // Initialize scene (runs once)
   useEffect(() => {
@@ -110,101 +132,53 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
 
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(colors.background);
+    sceneRef.current = scene;
 
-    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Scene
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(colors.background);
-    sceneRef.current = scene;
-
-    // Camera
-    const maxDim = Math.max(dims.l, dims.b, dims.h);
-    const padding = 1.2;
-    const frustumSize = maxDim * padding;
-    const aspect = width / height;
-    const camera = new THREE.OrthographicCamera(
-      -frustumSize * aspect / 2, frustumSize * aspect / 2,
-      frustumSize / 2, -frustumSize / 2,
-      0.1, 200
-    );
-    const centerX = dims.l / 2;
-    const centerY = dims.b / 2;
-    const centerZ = dims.h / 2;
-    const distance = maxDim * 1.5;
-    camera.position.set(
-      centerX + distance,
-      centerY - distance,
-      centerZ + distance
-    );
-    camera.up.set(0, 0, 1); // Z-up
-    camera.lookAt(centerX, centerY, centerZ);
+    // Use helper for initial camera setup (iso view)
+    const camera = new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 200);
+    setCameraView(camera, containerRef.current, dims, "iso");
     cameraRef.current = camera;
 
-    // Controls
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controlsRef.current = controls;
 
-    // Lights
     scene.add(new THREE.AmbientLight(palette.white, 0.6));
     const dir = new THREE.DirectionalLight(palette.white, 0.9);
     dir.position.set(7, 10, 6);
     scene.add(dir);
+    scene.add(createAxes({ size: 3 }));
+    // Center the grid on the cubicle center when page loads
 
-    // Axes + helper grid
-    const axes = createAxes({ size: 3 });
-    scene.add(axes);
-
-    const grid = createGrid({
-      sizex: 5,
-      sizey: 10,
-      sizez: 15,
-      color: colors.grid,
-    });
-    scene.add(grid);
+    scene.add(createGrid({sizex: 5, sizey: 10, sizez: 15, color: colors.grid}));
 
     // Hover label
     const hoverLabel = document.createElement("div");
-    hoverLabel.style.position = "absolute";
-    hoverLabel.style.bottom = "12px";
-    hoverLabel.style.left = "12px";
-    hoverLabel.style.padding = "6px 10px";
-    hoverLabel.style.background = "rgba(0,0,0,0.6)";
-    hoverLabel.style.color = "#fff";
-    hoverLabel.style.font = "12px/1.2 monospace";
-    hoverLabel.style.borderRadius = "6px";
-    hoverLabel.style.pointerEvents = "none";
-    hoverLabel.style.userSelect = "none";
+    Object.assign(hoverLabel.style, styles.hoverLabel);
     hoverLabel.textContent = "";
     containerRef.current.appendChild(hoverLabel);
     hoverLabelRef.current = hoverLabel;
 
-    // Resize handler
+    // Responsive resize: always use setCameraView for consistency
     const onResize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current)
         return;
-      const w = containerRef.current.clientWidth;
-      const h = containerRef.current.clientHeight;
-      rendererRef.current.setSize(w, h);
-      
-      const aspect = w / h;
-      const maxDim = Math.max(dims.l, dims.b, dims.h);
-      const padding = 1.2;
-      const frustumSize = maxDim * padding;
-      cameraRef.current.left = -frustumSize * aspect / 2;
-      cameraRef.current.right = frustumSize * aspect / 2;
-      cameraRef.current.top = frustumSize / 2;
-      cameraRef.current.bottom = -frustumSize / 2;
-      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(
+        containerRef.current.clientWidth,
+        containerRef.current.clientHeight
+      );
+      setCameraView(cameraRef.current, containerRef.current, dims, "iso");
     };
     window.addEventListener("resize", onResize);
 
-    // Animate
+    // Animation loop
     const animate = () => {
       controls.update();
       renderer.render(scene, camera);
@@ -212,26 +186,15 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
     };
     animate();
 
+    resetCamera("iso");
     // Cleanup
     return () => {
       window.removeEventListener("resize", onResize);
       if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
       controls.dispose();
-      if (hoverDisposeRef.current) hoverDisposeRef.current();
-      if (hoverLabelRef.current && hoverLabelRef.current.parentElement)
-        hoverLabelRef.current.parentElement.removeChild(hoverLabelRef.current);
-
-      scene.traverse((obj) => {
-        if ((obj as THREE.Mesh).geometry)
-          (obj as THREE.Mesh).geometry.dispose?.();
-        if ((obj as THREE.Mesh).material) {
-          const mat = (obj as THREE.Mesh).material as
-            | THREE.Material
-            | THREE.Material[];
-          if (Array.isArray(mat)) mat.forEach((m) => m.dispose?.());
-          else mat.dispose?.();
-        }
-      });
+      hoverDisposeRef.current?.();
+      hoverLabelRef.current?.parentElement?.removeChild(hoverLabelRef.current);
+      removeGroup(scene, cubicleRef.current);
       renderer.dispose();
       renderer.domElement.remove();
     };
@@ -240,48 +203,21 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
   // Plot cubicle (runs when plotTrigger changes)
   useEffect(() => {
     if (!sceneRef.current || !rendererRef.current || !cameraRef.current) return;
-    if (plotTrigger === 0) return; // Don't plot on initial render
+    if (plotTrigger === 0) return;
+    removeGroup(sceneRef.current, cubicleRef.current);
+    hoverDisposeRef.current?.();
+    hoverDisposeRef.current = null;
 
-    // Remove previous cubicle
-    if (cubicleRef.current) {
-      sceneRef.current.remove(cubicleRef.current);
-      cubicleRef.current.traverse((obj) => {
-        if ((obj as THREE.Mesh).geometry)
-          (obj as THREE.Mesh).geometry.dispose?.();
-        if ((obj as THREE.Mesh).material) {
-          const mat = (obj as THREE.Mesh).material as
-            | THREE.Material
-            | THREE.Material[];
-          if (Array.isArray(mat)) mat.forEach((m) => m.dispose?.());
-          else mat.dispose?.();
-        }
-      });
-      cubicleRef.current = null;
-    }
-    if (hoverDisposeRef.current) {
-      hoverDisposeRef.current();
-      hoverDisposeRef.current = null;
-    }
-
-    // Prepare sides (floor must be included)
     const selected: Side[] = ALL_SIDES.filter(
       (s) => s === "floor" || !!faces[s]
     );
-
-    // Prepare opening (optional)
-    const openings: Record<string, { w?: number; h?: number; x?: number; y?: number }> = {};
-    if (opening.face) {
-      const w = Number(opening.w) > 0 ? Number(opening.w) : undefined;
-      const h = Number(opening.h) > 0 ? Number(opening.h) : undefined;
-      const x = undefined;
-      const y = undefined;
-
-      if ((w ?? 0) > 0 && (h ?? 0) > 0) {
-        openings[opening.face] = { w, h, x, y };
-      }
+    const openings: Record<
+      string,
+      { w?: number; h?: number; x?: number; y?: number }
+    > = {};
+    if (opening.face && Number(opening.w) > 0 && Number(opening.h) > 0) {
+      openings[opening.face] = { w: Number(opening.w), h: Number(opening.h) };
     }
-
-    // Create cubicle
     const cubicle = makeCubicle({
       l: dims.l,
       b: dims.b,
@@ -292,13 +228,12 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
     cubicleRef.current = cubicle;
     sceneRef.current.add(cubicle);
 
+    // Always reset to iso after plot
     resetCamera("iso");
 
-    // Wire hover to node group
     const nodesGroup = cubicle.getObjectByName(
       "NodesFromVectors"
     ) as THREE.Group | null;
-
     if (nodesGroup && hoverLabelRef.current && rendererRef.current) {
       hoverDisposeRef.current = enableNodeHoverCoordinates(
         rendererRef.current.domElement,
@@ -315,10 +250,10 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
     <div ref={containerRef} style={styles.cubicle}>
       {/* View buttons */}
       <div style={styles.viewButtons}>
-        {['front', 'back', 'left', 'right', 'roof', 'ground', 'iso'].map((view) => (
+        {VIEW_LIST.map((view) => (
           <button
             key={view}
-            onClick={() => setView(view)}
+            onClick={() => resetCamera(view)}
             style={styles.viewButton}
           >
             {view}
@@ -343,23 +278,8 @@ export const CubicleViewer: React.FC<CubicleViewerProps> = ({
   );
 };
 
-const styles: {
-  cubicle: React.CSSProperties;
-  legend: React.CSSProperties;
-  item: React.CSSProperties;
-  dot: React.CSSProperties;
-  x: React.CSSProperties;
-  y: React.CSSProperties;
-  z: React.CSSProperties;
-  hoverLabel: React.CSSProperties;
-  viewButton: React.CSSProperties;
-  viewButtons: React.CSSProperties;
-} = {
-  cubicle: {
-    width: "100%",
-    height: "100%",
-    position: "relative",
-  },
+const styles: Record<string, React.CSSProperties> = {
+  cubicle: { width: "100%", height: "100%", position: "relative" },
   legend: {
     position: "absolute",
     right: "12px",
@@ -368,7 +288,7 @@ const styles: {
     gap: "10px",
     padding: "6px 10px",
     borderRadius: "8px",
-    background: "rgba(255, 255, 255, 0.9)",
+    background: "rgba(255,255,255,0.9)",
     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
     font: "12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
   },
@@ -380,11 +300,7 @@ const styles: {
     borderRadius: "999px",
     background: "#f5f6f8",
   },
-  dot: {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-  },
+  dot: { width: "8px", height: "8px", borderRadius: "50%" },
   x: { background: "#ff4d4f" },
   y: { background: "#52c41a" },
   z: { background: "#2196f3" },
@@ -412,7 +328,7 @@ const styles: {
     padding: "6px 12px",
     border: "1px solid #ddd",
     borderRadius: "4px",
-    background: "rgba(255, 255, 255, 0.9)",
+    background: "rgba(255,255,255,0.9)",
     cursor: "pointer",
     fontSize: "12px",
     textTransform: "capitalize" as const,

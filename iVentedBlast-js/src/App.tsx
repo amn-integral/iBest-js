@@ -14,7 +14,6 @@ export default function App() {
 
   return (
     <div className={appCss.rootLayout}>
-      <div className={appCss.header}></div>
       <div className={appCss.appLayout}>
         <aside className={appCss.formPane}>
           <CubicleForm {...cubicleConfig} onSubmit={() => setPlotTrigger(p => p + 1)} />
@@ -24,8 +23,6 @@ export default function App() {
           <Results />
         </main>
       </div>
-      <div className={appCss.footer}>
       </div>
-    </div>
   );
 }

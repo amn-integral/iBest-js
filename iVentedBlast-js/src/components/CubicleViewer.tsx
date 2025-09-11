@@ -4,11 +4,12 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
   makeCubicle,
   createAxes,
-  createGrid,
   enableNodeHoverCoordinates,
 } from "../lib/geometry";
 import { colors, palette } from "../lib/colors";
 import cubicleViewerCss from "./CubicleViewer.module.css";
+import {  removeGroup, addGrid, addChargeSphere } from "../lib/utils/object-utils";
+import { setCameraView } from "../lib/utils/camera-utils";
 
 type Side = "floor" | "roof" | "front" | "back" | "left" | "right";
 const ALL_SIDES: Side[] = ["floor", "roof", "front", "back", "left", "right"];
@@ -23,84 +24,9 @@ const VIEW_LIST = [
   "ground",
   "iso",
 ] as const;
+
 type ViewType = (typeof VIEW_LIST)[number];
 
-// Helper to set camera frustum and position for a given view
-function setCameraView(
-  camera: THREE.OrthographicCamera,
-  container: HTMLDivElement,
-  dims: { l: number; b: number; h: number },
-  view: ViewType
-) {
-  // Calculate cubicle center and max dimension
-  const maxDim = Math.max(dims.l, dims.b, dims.h);
-  const padding = 1.25;
-  const frustumSize = maxDim * padding;
-  const aspect = container.clientWidth / container.clientHeight;
-  const [cx, cy, cz] = [dims.l / 2, dims.b / 2, dims.h / 2];
-  const distance = maxDim * 1.5;
-
-  // Reset orthographic frustum and zoom
-  camera.left = (-frustumSize * aspect) / 2;
-  camera.right = (frustumSize * aspect) / 2;
-  camera.top = frustumSize / 2;
-  camera.bottom = -frustumSize / 2;
-  camera.near = 0.1;
-  camera.far = maxDim * 4;
-  camera.zoom = 1;
-  camera.updateProjectionMatrix();
-
-  // Set camera position for each view
-  switch (view) {
-    case "front":
-      // Look at Y=0 face from negative Y
-      camera.position.set(cx, -distance, cz);
-      break;
-    case "back":
-      // Look at Y=b face from positive Y
-      camera.position.set(cx, dims.b + distance, cz);
-      break;
-    case "left":
-      // Look at X=0 face from negative X
-      camera.position.set(-distance, cy, cz);
-      break;
-    case "right":
-      // Look at X=l face from positive X
-      camera.position.set(dims.l + distance, cy, cz);
-      break;
-    case "roof":
-      // Look down from above (Z+)
-      camera.position.set(cx, cy, dims.h + distance);
-      break;
-    case "ground":
-      // Look up from below (Z-)
-      camera.position.set(cx, cy, -distance);
-      break;
-    case "iso":
-    default:
-      // Isometric: diagonal from above
-      camera.position.set(cx + distance, cy - distance, cz + distance);
-      break;
-  }
-  // Always use Z-up
-  camera.up.set(0, 0, 1);
-  camera.lookAt(cx, cy, cz);
-}
-
-const removeGroup = (scene: THREE.Scene, group: THREE.Group | null) => {
-  if (!group) return;
-  scene.remove(group);
-  group.traverse((obj) => {
-    if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose?.();
-    if ((obj as THREE.Mesh).material) {
-      const mat = (obj as THREE.Mesh).material as
-        | THREE.Material
-        | THREE.Material[];
-      if (Array.isArray(mat)) mat.forEach((m) => m.dispose?.());
-      else mat.dispose?.();
-    }
-  });
-};
 
 export const CubicleViewer: React.FC<{
   dims: { l: number; b: number; h: number };
@@ -117,6 +43,8 @@ export const CubicleViewer: React.FC<{
   const cubicleRef = useRef<THREE.Group | null>(null);
   const hoverDisposeRef = useRef<(() => void) | null>(null);
   const hoverLabelRef = useRef<HTMLDivElement | null>(null);
+  const chargeSphereRef = useRef<THREE.Mesh | null>(null);
+  const gridRef = useRef<THREE.Group | null>(null);
 
   // Stable camera reset callback for all views
   const resetCamera = (view: ViewType) => {
@@ -158,7 +86,6 @@ export const CubicleViewer: React.FC<{
     scene.add(createAxes({ size: 3 }));
     // Center the grid on the cubicle center when page loads
 
-    scene.add(createGrid({sizex: 5, sizey: 10, sizez: 15, color: colors.grid}));
 
     // Hover label
     const hoverLabel = document.createElement("div");
@@ -191,14 +118,6 @@ export const CubicleViewer: React.FC<{
     animate();
 
     resetCamera("iso");
-
-    // Add a red sphere to indicate the charge at center of cubicle
-    const chargeSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(0.25, 16, 16),
-      new THREE.MeshBasicMaterial({ color: palette.red })
-    );
-    chargeSphere.position.set(dims.l / 2, dims.b / 2, dims.h / 2);
-    scene.add(chargeSphere);
 
     // Cleanup
     return () => {
@@ -243,6 +162,10 @@ export const CubicleViewer: React.FC<{
 
     // Always reset to iso after plot
     resetCamera("iso");
+
+    addChargeSphere(sceneRef.current, dims, chargeSphereRef);
+
+    addGrid(sceneRef.current, dims, gridRef);
 
     const nodesGroup = cubicle.getObjectByName(
       "NodesFromVectors"

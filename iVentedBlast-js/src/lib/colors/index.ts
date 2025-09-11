@@ -40,6 +40,9 @@ export const palette = {
   amber500: 0xf59e0b,
   violet500: 0x8b5cf6,
   cyan500: 0x06b6d4,
+
+  // Extended
+  red: 0xff3b30,
 };
 
 export type Pallete = typeof palette;

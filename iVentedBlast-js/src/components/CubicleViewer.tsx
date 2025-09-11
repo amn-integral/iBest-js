@@ -191,6 +191,15 @@ export const CubicleViewer: React.FC<{
     animate();
 
     resetCamera("iso");
+
+    // Add a red sphere to indicate the charge at center of cubicle
+    const chargeSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.25, 16, 16),
+      new THREE.MeshBasicMaterial({ color: palette.red })
+    );
+    chargeSphere.position.set(dims.l / 2, dims.b / 2, dims.h / 2);
+    scene.add(chargeSphere);
+
     // Cleanup
     return () => {
       window.removeEventListener("resize", onResize);

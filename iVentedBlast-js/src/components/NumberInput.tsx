@@ -5,7 +5,7 @@ import numberInputCss from "./NumberInput.module.css";
 type NumberInputProps = {
   label: React.ReactNode;
   value: number | "";                 // allow clearing the input
-  onChange: (next: number) => void;   // you get a number (NaN if empty)
+  onChange?: (next: number) => void;   // you get a number (NaN if empty)
   step?: number;
   min?: number;
   max?: number;
@@ -17,6 +17,7 @@ type NumberInputProps = {
   labelClass?: string;
   inputClass?: string;
   unitClass?: string;
+  disabled?: boolean;
 };
 
 export const NumberInput: React.FC<NumberInputProps> = ({
@@ -32,6 +33,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   labelClass,
   inputClass,
   unitClass,
+  disabled
 }) => {
 
   rowClass = rowClass || numberInputCss.cfRow;
@@ -54,6 +56,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
           const v = e.target.value;
           onChange(v === "" ? NaN : Number(v));
         }}
+        disabled={disabled}
       />
       {unit ? <span className={unitClass}>{unit}</span> : null}
     </label>

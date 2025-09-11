@@ -2,7 +2,8 @@ import React from "react";
 import cubicleFormCss from "./CubicleForm.module.css";
 import {NumberInput} from "./NumberInput";
 type Side = "floor" | "roof" | "front" | "back" | "left" | "right";
-const ALL_SIDES: Side[] = ["floor", "roof", "front", "back", "left", "right"];
+const OPENINGS: Side[] = ["roof", "back"];
+import {type cubicleTypes} from "src/hooks/useCubicleConfig";
 
 type Opening = {
   face: Side | "";
@@ -13,10 +14,16 @@ type Opening = {
 };
 
 interface CubicleFormProps {
+  cubicleType: cubicleTypes ;
+  setCubicleType: (cubicleType: cubicleTypes) => void;
+
   dims: { l: number; b: number; h: number };
   setDims: (dims: { l: number; b: number; h: number }) => void;
+  
   faces: Record<Side, boolean>;
   updateFace: (side: Side, checked: boolean) => void;
+  updateFaces: (sides: Record<Side, boolean>) => void;
+  
   opening: {
     face: Side | "";
     w: number;
@@ -26,27 +33,69 @@ interface CubicleFormProps {
   };
   setOpening: (opening: Opening) => void;
   resetOpening: () => void;
+  
   charge: {W: number, R: number, angle: number, Pmax: number, Imax: number};
   setCharge: (props : {W: number, R: number, angle: number, Pmax: number, Imax: number}) => void;
-  onSubmit: (e?: React.FormEvent) => void;
+  
+  onPlot: (e?: React.FormEvent) => void;
+  onAnalyze: (e?: React.FormEvent) => void;
 }
 
 export const CubicleForm: React.FC<CubicleFormProps> = ({
+  setCubicleType,
   dims,
   setDims,
-  faces,
-  updateFace,
+  updateFaces,
   opening,
   setOpening,
-  resetOpening,
   charge,
   setCharge,
-  onSubmit,
+  onPlot,
+  onAnalyze
 }) => {
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
-    onSubmit();
+
+    const nativeEvent = e.nativeEvent as SubmitEvent;
+    const submitter = nativeEvent.submitter as HTMLButtonElement | null;
+    
+    switch (submitter?.name) {
+      case "plot":
+        console.log("Plot button clicked");
+        onPlot();
+        break;
+      case "analyze":
+        onAnalyze();
+        console.log("Analyze button clicked");
+        break;
+      default:
+        console.warn("Unknown submit action");
+        break;
+    }
   };
+
+  const [geometry, setGeometry] = React.useState("partially_confined");
+
+  function handleGeometry(e: React.ChangeEvent<HTMLSelectElement>): void {
+    const value = e.target.value;
+    console.log("Selected geometry:", value);
+    switch (value) {
+        case "partially_confined":
+          updateFaces({floor: true, roof: true, front: true, back: true, left: true, right: true});
+          setGeometry(value);
+          setCubicleType(value);
+          break;
+        case "fully_vented":
+          updateFaces({floor: true, roof: false, front: true, back: false, left: true, right: true}); 
+          setGeometry(value);
+          setCubicleType(value);
+          break;
+        default:
+          console.warn("Unknown geometry selected:", value);
+          break;
+      }
+  }
 
   return (
     <form className={cubicleFormCss.cf} onSubmit={handleSubmit}>
@@ -54,53 +103,41 @@ export const CubicleForm: React.FC<CubicleFormProps> = ({
 
       <label className={cubicleFormCss.cfRow}>
         <span className={cubicleFormCss.cfLabel}> Box Type</span>
-        <select>
-            <option >Vented pressure from partially confined cubicle</option>
-            <option >Vented pressure from fully vented three walled cubicle</option>
+        <select onChange={(e) => handleGeometry(e)}>
+            <option value="partially_confined">Vented pressure from partially confined cubicle</option>
+            <option value="fully_vented">Vented pressure from fully vented three walled cubicle</option>
         </select>
       </label>
+
 
       <NumberInput label="L (ft) Y" value={dims.l} onChange={(v: number) => setDims({ ...dims, l: v })} />
       <NumberInput label="B (ft) X" value={dims.b} onChange={(v: number) => setDims({ ...dims, b: v })} />
       <NumberInput label="H (ft) Z" value={dims.h} onChange={(v: number) => setDims({ ...dims, h: v })} />
-
-      <div className={cubicleFormCss.cfSection}>Faces</div>
-      {ALL_SIDES.map((s) => (
-        <label key={s} className={cubicleFormCss.cfCheck}>
-          <input
-            type="checkbox"
-            checked={s === "floor" ? true : !!faces[s]}
-            onChange={(e) => updateFace(s, e.target.checked)}
-            disabled={s === "floor"}
-          />
-          <span className={cubicleFormCss.cap}>{s}</span>
-        </label>
-      ))}
+      <NumberInput key="volume" label={<span>Volume (ft<sup>3</sup>)</span>} value={dims.l * dims.b * dims.h}  disabled={true} />
 
       <div className={cubicleFormCss.cfSection}>Opening Dimension</div>
 
-      <label className={cubicleFormCss.cfRow}>
-        <span className={cubicleFormCss.cfLabel}>Face</span>
-        <select
-          value={opening.face}
-          onChange={(e) =>
+      {geometry === "fully_vented" ? (
+        <label className={cubicleFormCss.cfRow}>
+          <span className={cubicleFormCss.cfLabel}>Face</span>
+          <select
+            value={opening.face}
+            onChange={(e) =>
             setOpening({ ...opening, face: e.target.value as Side | "" })
           }
         >
-          <option value="">— none —</option>
-          {ALL_SIDES.filter((s) => s !== "floor").map((s) => (
+          {OPENINGS.filter((s) => s !== "floor").map((s) => (
             <option value={s} key={s}>
               {s}
             </option>
           ))}
         </select>
       </label>
+      ) : null}
 
       {[
         ["Width (w)", "w"],
         ["Height (h)", "h"],
-        // ["X (optional)", "x"],
-        // ["Y (optional)", "y"],
       ].map(([label, key]) => (
         <NumberInput
             key={key}
@@ -109,6 +146,8 @@ export const CubicleForm: React.FC<CubicleFormProps> = ({
             onChange={(v: number) => setOpening({ ...opening, [key]: v })}
           />
       ))}
+
+      <NumberInput key="area" label={<span>Area (ft<sup>2</sup>)</span>} value={opening.w * opening.h}  disabled={true} />
 
       <div className={cubicleFormCss.cfSection}>Blast Load Definition</div>
 
@@ -143,10 +182,8 @@ export const CubicleForm: React.FC<CubicleFormProps> = ({
       />
 
       <div className={cubicleFormCss.cfActions}>
-        <button type="submit">Plot</button>
-        <button type="button" onClick={resetOpening}>
-          Clear Opening
-        </button>
+        <button type="submit" name="plot">Plot</button>
+        <button type="submit" name="analyze">Analyze</button>
       </div>
     </form>
   );

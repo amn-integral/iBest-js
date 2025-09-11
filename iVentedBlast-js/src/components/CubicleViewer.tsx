@@ -8,6 +8,7 @@ import {
   enableNodeHoverCoordinates,
 } from "../lib/geometry";
 import { colors, palette } from "../lib/colors";
+import cubicleViewerCss from "./CubicleViewer.module.css";
 
 type Side = "floor" | "roof" | "front" | "back" | "left" | "right";
 const ALL_SIDES: Side[] = ["floor", "roof", "front", "back", "left", "right"];
@@ -161,7 +162,8 @@ export const CubicleViewer: React.FC<{
 
     // Hover label
     const hoverLabel = document.createElement("div");
-    Object.assign(hoverLabel.style, styles.hoverLabel);
+    // Object.assign(hoverLabel.style, cubicleViewerCss.hoverLabel);
+    hoverLabel.className = cubicleViewerCss.hoverLabel;
     hoverLabel.textContent = "";
     containerRef.current.appendChild(hoverLabel);
     hoverLabelRef.current = hoverLabel;
@@ -174,6 +176,8 @@ export const CubicleViewer: React.FC<{
         containerRef.current.clientWidth,
         containerRef.current.clientHeight
       );
+      rendererRef.current.domElement.style.width = "100%";
+      rendererRef.current.domElement.style.height = "100%";
       setCameraView(cameraRef.current, containerRef.current, dims, "iso");
     };
     window.addEventListener("resize", onResize);
@@ -247,90 +251,33 @@ export const CubicleViewer: React.FC<{
   }, [plotTrigger, dims, faces, opening]);
 
   return (
-    <div ref={containerRef} style={styles.cubicle}>
+    <div ref={containerRef} className={cubicleViewerCss.cubicle}>
       {/* View buttons */}
-      <div style={styles.viewButtons}>
+      <div className={cubicleViewerCss.viewButtons}>
         {VIEW_LIST.map((view) => (
           <button
             key={view}
             onClick={() => resetCamera(view)}
-            style={styles.viewButton}
+            className={cubicleViewerCss.viewButton}
           >
             {view}
           </button>
         ))}
       </div>
       {/* bottom-right axis legend */}
-      <div style={styles.legend}>
-        <span style={styles.item}>
-          <i style={{ ...styles.dot, ...styles.x }} /> X
+      <div className={cubicleViewerCss.legend}>
+        <span className={cubicleViewerCss.item}>
+          <i className={`${cubicleViewerCss.dot} ${cubicleViewerCss.x}`} /> X
         </span>
-        <span style={styles.item}>
-          <i style={{ ...styles.dot, ...styles.y }} /> Y
+        <span className={cubicleViewerCss.item}>
+          <i className={`${cubicleViewerCss.dot} ${cubicleViewerCss.y}`} /> Y
         </span>
-        <span style={styles.item}>
-          <i style={{ ...styles.dot, ...styles.z }} /> Z
+        <span className={cubicleViewerCss.item}>
+          <i className={`${cubicleViewerCss.dot} ${cubicleViewerCss.z}`} /> Z
         </span>
       </div>
       {/* bottom-left hover label (text set via ref in effects) */}
-      <div ref={hoverLabelRef} style={styles.hoverLabel} />
+      <div ref={hoverLabelRef} className={cubicleViewerCss.hoverLabel} />
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  cubicle: { width: "100%", height: "100%", position: "relative" },
-  legend: {
-    position: "absolute",
-    right: "12px",
-    bottom: "12px",
-    display: "flex",
-    gap: "10px",
-    padding: "6px 10px",
-    borderRadius: "8px",
-    background: "rgba(255,255,255,0.9)",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-    font: "12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-  },
-  item: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: "4px 8px",
-    borderRadius: "999px",
-    background: "#f5f6f8",
-  },
-  dot: { width: "8px", height: "8px", borderRadius: "50%" },
-  x: { background: "#ff4d4f" },
-  y: { background: "#52c41a" },
-  z: { background: "#2196f3" },
-  hoverLabel: {
-    position: "absolute",
-    left: "12px",
-    bottom: "12px",
-    padding: "6px 10px",
-    borderRadius: "6px",
-    background: "rgba(0,0,0,0.6)",
-    color: "#fff",
-    font: "12px/1.2 monospace",
-    pointerEvents: "none",
-    userSelect: "none",
-  },
-  viewButtons: {
-    position: "absolute",
-    top: "12px",
-    left: "12px",
-    display: "flex",
-    gap: "6px",
-    flexWrap: "wrap" as const,
-  },
-  viewButton: {
-    padding: "6px 12px",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
-    background: "rgba(255,255,255,0.9)",
-    cursor: "pointer",
-    fontSize: "12px",
-    textTransform: "capitalize" as const,
-  },
 };

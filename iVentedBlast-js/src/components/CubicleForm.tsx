@@ -3,7 +3,7 @@ import cubicleFormCss from "./CubicleForm.module.css";
 import {NumberInput} from "./NumberInput";
 type Side = "floor" | "roof" | "front" | "back" | "left" | "right";
 const OPENINGS: Side[] = ["roof", "back"];
-import {type cubicleTypes} from "src/hooks/useCubicleConfig";
+import {type cubicleTypes, type fullyVentedTypes} from "src/hooks/useCubicleConfig";
 
 type Opening = {
   face: Side | "";
@@ -16,6 +16,10 @@ type Opening = {
 interface CubicleFormProps {
   cubicleType: cubicleTypes ;
   setCubicleType: (cubicleType: cubicleTypes) => void;
+
+  fullyVentedType?: string;
+  setFullyVentedType: (fullyVentedType: fullyVentedTypes) => void;
+
 
   dims: { l: number; b: number; h: number };
   setDims: (dims: { l: number; b: number; h: number }) => void;
@@ -41,8 +45,18 @@ interface CubicleFormProps {
   onAnalyze: (e?: React.FormEvent) => void;
 }
 
+const partially_confined_cubicle = {
+  'c3wnw': 'Cubile three wall without a roof',
+  'r3wnr': 'Reactangular three wall wthout a roof',
+  'c3wr': 'Cubicle three wall with a roof',
+  'r3wr': 'Rectangular three wall with a roof'
+}
+
 export const CubicleForm: React.FC<CubicleFormProps> = ({
+  cubicleType,
   setCubicleType,
+  fullyVentedType,
+  setFullyVentedType,
   dims,
   setDims,
   updateFaces,
@@ -75,7 +89,6 @@ export const CubicleForm: React.FC<CubicleFormProps> = ({
     }
   };
 
-  const [geometry, setGeometry] = React.useState("partially_confined");
 
   function handleGeometry(e: React.ChangeEvent<HTMLSelectElement>): void {
     const value = e.target.value;
@@ -83,12 +96,10 @@ export const CubicleForm: React.FC<CubicleFormProps> = ({
     switch (value) {
         case "partially_confined":
           updateFaces({floor: true, roof: true, front: true, back: true, left: true, right: true});
-          setGeometry(value);
           setCubicleType(value);
           break;
         case "fully_vented":
           updateFaces({floor: true, roof: false, front: true, back: false, left: true, right: true}); 
-          setGeometry(value);
           setCubicleType(value);
           break;
         default:
@@ -103,11 +114,27 @@ export const CubicleForm: React.FC<CubicleFormProps> = ({
 
       <label className={cubicleFormCss.cfRow}>
         <span className={cubicleFormCss.cfLabel}> Box Type</span>
-        <select onChange={(e) => handleGeometry(e)}>
+        <select onChange={(e) => handleGeometry(e)} value={cubicleType}>
             <option value="partially_confined">Vented pressure from partially confined cubicle</option>
             <option value="fully_vented">Vented pressure from fully vented three walled cubicle</option>
         </select>
       </label>
+
+
+      {cubicleType  === 'fully_vented' ? (
+
+      <label className={cubicleFormCss.cfRow}>
+        <span className={cubicleFormCss.cfLabel}> Select Geometry</span>
+        <select  value={fullyVentedType} onChange={(e) => setFullyVentedType(e.target.value as fullyVentedTypes)}>
+
+            {Object.entries(partially_confined_cubicle).map(([key, label]) => (
+                <option value={key} key={key}>{label}</option>
+            ))}
+        </select>
+      </label>
+
+
+      ) : null}
 
 
       <NumberInput label="L (ft) Y" value={dims.l} onChange={(v: number) => setDims({ ...dims, l: v })} />
@@ -115,39 +142,40 @@ export const CubicleForm: React.FC<CubicleFormProps> = ({
       <NumberInput label="H (ft) Z" value={dims.h} onChange={(v: number) => setDims({ ...dims, h: v })} />
       <NumberInput key="volume" label={<span>Volume (ft<sup>3</sup>)</span>} value={dims.l * dims.b * dims.h}  disabled={true} />
 
-      <div className={cubicleFormCss.cfSection}>Opening Dimension</div>
 
-      {geometry === "fully_vented" ? (
-        <label className={cubicleFormCss.cfRow}>
+      {cubicleType === "partially_confined" ? (
+        <>
+          <div className={cubicleFormCss.cfSection}>Opening Dimension</div>
+          <label className={cubicleFormCss.cfRow}>
           <span className={cubicleFormCss.cfLabel}>Face</span>
           <select
             value={opening.face}
-            onChange={(e) =>
-            setOpening({ ...opening, face: e.target.value as Side | "" })
-          }
-        >
-          {OPENINGS.filter((s) => s !== "floor").map((s) => (
-            <option value={s} key={s}>
-              {s}
-            </option>
+            onChange={(e) => setOpening({ ...opening, face: e.target.value as Side | "" })}
+          >
+            {OPENINGS.filter((s) => s !== "floor").map((s) => (
+              <option value={s} key={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          </label>
+
+          {[
+            ["Width (w)", "w"],
+            ["Height (h)", "h"],
+          ].map(([label, key]) => (
+            <NumberInput
+              key={key}
+              label={label}
+              value={opening[key as keyof typeof opening] as number}
+              onChange={(v: number) => setOpening({ ...opening, [key]: v })}
+            />
           ))}
-        </select>
-      </label>
+
+          <NumberInput key="area" label={<span>Area (ft<sup>2</sup>)</span>} value={opening.w * opening.h}  disabled={true} />
+        </>
       ) : null}
 
-      {[
-        ["Width (w)", "w"],
-        ["Height (h)", "h"],
-      ].map(([label, key]) => (
-        <NumberInput
-            key={key}
-            label={label}
-            value={opening[key as keyof typeof opening] as number}
-            onChange={(v: number) => setOpening({ ...opening, [key]: v })}
-          />
-      ))}
-
-      <NumberInput key="area" label={<span>Area (ft<sup>2</sup>)</span>} value={opening.w * opening.h}  disabled={true} />
 
       <div className={cubicleFormCss.cfSection}>Blast Load Definition</div>
 

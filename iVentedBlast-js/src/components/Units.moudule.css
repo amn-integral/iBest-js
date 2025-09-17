@@ -1,0 +1,13 @@
+.unit {
+    display: inline-block;
+    min-width: 2.5em;
+    text-align: right;
+    margin-right: 0.2em;
+    font-size: 0.75em;
+    white-space: nowrap;
+    }
+
+.sup {
+  font-size: 0.75em;
+  line-height: 0;
+}

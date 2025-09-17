@@ -3,11 +3,12 @@ import { useState } from "react";
 // Local Side type
 type Side = "floor" | "roof" | "front" | "back" | "left" | "right";
 export type cubicleTypes = "partially_confined" | "fully_vented";
+export type fullyVentedTypes = 'c3wnw' | 'r3wnr' | 'c3wr' | 'r3wr';
 
 export const useCubicleConfig = () => {
-  const [cubicleType, setCubicleType] = useState<cubicleTypes>("partially_confined");
-  const [dims, setDims] = useState({ l: 5, b: 10, h: 15 });
-  const [charge, setCharge] = useState({W: 0, R: 0, angle: 0, Pmax: 0, Imax: 0});
+  const [cubicleType, setCubicleType] = useState<cubicleTypes>("fully_vented");
+  const [dims, setDims] = useState({ l: 17.5 , b: 17.5, h: 13 });
+  const [charge, setCharge] = useState({W: 833.3, R: 200, angle: 0, Pmax: 0, Imax: 0});
   const [faces, setFaces] = useState<Record<Side, boolean>>({
     floor: true, // always on
     roof: true,
@@ -16,6 +17,8 @@ export const useCubicleConfig = () => {
     left: true,
     right: true,
   });
+
+  const [fullyVentedType, setFullyVentedType] = useState<fullyVentedTypes>("c3wnw");
 
   const [opening, setOpening] = useState<{
     face: Side | "";
@@ -49,6 +52,8 @@ export const useCubicleConfig = () => {
   return {
     cubicleType,
     setCubicleType,
+    fullyVentedType,
+    setFullyVentedType,
     dims,
     setDims,
     faces,

@@ -1,0 +1,59 @@
+/* Parent grid: don't center its children */
+.resultsLayout {
+  display: grid;
+  grid-template-rows: auto 1fr;   /* tabs row auto height, content fills */
+  gap: 16px;
+  justify-items: start;           /* <— new */
+  align-items: start;             /* <— new */
+  width: 100%;
+}
+
+/* Tabs row: stick to top-left of the grid cell */
+.resultsTabs {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-start;    /* left within the row */
+  align-items: center;
+  justify-self: start;            /* <— override any parent justify-items */
+  align-self: start;              /* <— override any parent align-items */
+  text-align: left;               /* guard against global text-align:center */
+  width: 100%;                    /* optional: make row full-width */
+  padding-left: 16px;         /* optional: align with content padding */
+  box-sizing: border-box;         /* include padding in width */
+}
+
+/* Summary grid (optional, same anchoring) */
+.summaryTab {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  justify-self: start;            /* <— optional */
+  align-self: start;              /* <— optional */
+  gap : 16px;
+  padding-left: 16px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  column-gap: 12px;
+  row-gap: 8px;
+}
+
+.kv > div {
+  display: contents;              /* lets dt/dd participate in the grid */
+}
+
+.kv dt {
+  font-weight: 600;
+}
+
+.kv dd {
+  margin: 0;
+}
+
+.kvDivider {
+  grid-column: 2;             /* the 1px column */
+  grid-row: 1 / -1;           /* span all rows */
+  background: var(--divider, #e5e7eb);
+  width: 1px;
+}

@@ -31,7 +31,6 @@
   overflow: hidden;
   background: #fff;
   display: grid;
-  place-items: center;    /* optional: center your canvas/scene */
 }
 
 /* Three rows to show head band and footer */
@@ -41,4 +40,12 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+}
+
+.results-pane {
+  border-top: 1px solid #e6e7eb;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+  background: #fff;
 }

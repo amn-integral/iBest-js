@@ -1,6 +1,6 @@
 {
   "private": true,
-  "workspaces": ["iVentedBlast-js", "iMath"],
+  "workspaces": ["iVentedBlast-js", "iMath", "iGraph"],
   "scripts": {
       "dev": "npm run dev -w iVentedBlast-js"
   }

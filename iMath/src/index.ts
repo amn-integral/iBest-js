@@ -1,2 +1,3 @@
-export {addNumbers} from './module1/add';
-export {runVentedAnalysis} from './ventedCubicle';
+export {addNumbers} from "./module1/add";
+export {runVentedAnalysis} from "./ventedCubicle";
+export * from "./newmark";

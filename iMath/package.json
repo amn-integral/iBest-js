@@ -21,9 +21,10 @@
     "typescript": "^5.4.0"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --sourcemap --watch",
+    "build": "tsup src/index.ts --format esm,cjs --sourcemap --clean && tsc -p tsconfig.build.json",
+    "dev": "tsup src/index.ts --format esm,cjs --sourcemap --watch",
     "typecheck": "tsc --noEmit",
+    "test": "npm run build && node tests/newmark.test.mjs",
     "prepublishOnly": "npm run build"
   }
 }

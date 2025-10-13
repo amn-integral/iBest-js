@@ -1,11 +1,10 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ChangeEvent,
-  type Dispatch,
-  type SetStateAction,
 } from "react";
 import {
   BackboneCurve,
@@ -14,19 +13,32 @@ import {
   averageAcceleration,
 } from "@integralrsg/imath";
 
+import { EditableGrid } from "./components/EditableGrid";
+import type { ColumnConfig } from "./components/EditableGrid";
 import "./App.css";
 
-type BackbonePointForm = {
+type BackboneRow = {
   id: number;
   displacement: string;
   resistance: string;
   klm: string;
 };
 
-type ForcePointForm = {
+type BackboneNumeric = {
+  displacement: number;
+  resistance: number;
+  klm: number;
+};
+
+type ForceRow = {
   id: number;
   time: string;
   force: string;
+};
+
+type ForceNumeric = {
+  time: number;
+  force: number;
 };
 
 type SolverSummary = {
@@ -45,6 +57,11 @@ type SolverSeries = {
   appliedForce: number[];
 };
 
+type BackboneCurves = {
+  initial: { x: number[]; y: number[] };
+  final: { x: number[]; y: number[] };
+};
+
 type HistoryChartProps = {
   title: string;
   time: number[];
@@ -54,63 +71,190 @@ type HistoryChartProps = {
   selectedIndex: number;
 };
 
-type BackboneCurves = {
-  initial: { x: number[]; y: number[] };
-  final: { x: number[]; y: number[] };
-};
+type AxisLimits = Record<"xMin" | "xMax" | "yMin" | "yMax", string>;
 
 type BackboneChartProps = {
   curves: BackboneCurves;
   displacementHistory: number[];
   restoringForceHistory: number[];
   selectedIndex: number;
-  axisLimits: {
-    xMin: string;
-    xMax: string;
-    yMin: string;
-    yMax: string;
-  };
+  axisLimits: AxisLimits;
 };
 
-type BackboneSetter = Dispatch<SetStateAction<BackbonePointForm[]>>;
-
-const INITIAL_INBOUND: BackbonePointForm[] = [
-  { id: 1, displacement: "0.75", resistance: "7.5", klm: "1" },
-  { id: 2, displacement: "10", resistance: "7.5", klm: "1" },
+const INITIAL_INBOUND_DATA: Array<Omit<BackboneRow, "id">> = [
+  { displacement: "0.75", resistance: "7.5", klm: "1" },
+  { displacement: "10", resistance: "7.5", klm: "1" },
 ];
 
-const INITIAL_REBOUND: BackbonePointForm[] = [
-  { id: 3, displacement: "-0.75", resistance: "-7.5", klm: "1" },
-  { id: 4, displacement: "-10", resistance: "-7.5", klm: "1" },
+const INITIAL_REBOUND_DATA: Array<Omit<BackboneRow, "id">> = [
+  { displacement: "-0.75", resistance: "-7.5", klm: "1" },
+  { displacement: "-10", resistance: "-7.5", klm: "1" },
 ];
 
-const INITIAL_FORCE: ForcePointForm[] = [
-  { id: 1, time: "0.0", force: "0.0" },
-  { id: 2, time: "0.1", force: "5.0" },
-  { id: 3, time: "0.2", force: "8.66" },
-  { id: 4, time: "0.3", force: "10.0" },
-  { id: 5, time: "0.4", force: "8.66" },
-  { id: 6, time: "0.5", force: "5.0" },
-  { id: 7, time: "0.6", force: "0.0" },
-  { id: 8, time: "0.7", force: "0.0" },
-  { id: 9, time: "0.8", force: "0.0" },
-  { id: 10, time: "0.9", force: "0.0" },
-  { id: 11, time: "1.0", force: "0.0" },
+const INITIAL_FORCE_DATA: Array<Omit<ForceRow, "id">> = [
+  { time: "0.0", force: "0.0" },
+  { time: "0.1", force: "5.0" },
+  { time: "0.2", force: "8.66" },
+  { time: "0.3", force: "10.0" },
+  { time: "0.4", force: "8.66" },
+  { time: "0.5", force: "5.0" },
+  { time: "0.6", force: "0.0" },
+  { time: "0.7", force: "0.0" },
+  { time: "0.8", force: "0.0" },
+  { time: "0.9", force: "0.0" },
+  { time: "1.0", force: "0.0" },
 ];
+
+const parseStrictNumber = (value: string) => {
+  if (!value.trim()) {
+    return null;
+  }
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
 
 export function App() {
-  const [mass, setMass] = useState(0.2553);
-  const [dampingRatio, setDampingRatio] = useState(0.05);
-  const [totalTime, setTotalTime] = useState(1);
-  const [timeStep, setTimeStep] = useState(0.1);
-  const [autoStep, setAutoStep] = useState(false);
+  const inboundIdRef = useRef(1);
+  const reboundIdRef = useRef(1);
+  const forceIdRef = useRef(1);
 
-  const [inboundPoints, setInboundPoints] =
-    useState<BackbonePointForm[]>(INITIAL_INBOUND);
-  const [reboundPoints, setReboundPoints] =
-    useState<BackbonePointForm[]>(INITIAL_REBOUND);
-  const [forcePoints, setForcePoints] =
-    useState<ForcePointForm[]>(INITIAL_FORCE);
+  const [massInput, setMassInput] = useState("10");
+  const [dampingRatioInput, setDampingRatioInput] = useState("0.05");
+  const [totalTimeInput, setTotalTimeInput] = useState("1.0");
+  const [timeStepInput, setTimeStepInput] = useState("0.001");
+  const [autoStep, setAutoStep] = useState(true);
+
+  const [inboundRows, setInboundRows] = useState<BackboneRow[]>(() =>
+    INITIAL_INBOUND_DATA.map((row) => ({
+      ...row,
+      id: inboundIdRef.current++,
+    })),
+  );
+  const [reboundRows, setReboundRows] = useState<BackboneRow[]>(() =>
+    INITIAL_REBOUND_DATA.map((row) => ({
+      ...row,
+      id: reboundIdRef.current++,
+    })),
+  );
+  const [forceRows, setForceRows] = useState<ForceRow[]>(() =>
+    INITIAL_FORCE_DATA.map((row) => ({
+      ...row,
+      id: forceIdRef.current++,
+    })),
+  );
+
+  const mass = useMemo(
+    () => parseStrictNumber(massInput) ?? Number.NaN,
+    [massInput],
+  );
+  const dampingRatio = useMemo(
+    () => parseStrictNumber(dampingRatioInput) ?? Number.NaN,
+    [dampingRatioInput],
+  );
+  const totalTime = useMemo(
+    () => parseStrictNumber(totalTimeInput) ?? Number.NaN,
+    [totalTimeInput],
+  );
+  const timeStep = useMemo(
+    () => parseStrictNumber(timeStepInput) ?? Number.NaN,
+    [timeStepInput],
+  );
+
+  const createInboundRow = useCallback(
+    () => ({
+      id: inboundIdRef.current++,
+      displacement: "",
+      resistance: "",
+      klm: "1",
+    }),
+    [],
+  );
+
+  const createReboundRow = useCallback(
+    () => ({
+      id: reboundIdRef.current++,
+      displacement: "",
+      resistance: "",
+      klm: "1",
+    }),
+    [],
+  );
+
+  const createForceRow = useCallback(
+    () => ({
+      id: forceIdRef.current++,
+      time: "",
+      force: "",
+    }),
+    [],
+  );
+
+  const handleScalarChange = useCallback(
+    (setter: (value: string) => void) =>
+      (event: ChangeEvent<HTMLInputElement>) => {
+        setter(event.target.value);
+      },
+    [],
+  );
+
+  const handleAutoStepChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setAutoStep(event.target.checked);
+    },
+    [],
+  );
+
+  const backboneColumns = useMemo<
+    ColumnConfig<"displacement" | "resistance" | "klm">[]
+  >(
+    () => [
+      {
+        key: "displacement",
+        label: "Displacement",
+        placeholder: "0.00",
+        parser: parseStrictNumber,
+      },
+      {
+        key: "resistance",
+        label: "Force",
+        placeholder: "0.00",
+        parser: parseStrictNumber,
+      },
+      {
+        key: "klm",
+        label: "k_lm",
+        placeholder: "1.0",
+        parser: parseStrictNumber,
+      },
+    ],
+    [],
+  );
+
+  const forceColumns = useMemo<ColumnConfig<"time" | "force">[]>(
+    () => [
+      {
+        key: "time",
+        label: "Time (s)",
+        placeholder: "0.00",
+        parser: parseStrictNumber,
+      },
+      {
+        key: "force",
+        label: "Force",
+        placeholder: "0.00",
+        parser: parseStrictNumber,
+      },
+    ],
+    [],
+  );
+
+  const [inboundValidRows, setInboundValidRows] = useState<BackboneNumeric[]>(
+    [],
+  );
+  const [reboundValidRows, setReboundValidRows] = useState<BackboneNumeric[]>(
+    [],
+  );
+  const [forceValidRows, setForceValidRows] = useState<ForceNumeric[]>([]);
 
   const [errors, setErrors] = useState<string[]>([]);
   const [summary, setSummary] = useState<SolverSummary | null>(null);
@@ -122,81 +266,25 @@ export function App() {
   const [playIndex, setPlayIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [forceDisplacementLimits, setForceDisplacementLimits] = useState({
+  const [forceDisplacementLimits, setForceDisplacementLimits] = useState<AxisLimits>({
     xMin: "",
     xMax: "",
     yMin: "",
     yMax: "",
   });
 
-  const idRef = useRef(1000);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const nextId = () => {
-    idRef.current += 1;
-    return idRef.current;
+  const handleAddInboundRow = () => {
+    setInboundRows((prev) => [...prev, createInboundRow()]);
   };
 
-  const handleBackboneChange = (
-    setFn: BackboneSetter,
-    id: number,
-    key: keyof BackbonePointForm,
-    value: string,
-  ) => {
-    setFn((prev) =>
-      prev.map((point) =>
-        point.id === id ? { ...point, [key]: value } : point,
-      ),
-    );
+  const handleAddReboundRow = () => {
+    setReboundRows((prev) => [...prev, createReboundRow()]);
   };
 
-  const addBackbonePoint = (
-    setFn: BackboneSetter,
-    template: Partial<BackbonePointForm> = {},
-  ) => {
-    setFn((prev) => [
-      ...prev,
-      {
-        id: nextId(),
-        displacement: template.displacement ?? "",
-        resistance: template.resistance ?? "",
-        klm: template.klm ?? "1",
-      },
-    ]);
-  };
-
-  const removeBackbonePoint = (setFn: BackboneSetter, id: number) => {
-    setFn((prev) => prev.filter((point) => point.id !== id));
-  };
-
-  const handleForceChange = (
-    id: number,
-    key: keyof ForcePointForm,
-    value: string,
-  ) => {
-    setForcePoints((prev) =>
-      prev.map((point) =>
-        point.id === id ? { ...point, [key]: value } : point,
-      ),
-    );
-  };
-
-  const addForcePoint = () => {
-    setForcePoints((prev) => [
-      ...prev,
-      {
-        id: nextId(),
-        time:
-          prev.length > 0
-            ? (Number(prev[prev.length - 1].time) + 0.1).toFixed(2)
-            : "0.0",
-        force: "0.0",
-      },
-    ]);
-  };
-
-  const removeForcePoint = (id: number) => {
-    setForcePoints((prev) => prev.filter((point) => point.id !== id));
+  const handleAddForceRow = () => {
+    setForceRows((prev) => [...prev, createForceRow()]);
   };
 
   const handleForceCsvImport = (event: ChangeEvent<HTMLInputElement>) => {
@@ -219,7 +307,7 @@ export function App() {
         return;
       }
 
-      const parsed: ForcePointForm[] = [];
+      const parsed: ForceRow[] = [];
       let parseError: string | null = null;
 
       rows.forEach((row, index) => {
@@ -241,7 +329,7 @@ export function App() {
         }
 
         parsed.push({
-          id: nextId(),
+          id: forceIdRef.current++,
           time: String(time),
           force: String(force),
         });
@@ -259,7 +347,7 @@ export function App() {
         return;
       }
 
-      setForcePoints(parsed.sort((a, b) => Number(a.time) - Number(b.time)));
+      setForceRows(parsed);
       setErrors([]);
       event.target.value = "";
     };
@@ -267,12 +355,113 @@ export function App() {
     reader.readAsText(file);
   };
 
+  const copyForceTable = useCallback(async () => {
+    const text = forceRows
+      .map((row) => forceColumns.map((column) => row[column.key]).join("\t"))
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+  }, [forceRows, forceColumns]);
+
   const handleAxisLimitChange = (
     key: keyof typeof forceDisplacementLimits,
     value: string,
   ) => {
     setForceDisplacementLimits((prev) => ({ ...prev, [key]: value }));
   };
+
+  const backbonePreview = useMemo(() => {
+    try {
+      if (inboundValidRows.length >= 2 && reboundValidRows.length >= 2) {
+        const previewCurve = new BackboneCurve(
+          inboundValidRows,
+          reboundValidRows,
+        );
+        return {
+          initial: {
+            x: [...previewCurve.xValues],
+            y: [...previewCurve.yValues],
+          },
+          final: {
+            x: [...previewCurve.xValues],
+            y: [...previewCurve.yValues],
+          },
+        };
+      }
+    } catch {
+      // ignore preview errors
+    }
+    return null;
+  }, [inboundValidRows, reboundValidRows]);
+
+  const forcePreviewSeries = useMemo(() => {
+    if (forceValidRows.length >= 2) {
+      return {
+        time: forceValidRows.map((row) => row.time),
+        values: forceValidRows.map((row) => row.force),
+      };
+    }
+    return null;
+  }, [forceValidRows]);
+
+  const selection = useMemo(() => {
+    if (!series || series.time.length === 0) {
+      return null;
+    }
+    const clampedIndex = Math.min(
+      Math.max(playIndex, 0),
+      series.time.length - 1,
+    );
+    return {
+      index: clampedIndex,
+      time: series.time[clampedIndex],
+      displacement: series.displacement[clampedIndex],
+      velocity: series.velocity[clampedIndex],
+      acceleration: series.acceleration[clampedIndex],
+      restoringForce: series.restoringForce[clampedIndex],
+      appliedForce: series.appliedForce[clampedIndex],
+    };
+  }, [series, playIndex]);
+
+  useEffect(() => {
+    if (!isPlaying || !series) {
+      return;
+    }
+    if (playIndex >= series.time.length - 1) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const nextIndex = playIndex + 1;
+    const dt =
+      series.time[nextIndex] - series.time[playIndex] <= 0
+        ? 0.016
+        : series.time[nextIndex] - series.time[playIndex];
+    const delay = Math.max((dt / playbackSpeed) * 1000, 16);
+    const timeout = window.setTimeout(() => {
+      setPlayIndex(nextIndex);
+    }, delay);
+    return () => window.clearTimeout(timeout);
+  }, [isPlaying, playIndex, playbackSpeed, series]);
+
+  useEffect(() => {
+    if (!series) {
+      setPlayIndex(0);
+      setIsPlaying(false);
+    } else {
+      setPlayIndex((index) =>
+        Math.min(index, series.time.length ? series.time.length - 1 : 0),
+      );
+    }
+  }, [series]);
 
   const runSolver = () => {
     const validationErrors: string[] = [];
@@ -291,102 +480,21 @@ export function App() {
         "Time step must be a positive number when automatic stepping is disabled.",
       );
     }
-    if (inboundPoints.length < 2) {
-      validationErrors.push("Inbound backbone must contain at least two points.");
+
+    if (inboundValidRows.length < 2) {
+      validationErrors.push(
+        "Inbound backbone must contain at least two valid points.",
+      );
     }
-    if (reboundPoints.length < 2) {
-      validationErrors.push("Rebound backbone must contain at least two points.");
+    if (reboundValidRows.length < 2) {
+      validationErrors.push(
+        "Rebound backbone must contain at least two valid points.",
+      );
     }
-    if (forcePoints.length < 2) {
-      validationErrors.push("Force history must contain at least two samples.");
-    }
-
-    const inboundParsed = inboundPoints.map((point, index) => {
-      const displacement = Number(point.displacement);
-      const resistance = Number(point.resistance);
-      const klm = Number(point.klm);
-      if (!Number.isFinite(displacement)) {
-        validationErrors.push(
-          `Inbound point ${index + 1}: displacement must be numeric.`,
-        );
-      }
-      if (!Number.isFinite(resistance)) {
-        validationErrors.push(
-          `Inbound point ${index + 1}: resistance must be numeric.`,
-        );
-      }
-      if (!Number.isFinite(klm) || klm <= 0) {
-        validationErrors.push(
-          `Inbound point ${index + 1}: klm must be a positive number.`,
-        );
-      }
-      return { displacement, resistance, klm };
-    });
-
-    const reboundParsed = reboundPoints.map((point, index) => {
-      const displacement = Number(point.displacement);
-      const resistance = Number(point.resistance);
-      const klm = Number(point.klm);
-      if (!Number.isFinite(displacement)) {
-        validationErrors.push(
-          `Rebound point ${index + 1}: displacement must be numeric.`,
-        );
-      }
-      if (!Number.isFinite(resistance)) {
-        validationErrors.push(
-          `Rebound point ${index + 1}: resistance must be numeric.`,
-        );
-      }
-      if (!Number.isFinite(klm) || klm <= 0) {
-        validationErrors.push(
-          `Rebound point ${index + 1}: klm must be a positive number.`,
-        );
-      }
-      return { displacement, resistance, klm };
-    });
-
-    const inboundSorted = [...inboundParsed].sort(
-      (a, b) => a.displacement - b.displacement,
-    );
-    const reboundSorted = [...reboundParsed].sort(
-      (a, b) => a.displacement - b.displacement,
-    );
-
-    for (let i = 1; i < inboundSorted.length; i += 1) {
-      if (inboundSorted[i].displacement === inboundSorted[i - 1].displacement) {
-        validationErrors.push("Inbound backbone displacements must be unique.");
-        break;
-      }
-    }
-    for (let i = 1; i < reboundSorted.length; i += 1) {
-      if (reboundSorted[i].displacement === reboundSorted[i - 1].displacement) {
-        validationErrors.push("Rebound backbone displacements must be unique.");
-        break;
-      }
-    }
-
-    const forceParsed = forcePoints.map((point, index) => {
-      const time = Number(point.time);
-      const force = Number(point.force);
-      if (!Number.isFinite(time)) {
-        validationErrors.push(`Force sample ${index + 1}: time must be numeric.`);
-      }
-      if (!Number.isFinite(force)) {
-        validationErrors.push(`Force sample ${index + 1}: force must be numeric.`);
-      }
-      return { time, force };
-    });
-
-    const forceSorted = [...forceParsed].sort((a, b) => a.time - b.time);
-    for (let i = 1; i < forceSorted.length; i += 1) {
-      if (forceSorted[i].time === forceSorted[i - 1].time) {
-        validationErrors.push("Force sample times must be unique.");
-        break;
-      }
-      if (forceSorted[i].time <= forceSorted[i - 1].time) {
-        validationErrors.push("Force sample times must increase monotonically.");
-        break;
-      }
+    if (forceValidRows.length < 2) {
+      validationErrors.push(
+        "Force history must contain at least two valid samples.",
+      );
     }
 
     if (validationErrors.length > 0) {
@@ -399,14 +507,14 @@ export function App() {
     }
 
     try {
-      const backbone = new BackboneCurve(inboundSorted, reboundSorted);
+      const backbone = new BackboneCurve(inboundValidRows, reboundValidRows);
       const initialCurve = {
         x: [...backbone.xValues],
         y: [...backbone.yValues],
       };
       const force = new ForceCurve(
-        forceSorted.map((sample) => sample.time),
-        forceSorted.map((sample) => sample.force),
+        forceValidRows.map((sample) => sample.time),
+        forceValidRows.map((sample) => sample.force),
       );
 
       const start = performance.now();
@@ -441,7 +549,6 @@ export function App() {
         restoringForce: response.restoringForce,
         appliedForce: response.appliedForce,
       });
-
       setBackboneCurves({
         initial: initialCurve,
         final: {
@@ -449,7 +556,6 @@ export function App() {
           y: [...backbone.yValues],
         },
       });
-
       setErrors([]);
       setPlayIndex(0);
       setIsPlaying(false);
@@ -464,355 +570,196 @@ export function App() {
     }
   };
 
-  useEffect(() => {
-    if (!isPlaying || !series) {
-      return;
-    }
-    if (playIndex >= series.time.length - 1) {
-      setIsPlaying(false);
-      return;
-    }
+  const inboundToolbar = (
+    <button
+      type="button"
+      className="secondary-button"
+      onClick={handleAddInboundRow}
+    >
+      + Add row
+    </button>
+  );
 
-    const nextIndex = playIndex + 1;
-    const dt =
-      series.time[nextIndex] - series.time[playIndex] <= 0
-        ? 0.016
-        : series.time[nextIndex] - series.time[playIndex];
-    const delay = Math.max((dt / playbackSpeed) * 1000, 16);
-    const timeout = window.setTimeout(() => {
-      setPlayIndex(nextIndex);
-    }, delay);
-    return () => window.clearTimeout(timeout);
-  }, [isPlaying, playIndex, playbackSpeed, series]);
+  const reboundToolbar = (
+    <button
+      type="button"
+      className="secondary-button"
+      onClick={handleAddReboundRow}
+    >
+      + Add row
+    </button>
+  );
 
-  useEffect(() => {
-    if (!series) {
-      setPlayIndex(0);
-      setIsPlaying(false);
-    } else {
-      setPlayIndex((index) =>
-        Math.min(index, series.time.length ? series.time.length - 1 : 0),
-      );
-    }
-  }, [series]);
-
-  const selection = useMemo(() => {
-    if (!series || series.time.length === 0 || playIndex >= series.time.length) {
-      return null;
-    }
-    const clamped = Math.max(Math.min(playIndex, series.time.length - 1), 0);
-    return {
-      index: clamped,
-      time: series.time[clamped],
-      displacement: series.displacement[clamped],
-      velocity: series.velocity[clamped],
-      acceleration: series.acceleration[clamped],
-      restoringForce: series.restoringForce[clamped],
-      appliedForce: series.appliedForce[clamped],
-    };
-  }, [series, playIndex]);
+  const forceToolbar = (
+    <>
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={handleAddForceRow}
+      >
+        + Add row
+      </button>
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        Import CSV
+      </button>
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={copyForceTable}
+      >
+        Copy table
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        style={{ display: "none" }}
+        onChange={handleForceCsvImport}
+      />
+    </>
+  );
 
   return (
     <div className="layout">
       <header className="layout__header">
         <h1>iGSDOF Front End</h1>
         <p>
-          Configure the generalized single-degree-of-freedom solver and review
-          Newmark results with interactive playback, backbone overlay, and
-          force–displacement hysteresis.
+          Configure the generalized single-degree-of-freedom solver, review input
+          previews, and inspect Newmark results with playback when ready.
         </p>
       </header>
 
       <main className="layout__content">
         <div className="panel panel--form">
           <h2>Solver Inputs</h2>
-          <div className="form-grid">
-            <label>
-              Mass (m)
-              <input
-                type="number"
-                step="any"
-                value={mass}
-                onChange={(event) => setMass(Number(event.target.value))}
-              />
-            </label>
-            <label>
-              Damping ratio (xi)
-              <input
-                type="number"
-                step="any"
-                value={dampingRatio}
-                onChange={(event) =>
-                  setDampingRatio(Number(event.target.value))
-                }
-              />
-            </label>
-            <label>
-              Total time (s)
-              <input
-                type="number"
-                step="any"
-                value={totalTime}
-                onChange={(event) => setTotalTime(Number(event.target.value))}
-              />
-            </label>
-            <label>
-              Time step (dt)
-              <input
-                type="number"
-                step="any"
-                value={timeStep}
-                disabled={autoStep}
-                onChange={(event) => setTimeStep(Number(event.target.value))}
-              />
-            </label>
-            <label className="checkbox-row">
-              <input
-                type="checkbox"
-                checked={autoStep}
-                onChange={(event) => setAutoStep(event.target.checked)}
-              />
-              Automatic time step
-            </label>
-          </div>
 
-          <section className="points-section">
-            <header>
-              <h3>Backbone (inbound)</h3>
-              <div className="section-actions">
-                <button type="button" onClick={() => addBackbonePoint(setInboundPoints)}>
-                  + Add row
-                </button>
+          <section className="solver-inputs">
+            <h3 className="solver-inputs__heading">System parameters</h3>
+            <div className="solver-inputs__table">
+              <div className="solver-inputs__row">
+                <label className="solver-inputs__label" htmlFor="solver-mass">
+                  Mass (kip·s²/in)
+                </label>
+                <input
+                  id="solver-mass"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  className="solver-inputs__input"
+                  value={massInput}
+                  onChange={handleScalarChange(setMassInput)}
+                />
               </div>
-            </header>
-            <table className="point-table">
-              <thead>
-                <tr>
-                  <th>Displacement</th>
-                  <th>Resistance</th>
-                  <th>klm</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {inboundPoints.map((point) => (
-                  <tr key={point.id}>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.displacement}
-                        onChange={(event) =>
-                          handleBackboneChange(
-                            setInboundPoints,
-                            point.id,
-                            "displacement",
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.resistance}
-                        onChange={(event) =>
-                          handleBackboneChange(
-                            setInboundPoints,
-                            point.id,
-                            "resistance",
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.klm}
-                        onChange={(event) =>
-                          handleBackboneChange(
-                            setInboundPoints,
-                            point.id,
-                            "klm",
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        onClick={() => removeBackbonePoint(setInboundPoints, point.id)}
-                        disabled={inboundPoints.length <= 2}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-
-          <section className="points-section">
-            <header>
-              <h3>Backbone (rebound)</h3>
-              <div className="section-actions">
-                <button type="button" onClick={() => addBackbonePoint(setReboundPoints)}>
-                  + Add row
-                </button>
-              </div>
-            </header>
-            <table className="point-table">
-              <thead>
-                <tr>
-                  <th>Displacement</th>
-                  <th>Resistance</th>
-                  <th>klm</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {reboundPoints.map((point) => (
-                  <tr key={point.id}>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.displacement}
-                        onChange={(event) =>
-                          handleBackboneChange(
-                            setReboundPoints,
-                            point.id,
-                            "displacement",
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.resistance}
-                        onChange={(event) =>
-                          handleBackboneChange(
-                            setReboundPoints,
-                            point.id,
-                            "resistance",
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.klm}
-                        onChange={(event) =>
-                          handleBackboneChange(
-                            setReboundPoints,
-                            point.id,
-                            "klm",
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        onClick={() => removeBackbonePoint(setReboundPoints, point.id)}
-                        disabled={reboundPoints.length <= 2}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-
-          <section className="points-section">
-            <header>
-              <h3>Force history</h3>
-              <div className="section-actions">
-                <button type="button" onClick={addForcePoint}>
-                  + Add sample
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => fileInputRef.current?.click()}
+              <div className="solver-inputs__row">
+                <label
+                  className="solver-inputs__label"
+                  htmlFor="solver-damping-ratio"
                 >
-                  Import CSV
-                </button>
+                  Damping ratio
+                </label>
+                <input
+                  id="solver-damping-ratio"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  className="solver-inputs__input"
+                  value={dampingRatioInput}
+                  onChange={handleScalarChange(setDampingRatioInput)}
+                />
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,text/csv"
-                style={{ display: "none" }}
-                onChange={handleForceCsvImport}
-              />
-            </header>
-            <table className="point-table">
-              <thead>
-                <tr>
-                  <th>Time (s)</th>
-                  <th>Force</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {forcePoints.map((point) => (
-                  <tr key={point.id}>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.time}
-                        onChange={(event) =>
-                          handleForceChange(point.id, "time", event.target.value)
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        step="any"
-                        value={point.force}
-                        onChange={(event) =>
-                          handleForceChange(point.id, "force", event.target.value)
-                        }
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        onClick={() => removeForcePoint(point.id)}
-                        disabled={forcePoints.length <= 2}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              <div className="solver-inputs__row">
+                <label
+                  className="solver-inputs__label"
+                  htmlFor="solver-total-time"
+                >
+                  Total time (s)
+                </label>
+                <input
+                  id="solver-total-time"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  className="solver-inputs__input"
+                  value={totalTimeInput}
+                  onChange={handleScalarChange(setTotalTimeInput)}
+                />
+              </div>
+              <div className="solver-inputs__row solver-inputs__row--toggle">
+                <span className="solver-inputs__label">Automatic time step</span>
+                <label className="solver-inputs__toggle">
+                  <input
+                    type="checkbox"
+                    checked={autoStep}
+                    onChange={handleAutoStepChange}
+                  />
+                  <span className="solver-inputs__toggle-slider" />
+                </label>
+              </div>
+              <div className="solver-inputs__row">
+                <label
+                  className="solver-inputs__label"
+                  htmlFor="solver-time-step"
+                >
+                  Fixed time step (s)
+                </label>
+                <input
+                  id="solver-time-step"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.0001"
+                  min="0"
+                  className="solver-inputs__input"
+                  value={timeStepInput}
+                  onChange={handleScalarChange(setTimeStepInput)}
+                  disabled={autoStep}
+                />
+              </div>
+            </div>
           </section>
+
+          <EditableGrid
+            title="Backbone (inbound)"
+            columns={backboneColumns}
+            rows={inboundRows}
+            onRowsChange={setInboundRows}
+            createRow={createInboundRow}
+            onValidatedRows={setInboundValidRows}
+            toolbar={inboundToolbar}
+            maxHeight={240}
+          />
+
+          <EditableGrid
+            title="Backbone (rebound)"
+            columns={backboneColumns}
+            rows={reboundRows}
+            onRowsChange={setReboundRows}
+            createRow={createReboundRow}
+            onValidatedRows={setReboundValidRows}
+            toolbar={reboundToolbar}
+            maxHeight={240}
+          />
+
+          <EditableGrid
+            title="Force history"
+            columns={forceColumns}
+            rows={forceRows}
+            onRowsChange={setForceRows}
+            createRow={createForceRow}
+            onValidatedRows={setForceValidRows}
+            toolbar={forceToolbar}
+            maxHeight={280}
+          />
 
           <button type="button" className="solve-button" onClick={runSolver}>
             Run GSDOF Solver
           </button>
+
           {errors.length > 0 ? (
             <ul className="error-list">
               {errors.map((message) => (
@@ -824,7 +771,7 @@ export function App() {
 
         <div className="panel panel--results">
           <h2>Results</h2>
-          {summary && series ? (
+          {summary && series && backboneCurves ? (
             <>
               <div className="summary-grid">
                 <div className="summary-card">
@@ -896,7 +843,7 @@ export function App() {
                   </div>
                   <div>
                     <span>a</span>
-                    <strong>{selection.acceleration.toFixed(4)} in/s²</strong>
+                    <strong>{selection.acceleration.toFixed(4)} in/s^2</strong>
                   </div>
                   <div>
                     <span>Restoring</span>
@@ -931,7 +878,7 @@ export function App() {
                   time={series.time}
                   values={series.acceleration}
                   color="#f97316"
-                  units="in/s²"
+                  units="in/s^2"
                   selectedIndex={playIndex}
                 />
                 <HistoryChart
@@ -942,15 +889,13 @@ export function App() {
                   units=""
                   selectedIndex={playIndex}
                 />
-                {backboneCurves ? (
-                  <BackboneChart
-                    curves={backboneCurves}
-                    displacementHistory={series.displacement}
-                    restoringForceHistory={series.restoringForce}
-                    selectedIndex={playIndex}
-                    axisLimits={forceDisplacementLimits}
-                  />
-                ) : null}
+                <BackboneChart
+                  curves={backboneCurves}
+                  displacementHistory={series.displacement}
+                  restoringForceHistory={series.restoringForce}
+                  selectedIndex={playIndex}
+                  axisLimits={forceDisplacementLimits}
+                />
               </div>
 
               <div className="axis-controls">
@@ -1008,16 +953,44 @@ export function App() {
               </div>
             </>
           ) : (
-            <p className="placeholder">
-              Configure the parameters on the left and run the solver to generate
-              playback-ready response plots.
-            </p>
+            <div className="preview-grid">
+              {backbonePreview ? (
+                <BackboneChart
+                  curves={backbonePreview}
+                  displacementHistory={[]}
+                  restoringForceHistory={[]}
+                  selectedIndex={0}
+                  axisLimits={forceDisplacementLimits}
+                />
+              ) : (
+                <div className="preview-placeholder">
+                  Provide at least two inbound and two rebound points to preview
+                  the backbone curve.
+                </div>
+              )}
+              {forcePreviewSeries ? (
+                <HistoryChart
+                  title="Force preview"
+                  time={forcePreviewSeries.time}
+                  values={forcePreviewSeries.values}
+                  color="#0ea5e9"
+                  units=""
+                  selectedIndex={forcePreviewSeries.time.length - 1}
+                />
+              ) : (
+                <div className="preview-placeholder">
+                  Provide at least two time-force samples to preview the force
+                  history.
+                </div>
+              )}
+            </div>
           )}
         </div>
       </main>
     </div>
   );
 }
+
 function formatRuntimeLabel(runtimeMs: number): string {
   if (!Number.isFinite(runtimeMs)) {
     return "–";
@@ -1028,7 +1001,7 @@ function formatRuntimeLabel(runtimeMs: number): string {
   if (runtimeMs >= 1) {
     return `${runtimeMs.toFixed(2)} ms`;
   }
-  return `${(runtimeMs * 1000).toFixed(2)} μs`;
+  return `${(runtimeMs * 1000).toFixed(2)} us`;
 }
 
 function formatLimitValue(value: number): string {
@@ -1046,8 +1019,40 @@ function HistoryChart({
   units,
   selectedIndex,
 }: HistoryChartProps) {
-  const width = 640;
-  const height = 220;
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState(640);
+
+  useEffect(() => {
+    const node = wrapperRef.current;
+    if (!node || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
+      const nextWidth = Math.floor(entry.contentRect.width);
+      if (nextWidth > 0) {
+        setContainerWidth((prev) => {
+          const clamped = Math.max(240, nextWidth);
+          return Math.abs(prev - clamped) > 1 ? clamped : prev;
+        });
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const width = Math.max(320, containerWidth);
+  const height = Math.max(160, Math.min(220, Math.round(width * 0.32)));
+
+  const calcTickCount = (length: number, idealSpacing: number, min = 3, max = 8) => {
+    const estimate = Math.max(min, Math.round(length / idealSpacing) + 1);
+    return Math.max(min, Math.min(max, estimate));
+  };
+  const xTickCount = calcTickCount(width, 140);
+  const yTickCount = calcTickCount(height, 60, 3, 7);
 
   const {
     path,
@@ -1095,19 +1100,18 @@ function HistoryChart({
     const pointerX = pointerRatioX * width;
     const pointerY = height - pointerRatioY * height;
 
-    const tickCount = 5;
     const xTicks: Array<{ x: number; label: string }> = [];
     const yTicks: Array<{ y: number; label: string }> = [];
-    for (let i = 0; i < tickCount; i += 1) {
-      const t = minTime + (spanTime * i) / (tickCount - 1);
+    for (let i = 0; i < xTickCount; i += 1) {
+      const t = minTime + (spanTime * i) / (xTickCount - 1);
       const ratio = (t - minTime) / spanTime;
       xTicks.push({
         x: ratio * width,
         label: spanTime === 0 ? minTime.toFixed(2) : t.toFixed(2),
       });
     }
-    for (let i = 0; i < tickCount; i += 1) {
-      const v = minVal + (spanVal * i) / (tickCount - 1);
+    for (let i = 0; i < yTickCount; i += 1) {
+      const v = minVal + (spanVal * i) / (yTickCount - 1);
       const ratio = (v - minVal) / spanVal;
       yTicks.push({
         y: height - ratio * height,
@@ -1125,14 +1129,14 @@ function HistoryChart({
       xTicks,
       yTicks,
     };
-  }, [time, values, selectedIndex]);
+  }, [height, time, values, selectedIndex, width, xTickCount, yTickCount]);
 
-  if (!time.length || !values.length || !path) {
+  if (!path) {
     return null;
   }
 
   return (
-    <div className="chart-wrapper">
+    <div className="chart-wrapper" ref={wrapperRef}>
       <div className="chart-header">
         <h4>
           {title} – Step {stepIndex}
@@ -1147,13 +1151,13 @@ function HistoryChart({
         role="img"
         aria-label={`${title} history`}
       >
-        <rect width={width} height={height} fill="#f8fafc" rx={12} />
-        <line x1={0} y1={height} x2={width} y2={height} stroke="#d1d9e6" strokeWidth={1} />
-        <line x1={0} y1={0} x2={0} y2={height} stroke="#d1d9e6" strokeWidth={1} />
+        <rect width={width} height={height} fill="#f8fafc" rx={10} />
+        <line x1={0} y1={height} x2={width} y2={height} stroke="#cbd5e1" strokeWidth={1} />
+        <line x1={0} y1={0} x2={0} y2={height} stroke="#cbd5e1" strokeWidth={1} />
         {xTicks.map((tick) => (
           <g key={tick.x} transform={`translate(${tick.x} ${height})`}>
             <line y1={0} y2={6} stroke="#94a3b8" strokeWidth={1} />
-            <text y={18} fill="#64748b" fontSize="10" textAnchor="middle">
+            <text y={18} fill="#1f2937" fontSize="12" textAnchor="middle">
               {tick.label}
             </text>
           </g>
@@ -1161,7 +1165,7 @@ function HistoryChart({
         {yTicks.map((tick) => (
           <g key={tick.y} transform={`translate(0 ${tick.y})`}>
             <line x1={0} x2={-6} stroke="#94a3b8" strokeWidth={1} />
-            <text x={-10} y={4} fill="#64748b" fontSize="10" textAnchor="end">
+            <text x={-12} y={4} fill="#1f2937" fontSize="12" textAnchor="end">
               {tick.label}
             </text>
           </g>
@@ -1198,17 +1202,40 @@ function BackboneChart({
   selectedIndex,
   axisLimits,
 }: BackboneChartProps) {
-  const width = 640;
-  const height = 220;
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState(640);
 
-  const parseLimit = (value: string): number | undefined => {
-    const trimmed = value.trim();
-    if (!trimmed.length) {
-      return undefined;
+  useEffect(() => {
+    const node = wrapperRef.current;
+    if (!node || typeof ResizeObserver === "undefined") {
+      return;
     }
-    const num = Number(trimmed);
-    return Number.isFinite(num) ? num : undefined;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
+      const nextWidth = Math.floor(entry.contentRect.width);
+      if (nextWidth > 0) {
+        setContainerWidth((prev) => {
+          const clamped = Math.max(260, nextWidth);
+          return Math.abs(prev - clamped) > 1 ? clamped : prev;
+        });
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const width = Math.max(320, containerWidth);
+  const height = Math.max(170, Math.min(240, Math.round(width * 0.32)));
+
+  const calcTickCount = (length: number, idealSpacing: number, min = 3, max = 8) => {
+    const estimate = Math.max(min, Math.round(length / idealSpacing) + 1);
+    return Math.max(min, Math.min(max, estimate));
   };
+  const xTickCount = calcTickCount(width, 140);
+  const yTickCount = calcTickCount(height, 60, 3, 7);
 
   const {
     initialPath,
@@ -1224,10 +1251,7 @@ function BackboneChart({
     xTicks,
     yTicks,
   } = useMemo(() => {
-    if (
-      !displacementHistory.length ||
-      displacementHistory.length !== restoringForceHistory.length
-    ) {
+    if (!curves.initial.x.length || !curves.initial.y.length) {
       return {
         initialPath: "",
         finalPath: "",
@@ -1236,7 +1260,7 @@ function BackboneChart({
         maxX: 0,
         minY: 0,
         maxY: 0,
-        pointerX: 0,
+        pointerX: width / 2,
         pointerY: height / 2,
         stepIndex: 0,
         xTicks: [] as Array<{ x: number; label: string }>,
@@ -1260,10 +1284,10 @@ function BackboneChart({
     const autoMinY = Math.min(...allY);
     const autoMaxY = Math.max(...allY);
 
-    const limitXMin = parseLimit(axisLimits.xMin);
-    const limitXMax = parseLimit(axisLimits.xMax);
-    const limitYMin = parseLimit(axisLimits.yMin);
-    const limitYMax = parseLimit(axisLimits.yMax);
+    const limitXMin = parseStrictNumber(axisLimits.xMin);
+    const limitXMax = parseStrictNumber(axisLimits.xMax);
+    const limitYMin = parseStrictNumber(axisLimits.yMin);
+    const limitYMax = parseStrictNumber(axisLimits.yMax);
 
     let minXValue = limitXMin ?? autoMinX;
     let maxXValue = limitXMax ?? autoMaxX;
@@ -1303,34 +1327,52 @@ function BackboneChart({
       return commands.join(" ");
     };
 
-    const clampedIndex = Math.min(
-      Math.max(selectedIndex, 0),
-      displacementHistory.length - 1,
-    );
+    const hasHistory =
+      displacementHistory.length > 0 &&
+      displacementHistory.length === restoringForceHistory.length;
 
-    const hysteresisPath = toPath(
-      displacementHistory.slice(0, clampedIndex + 1),
-      restoringForceHistory.slice(0, clampedIndex + 1),
-    );
+    const clampedIndex = hasHistory
+      ? Math.min(Math.max(selectedIndex, 0), displacementHistory.length - 1)
+      : 0;
 
-    const pointerX =
-      ((displacementHistory[clampedIndex] - minXValue) / spanX) * width;
-    const pointerY =
-      height -
-      ((restoringForceHistory[clampedIndex] - minYValue) / spanY) * height;
+    const hysteresisPath = hasHistory
+      ? toPath(
+          displacementHistory.slice(0, clampedIndex + 1),
+          restoringForceHistory.slice(0, clampedIndex + 1),
+        )
+      : "";
 
-    const tickCount = 5;
+    let pointerCoordX: number;
+    let pointerCoordY: number;
+
+    if (hasHistory) {
+      pointerCoordX =
+        ((displacementHistory[clampedIndex] - minXValue) / spanX) * width;
+      pointerCoordY =
+        height -
+        ((restoringForceHistory[clampedIndex] - minYValue) / spanY) * height;
+    } else if (curves.final.x.length && curves.final.y.length) {
+      const lastIndex = curves.final.x.length - 1;
+      pointerCoordX =
+        ((curves.final.x[lastIndex] - minXValue) / spanX) * width;
+      pointerCoordY =
+        height - ((curves.final.y[lastIndex] - minYValue) / spanY) * height;
+    } else {
+      pointerCoordX = width / 2;
+      pointerCoordY = height / 2;
+    }
+
     const xTicks: Array<{ x: number; label: string }> = [];
     const yTicks: Array<{ y: number; label: string }> = [];
-    for (let i = 0; i < tickCount; i += 1) {
-      const value = minXValue + (spanX * i) / (tickCount - 1);
+    for (let i = 0; i < xTickCount; i += 1) {
+      const value = minXValue + (spanX * i) / (xTickCount - 1);
       xTicks.push({
         x: ((value - minXValue) / spanX) * width,
         label: value.toFixed(2),
       });
     }
-    for (let i = 0; i < tickCount; i += 1) {
-      const value = minYValue + (spanY * i) / (tickCount - 1);
+    for (let i = 0; i < yTickCount; i += 1) {
+      const value = minYValue + (spanY * i) / (yTickCount - 1);
       yTicks.push({
         y: height - ((value - minYValue) / spanY) * height,
         label: value.toFixed(2),
@@ -1345,24 +1387,34 @@ function BackboneChart({
       maxX: maxXValue,
       minY: minYValue,
       maxY: maxYValue,
-      pointerX: Number.isFinite(pointerX) ? pointerX : 0,
-      pointerY: Number.isFinite(pointerY) ? pointerY : height / 2,
-      stepIndex: clampedIndex,
+      pointerX: Number.isFinite(pointerCoordX) ? pointerCoordX : width / 2,
+      pointerY: Number.isFinite(pointerCoordY) ? pointerCoordY : height / 2,
+      stepIndex: hasHistory ? clampedIndex : 0,
       xTicks,
       yTicks,
     };
-  }, [axisLimits, curves, displacementHistory, restoringForceHistory, selectedIndex]);
+  }, [
+    axisLimits,
+    curves,
+    displacementHistory,
+    height,
+    restoringForceHistory,
+    selectedIndex,
+    width,
+    xTickCount,
+    yTickCount,
+  ]);
 
   if (!initialPath && !finalPath && !hysteresisPath) {
     return null;
   }
 
   return (
-    <div className="chart-wrapper">
+    <div className="chart-wrapper" ref={wrapperRef}>
       <div className="chart-header">
         <h4>Hysteresis with Backbone – Step {stepIndex}</h4>
         <span>
-          disp {minX.toFixed(3)}..{maxX.toFixed(3)} in | force {minY.toFixed(3)}..{maxY.toFixed(3)}
+          disp {formatLimitValue(minX)}..{formatLimitValue(maxX)} in | force {formatLimitValue(minY)}..{formatLimitValue(maxY)}
         </span>
       </div>
       <svg
@@ -1371,13 +1423,13 @@ function BackboneChart({
         role="img"
         aria-label="Backbone curve comparison"
       >
-        <rect width={width} height={height} fill="#f8fafc" rx={12} />
-        <line x1={0} y1={height} x2={width} y2={height} stroke="#d1d9e6" strokeWidth={1} />
-        <line x1={0} y1={0} x2={0} y2={height} stroke="#d1d9e6" strokeWidth={1} />
+        <rect width={width} height={height} fill="#f8fafc" rx={10} />
+        <line x1={0} y1={height} x2={width} y2={height} stroke="#cbd5e1" strokeWidth={1} />
+        <line x1={0} y1={0} x2={0} y2={height} stroke="#cbd5e1" strokeWidth={1} />
         {xTicks.map((tick) => (
           <g key={tick.x} transform={`translate(${tick.x} ${height})`}>
             <line y1={0} y2={6} stroke="#94a3b8" strokeWidth={1} />
-            <text y={18} fill="#64748b" fontSize="10" textAnchor="middle">
+            <text y={18} fill="#1f2937" fontSize="12" textAnchor="middle">
               {tick.label}
             </text>
           </g>
@@ -1385,7 +1437,7 @@ function BackboneChart({
         {yTicks.map((tick) => (
           <g key={tick.y} transform={`translate(0 ${tick.y})`}>
             <line x1={0} x2={-6} stroke="#94a3b8" strokeWidth={1} />
-            <text x={-10} y={4} fill="#64748b" fontSize="10" textAnchor="end">
+            <text x={-12} y={4} fill="#1f2937" fontSize="12" textAnchor="end">
               {tick.label}
             </text>
           </g>
@@ -1457,3 +1509,9 @@ function BackboneChart({
     </div>
   );
 }
+
+
+
+
+
+

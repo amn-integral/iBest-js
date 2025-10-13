@@ -1,0 +1,143 @@
+.chart-test-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.test-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.test-header h1 {
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.test-header p {
+  color: #6b7280;
+  margin: 0;
+}
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+}
+
+.playback-button {
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.playback-button:hover {
+  background: #2563eb;
+}
+
+.playback-slider {
+  flex: 1;
+  height: 0.5rem;
+}
+
+.speed-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.speed-select select {
+  padding: 0.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+}
+
+.sample-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+}
+
+.sample-readout > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sample-readout span {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.sample-readout strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Chart component styles - these should match the original App.css */
+.chart-wrapper {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+  margin-bottom: 1rem;
+}
+
+.chart-header h4 {
+  margin: 0 0 0.25rem 0;
+  color: #1f2937;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.chart-header span {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+}
+
+.axis-label {
+  font-size: 12px;
+  fill: #374151;
+  font-weight: 500;
+}
+
+.axis-label--x {
+  text-anchor: middle;
+}
+
+.axis-label--y {
+  text-anchor: middle;
+}

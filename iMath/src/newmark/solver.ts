@@ -48,7 +48,7 @@ export function newmarkSolver(
   force: ForceCurve,
   initialConditions: InitialConditions,
   settings: SolverSettings,
-  params: NewmarkParameters = averageAcceleration,
+  params: NewmarkParameters = averageAcceleration
 ): NewmarkResponse {
   const beta = params.beta;
   const gamma = params.gamma;
@@ -60,8 +60,7 @@ export function newmarkSolver(
     throw new Error("dt must be greater than 0 for fixed time step");
   }
 
-  const naturalPeriod =
-    TWO_PI * Math.sqrt(mass / resistance.inboundStiffness);
+  const naturalPeriod = TWO_PI * Math.sqrt(mass / resistance.inboundStiffness);
   const dt = auto ? 0.001 * naturalPeriod : (settings.dt as number);
   const steps = Math.floor(totalTime / dt) + 1;
 
@@ -111,10 +110,7 @@ export function newmarkSolver(
   }
 
   const stiffness0 = kT[0];
-  let c =
-    2 *
-    dampingRatio *
-    Math.sqrt(Math.abs(effectiveMass * stiffness0));
+  let c = 2 * dampingRatio * Math.sqrt(Math.abs(effectiveMass * stiffness0));
   if (effectiveMass * stiffness0 < 0) {
     c = -c;
   }
@@ -176,8 +172,7 @@ export function newmarkSolver(
             a1 = effectiveMass * invBetaDt2 + c * gammaOverBetaDt;
             a2 = effectiveMass * invBetaDt - c * oneMinusGammaOverBeta;
             a3 =
-              effectiveMass * inv2betaMinusOne -
-              c * dtOneMinusGammaOver2beta;
+              effectiveMass * inv2betaMinusOne - c * dtOneMinusGammaOver2beta;
           }
         }
         break;

@@ -18,9 +18,12 @@ import {
   parseStrictNumber,
   formatLimitValue,
 } from "@integralrsg/igraph";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 const integralLogo = "/integralLogo.svg";
 
 import { EditableGrid } from "./components/EditableGrid";
+import { Report } from "./components/Report";
 import type { ColumnConfig } from "./components/EditableGrid";
 import "./App.css";
 
@@ -248,6 +251,7 @@ export function App() {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const reportRef = useRef<HTMLDivElement | null>(null);
 
   const handleAddInboundRow = () => {
     setInboundRows((prev) => [...prev, createInboundRow()]);
@@ -344,6 +348,45 @@ export function App() {
       document.body.removeChild(textarea);
     }
   }, [forceRows, forceColumns]);
+
+  const generatePdf = useCallback(async () => {
+    if (!reportRef.current) {
+      console.error("Report component is not available.");
+      return;
+    }
+
+    try {
+      // Capture the report component as canvas
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        width: 794, // A4 width in pixels at 96 DPI
+        height: 1123, // A4 height in pixels at 96 DPI
+      });
+
+      // Create PDF with A4 dimensions
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Calculate dimensions to fit the canvas on A4 page
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+      // Save the PDF
+      pdf.save("solver-report.pdf");
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
+  }, []);
 
   const backbonePreview = useMemo(() => {
     try {
@@ -733,6 +776,14 @@ export function App() {
             Run GSDOF Solver
           </button>
 
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={generatePdf}
+          >
+            Print to PDF
+          </button>
+
           {errors.length > 0 ? (
             <ul className="error-list">
               {errors.map((message) => (
@@ -908,6 +959,27 @@ export function App() {
           )}
         </div>
       </main>
+
+      {/* Hidden Report component for PDF generation */}
+      <div className="print-container">
+        <div ref={reportRef}>
+          <Report
+            mass={massInput}
+            dampingRatio={dampingRatioInput}
+            totalTime={totalTimeInput}
+            timeStep={timeStepInput}
+            autoStep={autoStep}
+            inboundRows={inboundRows}
+            reboundRows={reboundRows}
+            forceRows={forceRows}
+            series={series}
+            summary={summary}
+            backboneCurves={backboneCurves}
+            backboneColumns={backboneColumns}
+            forceColumns={forceColumns}
+          />
+        </div>
+      </div>
     </div>
   );
 }

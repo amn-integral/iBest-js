@@ -24,8 +24,9 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
   const chartHeight = height - padding.top - padding.bottom;
   const strokeWidth = 2.5;
 
-  const xTickCount = calcTickCount(chartWidth, 140);
-  const yTickCount = calcTickCount(chartHeight, 60, 3, 7);
+  // Fixed tick counts for consistent spacing
+  const xTickCount = 5;
+  const yTickCount = 5;
 
   const chartData = useMemo(() => {
     if (!time.length || !values.length || time.length !== values.length) {
@@ -46,21 +47,16 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
     const minValOriginal = Math.min(...values);
     const maxValOriginal = Math.max(...values);
 
-    // Ensure Y-axis always includes 0
-    let minVal = Math.min(0, minValOriginal);
-    let maxVal = Math.max(0, maxValOriginal);
+    // Use exact data bounds without any padding
+    const dataMinVal = minValOriginal;
+    const dataMaxVal = maxValOriginal;
+    let minVal = minValOriginal;
+    let maxVal = maxValOriginal;
 
-    // Add 10% padding to Y-axis range for display
-    const valRange = maxVal - minVal;
-    if (valRange > 0) {
-      const paddingAmount = valRange * 0.1;
-      minVal = minVal - paddingAmount;
-      maxVal = maxVal + paddingAmount;
-    } else {
-      // If all values are the same, add symmetric padding
-      const pad = Math.abs(minVal) * 0.1 || 0.1;
-      minVal = minVal - pad;
-      maxVal = maxVal + pad;
+    // Handle case where all values are the same
+    if (minVal === maxVal) {
+      minVal = minVal - 0.01;
+      maxVal = maxVal + 0.01;
     }
 
     const path = generateSvgPath(
@@ -91,12 +87,22 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
       chartWidth,
       false
     );
-    const yTicks = generateTicks(minVal, maxVal, yTickCount, chartHeight, true);
+
+    // Generate ticks using exact data bounds (no padding)
+    const yTicks = generateTicks(
+      dataMinVal,
+      dataMaxVal,
+      yTickCount,
+      chartHeight,
+      true
+    );
 
     return {
       path,
       minValue: minVal,
       maxValue: maxVal,
+      dataMinValue: dataMinVal, // Original data min without padding
+      dataMaxValue: dataMaxVal, // Original data max without padding
       pointerX: Number.isFinite(pointerX) ? pointerX : 0,
       pointerY: Number.isFinite(pointerY) ? pointerY : chartHeight / 2,
       stepIndex: clampedIndex,
@@ -126,8 +132,8 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
           {title} – Step {chartData.stepIndex + 1}
         </h4>
         <span>
-          min {chartData.minValue.toFixed(3)} | max{" "}
-          {chartData.maxValue.toFixed(3)}
+          min {chartData.dataMinValue?.toFixed(3) ?? "0.000"} | max{" "}
+          {chartData.dataMaxValue?.toFixed(3) ?? "0.000"}
         </span>
       </div>
       <svg

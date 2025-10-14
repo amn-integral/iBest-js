@@ -63,7 +63,10 @@ function classNames(...tokens: Array<string | false | null | undefined>) {
   return tokens.filter(Boolean).join(" ");
 }
 
-export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>({
+export function EditableGrid<
+  K extends string,
+  TRow extends EditableGridRow<K>,
+>({
   title,
   columns,
   rows,
@@ -86,28 +89,28 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
 
   const cellRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  const registerCell = useCallback((position: CellPosition, node: HTMLDivElement | null) => {
-    const key = makeCellKey(position);
-    if (node) {
-      cellRefs.current.set(key, node);
-    } else {
-      cellRefs.current.delete(key);
-    }
-  }, []);
-
-  const focusCell = useCallback(
-    (position: CellPosition | null) => {
-      if (!position) {
-        return;
-      }
+  const registerCell = useCallback(
+    (position: CellPosition, node: HTMLDivElement | null) => {
       const key = makeCellKey(position);
-      const node = cellRefs.current.get(key);
       if (node) {
-        node.focus({ preventScroll: false });
+        cellRefs.current.set(key, node);
+      } else {
+        cellRefs.current.delete(key);
       }
     },
-    [],
+    []
   );
+
+  const focusCell = useCallback((position: CellPosition | null) => {
+    if (!position) {
+      return;
+    }
+    const key = makeCellKey(position);
+    const node = cellRefs.current.get(key);
+    if (node) {
+      node.focus({ preventScroll: false });
+    }
+  }, []);
 
   const ensureActiveCellInBounds = useCallback(
     (position: CellPosition | null): CellPosition | null => {
@@ -118,7 +121,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
       const nextCol = clamp(position.col, 0, columns.length - 1);
       return { row: nextRow, col: nextCol };
     },
-    [rows.length, columns.length],
+    [rows.length, columns.length]
   );
 
   const appendRow = useCallback(
@@ -133,18 +136,18 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
       }
       setEditingCell(null);
     },
-    [createRow, onRowsChange, rows, columns.length],
+    [createRow, onRowsChange, rows, columns.length]
   );
 
   const updateCellValue = useCallback(
     (rowIndex: number, columnKey: K, nextValue: string) => {
       onRowsChange((prev) =>
         prev.map((row, index) =>
-          index === rowIndex ? { ...row, [columnKey]: nextValue } : row,
-        ),
+          index === rowIndex ? { ...row, [columnKey]: nextValue } : row
+        )
       );
     },
-    [onRowsChange],
+    [onRowsChange]
   );
 
   const moveSelection = useCallback(
@@ -153,13 +156,21 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
         if (!current) {
           return rows.length && columns.length ? { row: 0, col: 0 } : null;
         }
-        const nextRow = clamp(current.row + deltaRow, 0, Math.max(rows.length - 1, 0));
-        const nextCol = clamp(current.col + deltaCol, 0, Math.max(columns.length - 1, 0));
+        const nextRow = clamp(
+          current.row + deltaRow,
+          0,
+          Math.max(rows.length - 1, 0)
+        );
+        const nextCol = clamp(
+          current.col + deltaCol,
+          0,
+          Math.max(columns.length - 1, 0)
+        );
         return { row: nextRow, col: nextCol };
       });
       setEditingCell(null);
     },
-    [rows.length, columns.length],
+    [rows.length, columns.length]
   );
 
   const moveTo = useCallback(
@@ -170,7 +181,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
       });
       setEditingCell(null);
     },
-    [rows.length, columns.length],
+    [rows.length, columns.length]
   );
 
   const startEditing = useCallback(
@@ -192,7 +203,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
         originalValue,
       });
     },
-    [columns, rows, updateCellValue],
+    [columns, rows, updateCellValue]
   );
 
   const finishEditing = useCallback(
@@ -211,17 +222,17 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
         const nextRow = clamp(
           current.row + (movement.rowDelta ?? 0),
           0,
-          Math.max(rows.length - 1, 0),
+          Math.max(rows.length - 1, 0)
         );
         const nextCol = clamp(
           current.col + (movement.colDelta ?? 0),
           0,
-          Math.max(columns.length - 1, 0),
+          Math.max(columns.length - 1, 0)
         );
         return { row: nextRow, col: nextCol };
       });
     },
-    [rows.length, columns.length],
+    [rows.length, columns.length]
   );
 
   const cancelEditing = useCallback(() => {
@@ -300,7 +311,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
 
   const handleCellKeyDown = (
     event: KeyboardEvent<HTMLDivElement>,
-    position: CellPosition,
+    position: CellPosition
   ) => {
     const column = columns[position.col];
     if (!column) {
@@ -390,7 +401,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
 
   const handleInputKeyDown = (
     event: KeyboardEvent<HTMLInputElement>,
-    position: CellPosition,
+    position: CellPosition
   ) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -439,7 +450,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
 
   const handleInputChange = (
     event: ChangeEvent<HTMLInputElement>,
-    position: CellPosition,
+    position: CellPosition
   ) => {
     const column = columns[position.col];
     if (!column) {
@@ -460,7 +471,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
             overflowY: "auto",
           }
         : undefined,
-    [maxHeight],
+    [maxHeight]
   );
 
   const renderCell = (rowIndex: number, colIndex: number) => {
@@ -484,7 +495,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
         }}
         className={classNames(
           "editable-grid__cellWrapper",
-          isActive && "is-active-column",
+          isActive && "is-active-column"
         )}
       >
         <div
@@ -495,7 +506,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
             "editable-grid__cell",
             isActive && "is-active",
             isEditing && "is-editing",
-            column.align && `align-${column.align}`,
+            column.align && `align-${column.align}`
           )}
           onClick={() => {
             setActiveCell(position);
@@ -516,9 +527,7 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
               inputMode="decimal"
             />
           ) : (
-            <span className="editable-grid__value">
-              {rawValue || "\u00A0"}
-            </span>
+            <span className="editable-grid__value">{rawValue || "\u00A0"}</span>
           )}
         </div>
       </td>
@@ -574,13 +583,13 @@ export function EditableGrid<K extends string, TRow extends EditableGridRow<K>>(
                     key={row.id}
                     className={classNames(
                       "editable-grid__row",
-                      isActiveRow && "is-active-row",
+                      isActiveRow && "is-active-row"
                     )}
                   >
-                    <th className="editable-grid__rowHeader">
-                      {rowIndex + 1}
-                    </th>
-                    {columns.map((_, colIndex) => renderCell(rowIndex, colIndex))}
+                    <th className="editable-grid__rowHeader">{rowIndex + 1}</th>
+                    {columns.map((_, colIndex) =>
+                      renderCell(rowIndex, colIndex)
+                    )}
                   </tr>
                 );
               })}

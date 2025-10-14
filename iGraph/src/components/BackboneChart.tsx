@@ -22,13 +22,14 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
   const height = Math.max(170, Math.min(240, Math.round(width * 0.32)));
 
   // Add padding for ticks and labels
-  const padding = { left: 60, right: 10, top: 10, bottom: 35 };
+  const padding = { left: 60, right: 10, top: 10, bottom: 80 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const strokeWidths = { initial: 2, final: 2.5, hysteresis: 2.5 };
 
-  const xTickCount = calcTickCount(chartWidth, 140);
-  const yTickCount = calcTickCount(chartHeight, 60, 3, 7);
+  // Fixed tick counts for consistent spacing
+  const xTickCount = 5;
+  const yTickCount = 5;
 
   const chartData = useMemo(() => {
     if (!curves.initial.x.length || !curves.initial.y.length) {
@@ -48,6 +49,10 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
       };
     }
 
+    // Separate backbone curve data from history data
+    const backboneX = [...curves.initial.x, ...curves.final.x];
+    const backboneY = [...curves.initial.y, ...curves.final.y];
+
     const allX = [
       ...curves.initial.x,
       ...curves.final.x,
@@ -59,42 +64,20 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
       ...restoringForceHistory,
     ];
 
+    // Store backbone-only min/max for display labels
+    const backboneMinY = backboneY.length > 0 ? Math.min(...backboneY) : 0;
+    const backboneMaxY = backboneY.length > 0 ? Math.max(...backboneY) : 0;
+
     const minXOriginal = Math.min(...allX);
     const maxXOriginal = Math.max(...allX);
     const minYOriginal = Math.min(...allY);
     const maxYOriginal = Math.max(...allY);
 
-    // Ensure both axes always include 0
-    let minXValue = Math.min(0, minXOriginal);
-    let maxXValue = Math.max(0, maxXOriginal);
-    let minYValue = Math.min(0, minYOriginal);
-    let maxYValue = Math.max(0, maxYOriginal);
-
-    // Add padding to both axes for display
-    const xRange = maxXValue - minXValue;
-    const yRange = maxYValue - minYValue;
-
-    // Add 1% padding to X-axis start/end for visual clarity
-    if (xRange > 0) {
-      const xPadding = xRange * 0.01;
-      minXValue -= xPadding;
-      maxXValue += xPadding;
-    } else {
-      const xPad = Math.abs(minXValue) * 0.01 || 0.05;
-      minXValue -= xPad;
-      maxXValue += xPad;
-    }
-
-    // Add 10% padding to Y-axis
-    if (yRange > 0) {
-      const yPadding = yRange * 0.1;
-      minYValue -= yPadding;
-      maxYValue += yPadding;
-    } else {
-      const yPad = Math.abs(minYValue) * 0.1 || 0.1;
-      minYValue -= yPad;
-      maxYValue += yPad;
-    }
+    // Use exact backbone data bounds without any padding or axis extensions
+    let minXValue = backboneX.length > 0 ? Math.min(...backboneX) : 0;
+    let maxXValue = backboneX.length > 0 ? Math.max(...backboneX) : 0;
+    let minYValue = backboneMinY;
+    let maxYValue = backboneMaxY;
 
     const initialPath = generateSvgPath(
       curves.initial.x,
@@ -165,6 +148,7 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
       pointerCoordY = chartHeight / 2;
     }
 
+    // Generate ticks using exact backbone data bounds (no padding)
     const xTicks = generateTicks(
       minXValue,
       maxXValue,
@@ -172,9 +156,10 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
       chartWidth,
       false
     );
+
     const yTicks = generateTicks(
-      minYValue,
-      maxYValue,
+      backboneMinY,
+      backboneMaxY,
       yTickCount,
       chartHeight,
       true
@@ -188,6 +173,8 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
       maxX: maxXValue,
       minY: minYValue,
       maxY: maxYValue,
+      backboneMinY, // Backbone curve min for display
+      backboneMaxY, // Backbone curve max for display
       pointerX: Number.isFinite(pointerCoordX) ? pointerCoordX : chartWidth / 2,
       pointerY: Number.isFinite(pointerCoordY)
         ? pointerCoordY
@@ -224,7 +211,8 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
         <span>
           disp {formatLimitValue(chartData.minX)}..
           {formatLimitValue(chartData.maxX)} | force{" "}
-          {formatLimitValue(chartData.minY)}..{formatLimitValue(chartData.maxY)}
+          {formatLimitValue(chartData.backboneMinY ?? chartData.minY)}..
+          {formatLimitValue(chartData.backboneMaxY ?? chartData.maxY)}
         </span>
       </div>
       <svg
@@ -367,31 +355,36 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
           />
         </g>
 
-        {/* Legend */}
-        <g transform="translate(18 18)">
-          <rect width="16" height="2" y="6" fill="#cbd5f5" />
-          <text x="24" y="9" fontSize="11" fill="#475569">
+        {/* Legend - 2 columns layout */}
+        <g transform={`translate(${padding.left}, ${height - 50})`}>
+          {/* Column 1 */}
+          <rect width="16" height="2" y="6" fill="#a1a1aa" />
+          <text x="24" y="9" fontSize="10" fill="#475569">
             Original backbone
           </text>
-          <rect width="16" height="2" y="22" fill="#2563eb" />
-          <text x="24" y="25" fontSize="11" fill="#475569">
+          <rect width="16" height="2" y="22" fill="#18181b" />
+          <text x="24" y="25" fontSize="10" fill="#475569">
             Current backbone
           </text>
-          <rect width="16" height="2" y="38" fill="#0f172a" />
-          <text x="24" y="41" fontSize="11" fill="#475569">
-            Hysteresis
-          </text>
-          <circle cx="8" cy="55" r="4" fill="#ef4444" />
-          <text x="24" y="58" fontSize="11" fill="#475569">
-            Current point
-          </text>
+
+          {/* Column 2 */}
+          <g transform="translate(150, 0)">
+            <rect width="16" height="2" y="6" fill="#3b82f6" />
+            <text x="24" y="9" fontSize="10" fill="#475569">
+              Hysteresis
+            </text>
+            <circle cx="8" cy="22" r="3" fill="#3b82f6" />
+            <text x="24" y="25" fontSize="10" fill="#475569">
+              Current point
+            </text>
+          </g>
         </g>
 
         {/* Axis labels */}
         <text
           className="axis-label axis-label--x"
           x={padding.left + chartWidth / 2}
-          y={height - 8}
+          y={height - 12}
           textAnchor="middle"
           fontSize="12"
           fill="#64748b"

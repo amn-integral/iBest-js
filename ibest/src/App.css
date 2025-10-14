@@ -622,3 +622,15 @@
     padding: 24px 16px 48px;
   }
 }
+
+/* Print container styles - hidden from view but available for PDF generation */
+.print-container {
+  position: absolute;
+  top: -10000px;
+  left: -10000px;
+  width: 794px;
+  height: 1123px;
+  overflow: hidden;
+  background: white;
+  z-index: -1;
+}

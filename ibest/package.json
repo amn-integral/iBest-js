@@ -10,8 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@integralrsg/imath": "file:../iMath",
     "@integralrsg/igraph": "file:../iGraph",
+    "@integralrsg/imath": "file:../iMath",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

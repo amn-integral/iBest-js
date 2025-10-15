@@ -1,133 +1,131 @@
-.editableGrid {
+.editable-grid {
   display: flex;
   flex-direction: column;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  border: 1px solid #f0f0f0;
+  border-radius: 0.65rem;
 }
 
-.editableGrid + .editableGrid {
+.editable-grid + .editable-grid {
   margin-top: 5px;
 }
 
-.editableGridHeader {
-  display: flex;
+.editable-grid-header {
+  display: grid;
   align-items: center;
+  grid-template-rows: auto auto ;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 1px 1px;
   border-bottom: 1px solid #d0d5dd;
   background: linear-gradient(180deg, #f8fafc 0%, #f2f4f7 100%);
 }
 
-.editableGridTitle h3 {
+.editable-grid-title {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.editable-grid-title h3 {
   margin: 0 !important;
   font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-  font-size: 18px !important;
-  line-height: 27px !important;
-  font-weight: 600 !important;
+  font-size: large !important;
+  font-weight: bold !important;
   color: #1f2937 !important;
 }
 
-.editableGridTitle p {
+.editable-grid-title p {
   margin: 2px 0 0;
   color: #6b7280;
-  font-size: 0.95rem;
+  font-size: medium;
+  font-weight: bold;
 }
 
-.editableGridActions {
+.editable-grid-actions {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.3rem;
 }
 
-.editableGridTable {
+.editable-grid-table {
   position: relative;
 }
 
-.editableGridTable table {
+.editable-grid-table table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   min-width: 360px;
 }
 
-.editableGridTable thead th {
+.editable-grid-table thead {
   position: sticky;
   top: 0;
   z-index: 2;
   background: #f8fafc !important;
-  padding: 8px 12px !important;
-  text-align: left !important;
+  text-align: center !important;
   font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-  font-size: 16px !important;
-  line-height: 24px !important;
-  font-weight: 600 !important;
+  padding: 0.3rem 0.3rem;
+  font-size: medium !important;
+  font-weight: bold !important;
   color: #475467 !important;
   border-bottom: 1px solid #d0d5dd;
   border-right: 1px solid #e4e7ec;
 }
 
-.editableGridTable thead th:last-child {
+.editable-grid-table thead th:last-child {
   border-right: none;
 }
 
-.editableGridRow {
+.editable-grid-row {
   background: #ffffff;
+  border: none;
+  outline: none;
+  cursor: default;
 }
 
-.editableGridRow:nth-child(even) {
+.editable-grid-row:nth-child(even) {
   background: #fbfcfe;
 }
 
-.editableGridRow.isActiveRow {
+.editable-grid-row.isActiveRow {
   background: #eef2ff;
 }
 
-.editableGridRowHeader {
+.editable-grid-row-header {
   width: 48px;
   min-width: 48px;
   text-align: center;
   background: #f1f5f9;
   color: #475467;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: medium;
   border-right: 1px solid #d0d5dd;
   border-bottom: 1px solid #e4e7ec;
-  padding: 8px 4px;
+  padding: 0.5rem 0.5rem;
 }
 
-.editableGridRowHeader:first-child {
+.editable-grid-row-header:first-child {
   border-top-left-radius: 8px;
 }
 
-.editableGridCellWrapper {
+.editable-grid-cell-wrapper {
   border-bottom: 1px solid #e4e7ec;
   border-right: 1px solid #e4e7ec;
+  line-height: 16px !important;
   padding: 0;
 }
 
-.editableGridCellWrapper.isActiveColumn {
+.editable-grid-cell-wrapper.isActiveColumn {
   background: #f5f9ff;
 }
 
-.editableGridCellWrapper:last-child {
+.editable-grid-cell-wrapper:last-child {
   border-right: none;
 }
 
-.editableGridCell {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 4px 8px;
-  cursor: cell !important;
-  outline: none !important;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-  font-size: 16px !important;
-  line-height: 24px !important;
-  color: #1f2937 !important;
-}
+
 
 .alignRight {
   justify-content: flex-end;
@@ -137,41 +135,27 @@
   justify-content: center;
 }
 
-.editableGridCell.isActive {
+.editable-grid-cell.isActive {
   box-shadow: inset 0 0 0 2px #2563eb;
   background: #eef4ff;
 }
 
-.editableGridCell.isEditing {
+.editable-grid-cell.isEditing {
   background: #ffffff;
 }
 
-.editableGridValue {
+.editable-grid-value {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.editableGridInput {
-  width: 100% !important;
-  border: 1px solid #2563eb !important;
-  border-radius: 4px !important;
-  padding: 6px 8px !important;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-  font-size: 16px !important;
-  line-height: 24px !important;
-  color: #1f2937 !important;
-  background-color: white !important;
-  box-sizing: border-box !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15) !important;
-}
-
-.editableGridInput:focus {
+.editable-grid-input:focus {
   outline: none;
 }
 
-.editableGridEmptyState {
+.editable-grid-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -183,16 +167,37 @@
   font-size: 1rem;
 }
 
-.editableGridTable::-webkit-scrollbar {
+.editable-grid-table::-webkit-scrollbar {
   height: 10px;
   width: 10px;
 }
 
-.editableGridTable::-webkit-scrollbar-thumb {
+.editable-grid-table::-webkit-scrollbar-thumb {
   background: #cbd5f5;
   border-radius: 8px;
 }
 
-.editableGridTable::-webkit-scrollbar-track {
+.editable-grid-table::-webkit-scrollbar-track {
   background: #f8fafc;
+}
+
+.editable-grid-cell {
+  font-size: medium !important;
+  position: relative;
+  display: flex;
+  align-items: center !important;
+  padding: 0.3rem 0.3rem;
+  cursor: cell !important;
+  outline: none !important;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  color: #1f2937 !important;
+}
+
+.editable-grid-table th,
+.editable-grid-table td {
+  height: 20px !important;         /* fixed row height */
+  min-height: 20px !important;
+  line-height: 20px !important;    /* vertically align text */
+  padding: 0 !important;           /* no extra spacing */
+  vertical-align: middle !important;
 }

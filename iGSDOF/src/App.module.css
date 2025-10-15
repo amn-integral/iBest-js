@@ -1,3 +1,134 @@
+/* React App Container - Strongest possible isolation from Django/Bootstrap styles */
+.reactAppContainer {
+  /* Create new stacking context and formatting context */
+  contain: layout style paint !important;
+  isolation: isolate !important;
+
+  /* Typography - use px instead of em/rem to avoid inheritance */
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
+  font-size: 16px !important;
+  line-height: 24px !important;
+  color: #0f172a !important;
+  text-align: left !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  text-decoration: none !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+
+  /* Layout and positioning */
+  display: block !important;
+  position: relative !important;
+  z-index: 999 !important;
+
+  /* Box model - use px values to avoid em/rem inheritance */
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  border: none !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+
+  /* Background and appearance */
+  /* background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important; */
+
+  /* Reset any inherited transformations */
+  transform: none !important;
+  transform-origin: initial !important;
+
+  /* Layout behavior */
+  float: none !important;
+  clear: both !important;
+  overflow: visible !important;
+  overflow-x: auto !important;
+
+  /* Sizing constraints */
+  min-width: 320px !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+.reactAppContainer *,
+.reactAppContainer *::before,
+.reactAppContainer *::after {
+  box-sizing: border-box !important;
+}
+
+/* Strongest possible overrides for all form elements */
+.reactAppContainer input,
+.reactAppContainer textarea,
+.reactAppContainer select,
+.reactAppContainer button,
+.reactAppContainer label:not(.solver-inputs-label):not(.solver-inputs-toggle):not(.playback-controls):not(.sample-readout):not() {
+  /* Typography - use px to avoid inheritance */
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
+  font-size: 16px !important;
+  line-height: 24px !important;
+  font-weight: normal !important;
+  color: #1f2937 !important;
+  text-align: left !important;
+
+  /* Layout */
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  background-color: white !important;
+  /* background-color: turquoise; */
+  box-sizing: border-box !important;
+
+  /* Reset any inherited styles */
+  text-decoration: none !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+
+.reactAppContainer main {
+  width: 100% !important;
+  float: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.reactAppContainer h1,
+.reactAppContainer h2,
+.reactAppContainer h3,
+.reactAppContainer h4,
+.reactAppContainer h5,
+.reactAppContainer h6 {
+  color: inherit !important;
+  font-family: inherit !important;
+  margin: 0 0 1rem 0 !important;
+}
+
+.reactAppContainer .hiddenInput {
+  display: none !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
 .layout {
   min-height: 100vh;
   display: flex;
@@ -32,13 +163,12 @@
   background: #ffffff;
   border-radius: 0.75rem;
   /* box-shadow: 0 8px 16px -8px rgba(15, 23, 42, 0.3); */
-  padding: 1rem 1.25rem 1rem 1rem;
-  ;
+  padding: 0rem 0.5rem 0rem 0rem;
 }
 
 .panel h2 {
   margin: 0 0 0.75rem;
-  font-size: 1.35rem;
+  font-size: x-large;
 }
 
 .solver-inputs {
@@ -51,8 +181,8 @@
 
 .solver-inputs-heading {
   margin: 0 0 0.65rem;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: large;
+  font-weight: bold;
   color: #111827;
 }
 
@@ -66,14 +196,16 @@
   grid-template-columns: minmax(150px, 0.9fr) minmax(0, 1fr);
   align-items: center;
   gap: 0.75rem;
-  /* padding: 0.55rem 0.75rem; */
-  /* border: 1px solid #e5e7eb; */
   border-radius: 0.55rem;
-  /* background: #ffffff; */
 }
 
 .solver-inputs-row-toggle {
-  grid-template-columns: minmax(150px, 1fr) auto;
+  grid-template-columns: minmax(150px, 0.9fr) minmax(0, 1fr);
+}
+
+/* Align toggle to the left within its column like other inputs */
+.solver-inputs-row-toggle .solver-inputs-toggle {
+  justify-self: center;
 }
 
 /* Bold black labels for solver inputs */
@@ -94,7 +226,7 @@
   width: 100% !important;
   border: 1px solid #c7d2fe !important;
   border-radius: 7px !important;
-  padding: 7px 10px !important;
+  padding: 5px 5px !important;
   font-family:
     "Segoe UI",
     system-ui,
@@ -126,78 +258,80 @@
 }
 
 .solver-inputs-toggle {
+
   position: relative !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  width: 20px !important;
-  height: 20px !important;
+  display: inline-block !important;
   cursor: pointer !important;
+
 }
 
 .solver-inputs-toggle input {
   opacity: 0;
   width: 0;
   height: 0;
+  align-items: left !important;
   position: absolute;
+  box-shadow: none !important;
+  border: none !important;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .solver-inputs-toggle-slider {
   position: relative;
-  width: 20px !important;
-  height: 20px !important;
-  border: 2px solid #d1d5db !important;
-  border-radius: 4px !important;
-  background: #ffffff !important;
+  width: 44px !important;
+  height: 24px !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: #d1d5db !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  display: block !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .solver-inputs-toggle-slider::before {
   content: "" !important;
-  display: none !important;
+  position: absolute !important;
+  top: 2px !important;
+  left: 2px !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  transition: transform 0.3s ease !important;
+  box-shadow: none !important;
+  display: block !important;
 }
 
 .solver-inputs-toggle-slider::after {
-  content: "✓" !important;
-  position: absolute !important;
-  color: #ffffff !important;
-  font-size: 14px !important;
-  font-weight: bold !important;
-  line-height: 1 !important;
-  opacity: 0 !important;
-  transition: opacity 0.2s ease !important;
-  transform: none !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
+  content: "" !important;
+  display: none !important;
 }
 
 .solver-inputs-toggle input:checked + .solver-inputs-toggle-slider {
   background: #10b981 !important;
-  border-color: #059669 !important;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+  box-shadow: none !important;
 }
 
-.solver-inputs-toggle input:checked + .solver-inputs-toggle-slider::after {
-  opacity: 1 !important;
+.solver-inputs-toggle input:checked + .solver-inputs-toggle-slider::before {
+  transform: translateX(20px) !important;
 }
 
 .solver-inputs-toggle:hover .solver-inputs-toggle-slider {
-  border-color: #9ca3af !important;
+  background: #9ca3af !important;
 }
 
 .solver-inputs-toggle input:checked:hover + .solver-inputs-toggle-slider {
   background: #059669 !important;
-  border-color: #047857 !important;
 }
 
 /* Checkbox focus styles */
 .solver-inputs-toggle input:focus + .solver-inputs-toggle-slider {
-  outline: 2px solid #2563eb !important;
-  outline-offset: 2px !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .form-grid {
@@ -360,21 +494,6 @@
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
 }
 
-.solve-button {
-  margin-top: 0.75rem;
-  background: linear-gradient(120deg, #2563eb, #7c3aed);
-  border: none;
-  color: #ffffff;
-  padding: 0.9rem 1.6rem;
-  border-radius: 999px;
-  font-size: 1.05rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
-}
-
 .solve-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 18px 25px -12px rgba(79, 70, 229, 0.5);
@@ -392,43 +511,23 @@
   line-height: 1.5;
 }
 
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.summary-card {
-  padding: 0.75rem 1rem;
-  background: #ffffff;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(226, 232, 240, 1);
-}
-
-.summary-card-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: 500;
-  margin-bottom: 0.35rem;
-}
 
 .playback-controls {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
+  grid-template-columns:repeat(auto-fit, minmax(20px, 1fr));
+  gap: 0.3rem;
+  margin: 0.0rem 0.0rem 0.0rem;
+  padding: 5px 0px !important;
 }
 
 .playback-button {
   border: none;
-  background: #1e293b;
-  color: #ffffff;
-  padding: 0.5rem 1.15rem;
-  border-radius: 999px;
-  font-weight: 600;
+  height: 100% ;
+  width: 100%;
+  padding: 5px 5px !important;
   cursor: pointer;
+  border-radius: 10px;
+  font-weight: bold;
   transition: transform 0.12s;
 }
 
@@ -441,45 +540,58 @@
 }
 
 .speed-select {
-  display: flex;
-  align-items: center;
+  display: inline-flex !important;
+  align-items: center !important;
+  background-color: linear-gradient(180deg, #f8fafc 0%, #f2f4f7 100%) !important;
+  font-size: small;
+  font-weight: bold;
   gap: 0.3rem;
-  font-weight: 600;
+  height: 100% ;
+  /* font-weight: 600; */
 }
 
 .speed-select select {
-  border-radius: 999px;
+  border-radius: 10px;
+  height: 100%;
+  width: 100%;
   border: 1px solid #cbd5f5;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.85rem;
+  text-align: center;
+  padding: 0.3rem 0.3rem 0.3rem 0.3rem;
+  font-size: small;
+  font-weight: bold;
 }
 
 .sample-readout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.65rem;
-  margin-bottom: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
+  gap: 0.3rem;
+  margin: 0.0rem 0.0rem 0.0rem;
+  margin-bottom: 0.5rem;
 }
 
 .sample-readout div {
   background: #ffffff;
   border-radius: 0.65rem;
-  padding: 0.7rem 0.85rem;
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .sample-readout span {
   font-size: 0.72rem;
   text-transform: uppercase;
-  color: #4b5563;
+  color: #000000;
+  font-weight: bold;
+  text-align: center ;
+  font-size: small;
 }
 
 .sample-readout strong {
   font-size: 0.95rem;
-  color: #111827;
+  color: #0a52ee;
+  text-align: center ;
+  font-size: small;
 }
 
 .charts-grid {
@@ -602,57 +714,6 @@
   }
 }
 
-.grid-playground {
-  min-height: 100vh;
-  padding: 32px 40px 64px;
-  background: linear-gradient(180deg, #f8fafc 0%, #e0e7ff 35%, #ffffff 100%);
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.grid-playground-header h1 {
-  margin: 0 0 8px;
-  font-size: 1.75rem;
-  color: #1e293b;
-}
-
-.grid-playground-header p {
-  margin: 0;
-  max-width: 640px;
-  color: #475569;
-  line-height: 1.6;
-}
-
-.grid-playground-summary {
-  padding: 20px 24px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid #d0d5dd;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
-}
-
-.grid-playground-summary h2 {
-  margin: 0 0 12px;
-  font-size: 1.1rem;
-  color: #1f2937;
-}
-
-.grid-playground-summary pre {
-  margin: 0;
-  padding: 12px;
-  background: #0f172a;
-  color: #f8fafc;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  overflow-x: auto;
-}
-
-@media (max-width: 768px) {
-  .grid-playground {
-    padding: 24px 16px 48px;
-  }
-}
 
 /* Print container styles - hidden from view but available for PDF generation */
 .printContainer {
@@ -688,4 +749,33 @@
 
 .vite-app * {
   all: revert; /* ensure all nested elements reset too */
+}
+
+.app-button{
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  margin: 0.5rem 0.5rem 0.5rem 0.0rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.grid-button{
+  background-color: #d9d9db;
+  color: #0f172a;
+  border: none;
+  padding: 0.3rem 0.3rem 0.3rem 0.3rem;
+  margin: 0.5rem 0.5rem 0.5rem 0.0rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: medium;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.hiddenInput {
+  display: none;
 }

@@ -1,6 +1,5 @@
 import {
   type ChangeEvent,
-  type CSSProperties,
   type Dispatch,
   type KeyboardEvent,
   type ReactNode,
@@ -8,13 +7,11 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
 
 import styles from "./EditableGrid.module.css";
-import appStyles from "../App.module.css";
 
 type ColumnParser = (value: string) => number | null;
 
@@ -75,7 +72,6 @@ export function EditableGrid<
   createRow,
   onValidatedRows,
   toolbar,
-  maxHeight,
 }: EditableGridProps<K, TRow>) {
   const [activeCell, setActiveCell] = useState<CellPosition | null>(() => {
     if (rows.length === 0 || columns.length === 0) {
@@ -464,17 +460,6 @@ export function EditableGrid<
     finishEditing();
   };
 
-  const bodyStyle = useMemo<CSSProperties | undefined>(
-    () =>
-      maxHeight
-        ? {
-            maxHeight: `${maxHeight}px`,
-            overflowY: "auto",
-          }
-        : undefined,
-    [maxHeight]
-  );
-
   const renderCell = (rowIndex: number, colIndex: number) => {
     const column = columns[colIndex];
     if (!column) {
@@ -552,7 +537,7 @@ export function EditableGrid<
         </div>
         {toolbar ? (
           <div className={styles.editableGridActions}>{toolbar}</div>
-        ) : null}
+        ) : <div></div>}
       </header>
       <div className={styles.editableGridTable} >
         {rows.length === 0 ? (
@@ -560,8 +545,6 @@ export function EditableGrid<
             <p>No rows yet. Use the toolbar to add a new row.</p>
             <button
               type="button"
-              className={appStyles.secondaryButton}
-              onClick={() => appendRow(0)}
             >
               + Add first row
             </button>

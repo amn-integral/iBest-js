@@ -545,10 +545,6 @@ export function App() {
       const finalDisplacement =
         response.displacement[response.displacement.length - 1];
 
-      // Print all the results to the console for now
-      console.log("Time (s):", response.time);
-      console.log("Displacement:", response.displacement);
-
       setSummary({
         maxDisplacement,
         finalDisplacement,
@@ -587,7 +583,7 @@ export function App() {
   const inboundToolbar = (
     <button
       type="button"
-      className="secondary-button"
+      className={appCss.gridButton}
       onClick={handleAddInboundRow}
     >
       + Add row
@@ -597,7 +593,7 @@ export function App() {
   const reboundToolbar = (
     <button
       type="button"
-      className="secondary-button"
+      className={appCss.gridButton}
       onClick={handleAddReboundRow}
     >
       + Add row
@@ -606,35 +602,36 @@ export function App() {
 
   const forceToolbar = (
     <>
-      <button
-        type="button"
-        className="secondary-button"
-        onClick={handleAddForceRow}
-      >
-        + Add row
-      </button>
-      <button
-        type="button"
-        className="secondary-button"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        Import CSV
-      </button>
-      <button
-        type="button"
-        className="secondary-button"
-        onClick={copyForceTable}
-      >
-        Copy table
-      </button>
+      {/* Hidden file input */}
       <input
-        id="force-csv-import"
-        aria-label="Import force history from CSV file"
+        id="force-csv-input"
         ref={fileInputRef}
         type="file"
         accept=".csv,text/csv"
         onChange={handleForceCsvImport}
+        className={appCss.hiddenInput}
       />
+
+      <button
+        type="button"
+        className={appCss.gridButton}
+        onClick={handleAddForceRow}
+      >
+        + Add row
+      </button>
+
+      {/* Use label as stylable trigger */}
+      <label htmlFor="force-csv-input" className={appCss.gridButton}>
+        Import CSV
+      </label>
+
+      <button
+        type="button"
+        className={appCss.gridButton}
+        onClick={copyForceTable}
+      >
+        Copy table
+      </button>
     </>
   );
 
@@ -776,7 +773,7 @@ export function App() {
 
           <button
             type="button"
-            className={appCss.solveButton}
+            className={appCss.appButton}
             onClick={runSolver}
           >
             Run GSDOF Solver
@@ -784,7 +781,7 @@ export function App() {
 
           <button
             type="button"
-            className={appCss.secondaryButton}
+            className={appCss.appButton}
             onClick={generatePdf}
           >
             Print to PDF
@@ -803,22 +800,7 @@ export function App() {
           <h2>Results</h2>
           {summary && series && backboneCurves ? (
             <>
-              <div className={appCss.summaryGrid}>
-                <div className={appCss.summaryCard}>
-                  <span>Max displacement</span>
-                  <strong>{summary.maxDisplacement.toFixed(4)}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Final displacement</span>
-                  <strong>{summary.finalDisplacement.toFixed(4)}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Steps</span>
-                  <strong>{summary.steps}</strong>
-                </div>
-              </div>
-
-              <div className="playback-controls">
+              <div className={appCss.playbackControls}>
                 <button
                   type="button"
                   className={appCss.playbackButton}
@@ -827,9 +809,10 @@ export function App() {
                   {isPlaying ? "Pause" : "Play"}
                 </button>
                 <input
-                  id="mass-input"
+                  id="step-input"
                   type="number"
-                  title="mas"
+                  className={appCss.solverInputsInput}
+                  title="step-number"
                   min={0}
                   max={series.time.length - 1}
                   value={Math.min(playIndex, series.time.length - 1)}

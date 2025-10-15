@@ -20,7 +20,7 @@ import {
 } from "@integralrsg/igraph";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-const integralLogo = "/integralLogo.svg";
+const integralLogo = `${import.meta.env.BASE_URL}integralLogo.svg`;
 
 import { EditableGrid } from "./components/EditableGrid";
 import { Report } from "./components/Report";
@@ -639,11 +639,7 @@ export function App() {
   );
 
   return (
-    <div className={appCss.layout}>
-      <header className={appCss.layoutHeader}>
-        <h1>iGSDOF Front End</h1>
-      </header>
-
+    <div className={`${appCss.reactAppContainer} ${appCss.layout}`}>
       <main className={appCss.layoutContent}>
         <div className={appCss.panel}>
           <h2>Solver Inputs</h2>

@@ -9,8 +9,6 @@ import type { CubicleProps, ResultProps } from "../../iMath/src/ventedCubicle";
 import { runVentedAnalysis } from "../../iMath/src/ventedCubicle";
 import { fetchGRFData } from "./api/api";
 
-// import {lerp} from "@integralrsg/imath"
-
 export default function App() {
   const [plotTrigger, setPlotTrigger] = useState(0);
   const cubicleConfig = useCubicleConfig();

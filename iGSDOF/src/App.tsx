@@ -25,7 +25,7 @@ const integralLogo = "/integralLogo.svg";
 import { EditableGrid } from "./components/EditableGrid";
 import { Report } from "./components/Report";
 import type { ColumnConfig } from "./components/EditableGrid";
-import "./App.css";
+import appCss from "./App.module.css";
 
 type BackboneRow = {
   id: number;
@@ -628,34 +628,34 @@ export function App() {
         Copy table
       </button>
       <input
+        id="force-csv-import"
+        aria-label="Import force history from CSV file"
         ref={fileInputRef}
         type="file"
         accept=".csv,text/csv"
-        style={{ display: "none" }}
         onChange={handleForceCsvImport}
       />
     </>
   );
 
   return (
-    <div className="layout">
-      <header className="layout__header">
+    <div className={appCss.layout}>
+      <header className={appCss.layoutHeader}>
         <h1>iGSDOF Front End</h1>
-        <p>
-          Configure the generalized single-degree-of-freedom solver, review
-          input previews, and inspect Newmark results with playback when ready.
-        </p>
       </header>
 
-      <main className="layout__content">
-        <div className="panel panel--form">
+      <main className={appCss.layoutContent}>
+        <div className={appCss.panel}>
           <h2>Solver Inputs</h2>
 
-          <section className="solver-inputs">
-            <h3 className="solver-inputs__heading">System parameters</h3>
-            <div className="solver-inputs__table">
-              <div className="solver-inputs__row">
-                <label className="solver-inputs__label" htmlFor="solver-mass">
+          <section className={appCss.solverInputs}>
+            <h3 className={appCss.solverInputsHeading}>System parameters</h3>
+            <div className={appCss.solverInputsTable}>
+              <div className={appCss.solverInputsRow}>
+                <label
+                  className={appCss.solverInputsLabel}
+                  htmlFor="solver-mass"
+                >
                   Mass
                 </label>
                 <input
@@ -663,32 +663,32 @@ export function App() {
                   type="number"
                   inputMode="decimal"
                   step="0.1"
-                  className="solver-inputs__input"
+                  className={appCss.solverInputsInput}
                   value={massInput}
                   onChange={handleScalarChange(setMassInput)}
                 />
               </div>
-              <div className="solver-inputs__row">
+              <div className={appCss.solverInputsRow}>
                 <label
-                  className="solver-inputs__label"
+                  className={appCss.solverInputsLabel}
                   htmlFor="solver-damping-ratio"
                 >
                   Damping ratio
                 </label>
                 <input
                   id="solver-damping-ratio"
+                  className={appCss.solverInputsInput}
                   type="number"
                   inputMode="decimal"
                   step="0.01"
                   min="0"
-                  className="solver-inputs__input"
                   value={dampingRatioInput}
                   onChange={handleScalarChange(setDampingRatioInput)}
                 />
               </div>
-              <div className="solver-inputs__row">
+              <div className={appCss.solverInputsRow}>
                 <label
-                  className="solver-inputs__label"
+                  className={appCss.solverInputsLabel}
                   htmlFor="solver-total-time"
                 >
                   Total time
@@ -699,27 +699,33 @@ export function App() {
                   inputMode="decimal"
                   step="0.01"
                   min="0"
-                  className="solver-inputs__input"
+                  className={appCss.solverInputsInput}
                   value={totalTimeInput}
                   onChange={handleScalarChange(setTotalTimeInput)}
                 />
               </div>
-              <div className="solver-inputs__row solver-inputs__row--toggle">
-                <span className="solver-inputs__label">
+              <div
+                className={
+                  appCss.solverInputsRow + " " + appCss.solverInputsRowToggle
+                }
+              >
+                <span className={appCss.solverInputsLabel}>
                   Automatic time step
                 </span>
-                <label className="solver-inputs__toggle">
+                <label className={appCss.solverInputsToggle}>
                   <input
+                    aria-label=""
+                    title="Automatic time step"
                     type="checkbox"
                     checked={autoStep}
                     onChange={handleAutoStepChange}
                   />
-                  <span className="solver-inputs__toggle-slider" />
+                  <span className={appCss.solverInputsToggleSlider} />
                 </label>
               </div>
-              <div className="solver-inputs__row">
+              <div className={appCss.solverInputsRow}>
                 <label
-                  className="solver-inputs__label"
+                  className={appCss.solverInputsLabel}
                   htmlFor="solver-time-step"
                 >
                   Fixed time step
@@ -730,7 +736,7 @@ export function App() {
                   inputMode="decimal"
                   step="0.0001"
                   min="0"
-                  className="solver-inputs__input"
+                  className={appCss.solverInputsInput}
                   value={timeStepInput}
                   onChange={handleScalarChange(setTimeStepInput)}
                   disabled={autoStep}
@@ -772,13 +778,17 @@ export function App() {
             maxHeight={280}
           />
 
-          <button type="button" className="solve-button" onClick={runSolver}>
+          <button
+            type="button"
+            className={appCss.solveButton}
+            onClick={runSolver}
+          >
             Run GSDOF Solver
           </button>
 
           <button
             type="button"
-            className="secondary-button"
+            className={appCss.secondaryButton}
             onClick={generatePdf}
           >
             Print to PDF
@@ -793,22 +803,18 @@ export function App() {
           ) : null}
         </div>
 
-        <div className="panel panel--results">
+        <div className={appCss.panelResults}>
           <h2>Results</h2>
           {summary && series && backboneCurves ? (
             <>
-              <div className="summary-grid">
-                <div className="summary-card">
+              <div className={appCss.summaryGrid}>
+                <div className={appCss.summaryCard}>
                   <span>Max displacement</span>
                   <strong>{summary.maxDisplacement.toFixed(4)}</strong>
                 </div>
                 <div className="summary-card">
                   <span>Final displacement</span>
                   <strong>{summary.finalDisplacement.toFixed(4)}</strong>
-                </div>
-                <div className="summary-card">
-                  <span>Runtime</span>
-                  <strong>{formatRuntimeLabel(summary.runtimeMs)}</strong>
                 </div>
                 <div className="summary-card">
                   <span>Steps</span>
@@ -819,13 +825,15 @@ export function App() {
               <div className="playback-controls">
                 <button
                   type="button"
-                  className="playback-button"
+                  className={appCss.playbackButton}
                   onClick={() => setIsPlaying((playing) => !playing)}
                 >
                   {isPlaying ? "Pause" : "Play"}
                 </button>
                 <input
-                  type="range"
+                  id="mass-input"
+                  type="number"
+                  title="mas"
                   min={0}
                   max={series.time.length - 1}
                   value={Math.min(playIndex, series.time.length - 1)}
@@ -834,7 +842,7 @@ export function App() {
                     setIsPlaying(false);
                   }}
                 />
-                <label className="speed-select">
+                <label className={appCss.speedSelect}>
                   Speed
                   <select
                     value={playbackSpeed}
@@ -842,17 +850,17 @@ export function App() {
                       setPlaybackSpeed(Number(event.target.value))
                     }
                   >
-                    <option value={0.25}>0.25×</option>
-                    <option value={0.5}>0.5×</option>
                     <option value={1}>1×</option>
                     <option value={2}>2×</option>
                     <option value={4}>4×</option>
+                    <option value={8}>8×</option>
+                    <option value={16}>16×</option>
                   </select>
                 </label>
               </div>
 
               {selection ? (
-                <div className="sample-readout">
+                <div className={appCss.sampleReadout}>
                   <div>
                     <span>t</span>
                     <strong>{selection.time.toFixed(4)}</strong>
@@ -882,7 +890,7 @@ export function App() {
                 </div>
               ) : null}
 
-              <div className="charts-grid">
+              <div className={appCss.chartsGrid}>
                 {series && (
                   <>
                     <HistoryChart
@@ -926,7 +934,7 @@ export function App() {
               </div>
             </>
           ) : (
-            <div className="preview-grid">
+            <div className={appCss.previewGrid}>
               {backbonePreview ? (
                 <BackboneChart
                   curves={backbonePreview}
@@ -935,7 +943,7 @@ export function App() {
                   selectedIndex={0}
                 />
               ) : (
-                <div className="preview-placeholder">
+                <div className={appCss.previewPlaceholder}>
                   Provide at least two inbound and two rebound points to preview
                   the backbone curve.
                 </div>
@@ -950,7 +958,7 @@ export function App() {
                   selectedIndex={forcePreviewSeries.time.length - 1}
                 />
               ) : (
-                <div className="preview-placeholder">
+                <div className={appCss.previewPlaceholder}>
                   Provide at least two time-force samples to preview the force
                   history.
                 </div>
@@ -961,8 +969,8 @@ export function App() {
       </main>
 
       {/* Hidden Report component for PDF generation */}
-      <div className="print-container">
-        <div ref={reportRef}>
+      <div className={appCss.printContainer} ref={reportRef}>
+        {series && backboneCurves && (
           <Report
             mass={massInput}
             dampingRatio={dampingRatioInput}
@@ -973,26 +981,12 @@ export function App() {
             reboundRows={reboundRows}
             forceRows={forceRows}
             series={series}
-            summary={summary}
             backboneCurves={backboneCurves}
             backboneColumns={backboneColumns}
             forceColumns={forceColumns}
           />
-        </div>
+        )}
       </div>
     </div>
   );
-}
-
-function formatRuntimeLabel(runtimeMs: number): string {
-  if (!Number.isFinite(runtimeMs)) {
-    return "–";
-  }
-  if (runtimeMs >= 1000) {
-    return `${(runtimeMs / 1000).toFixed(2)} s`;
-  }
-  if (runtimeMs >= 1) {
-    return `${runtimeMs.toFixed(2)} ms`;
-  }
-  return `${(runtimeMs * 1000).toFixed(2)} us`;
 }

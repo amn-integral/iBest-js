@@ -1,4 +1,4 @@
-.editable-grid {
+.editableGrid {
   display: flex;
   flex-direction: column;
   border: 1px solid #d0d5dd;
@@ -7,11 +7,11 @@
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
 }
 
-.editable-grid + .editable-grid {
+.editableGrid + .editableGrid {
   margin-top: 16px;
 }
 
-.editable-grid__header {
+.editableGridHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -20,37 +20,37 @@
   background: linear-gradient(180deg, #f8fafc 0%, #f2f4f7 100%);
 }
 
-.editable-grid__title h3 {
+.editableGridTitle h3 {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
   color: #1f2937;
 }
 
-.editable-grid__title p {
+.editableGridTitle p {
   margin: 2px 0 0;
   color: #6b7280;
   font-size: 0.75rem;
 }
 
-.editable-grid__actions {
+.editableGridActions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.editable-grid__table {
+.editableGridTable {
   position: relative;
 }
 
-.editable-grid__table table {
+.editableGridTable table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   min-width: 360px;
 }
 
-.editable-grid__table thead th {
+.editableGridTable thead th {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -64,23 +64,23 @@
   border-right: 1px solid #e4e7ec;
 }
 
-.editable-grid__table thead th:last-child {
+.editableGridTable thead th:last-child {
   border-right: none;
 }
 
-.editable-grid__row {
+.editableGridRow {
   background: #ffffff;
 }
 
-.editable-grid__row:nth-child(even) {
+.editableGridRow:nth-child(even) {
   background: #fbfcfe;
 }
 
-.editable-grid__row.is-active-row {
+.editableGridRow.isActiveRow {
   background: #eef2ff;
 }
 
-.editable-grid__rowHeader {
+.editableGridRowHeader {
   width: 48px;
   min-width: 48px;
   text-align: center;
@@ -93,25 +93,25 @@
   padding: 8px 4px;
 }
 
-.editable-grid__rowHeader:first-child {
+.editableGridRowHeader:first-child {
   border-top-left-radius: 8px;
 }
 
-.editable-grid__cellWrapper {
+.editableGridCellWrapper {
   border-bottom: 1px solid #e4e7ec;
   border-right: 1px solid #e4e7ec;
   padding: 0;
 }
 
-.editable-grid__cellWrapper.is-active-column {
+.editableGridCellWrapper.isActiveColumn {
   background: #f5f9ff;
 }
 
-.editable-grid__cellWrapper:last-child {
+.editableGridCellWrapper:last-child {
   border-right: none;
 }
 
-.editable-grid__cell {
+.editableGridCell {
   position: relative;
   display: flex;
   align-items: center;
@@ -123,31 +123,31 @@
   color: #1f2937;
 }
 
-.editable-grid__cell.align-right {
+.alignRight {
   justify-content: flex-end;
 }
 
-.editable-grid__cell.align-center {
+.alignCenter {
   justify-content: center;
 }
 
-.editable-grid__cell.is-active {
+.editableGridCell.isActive {
   box-shadow: inset 0 0 0 2px #2563eb;
   background: #eef4ff;
 }
 
-.editable-grid__cell.is-editing {
+.editableGridCell.isEditing {
   background: #ffffff;
 }
 
-.editable-grid__value {
+.editableGridValue {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.editable-grid__input {
+.editableGridInput {
   width: 100%;
   border: 1px solid #2563eb;
   border-radius: 4px;
@@ -157,11 +157,11 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
-.editable-grid__input:focus {
+.editableGridInput:focus {
   outline: none;
 }
 
-.editable-grid__empty-state {
+.editableGridEmptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -173,16 +173,16 @@
   font-size: 0.85rem;
 }
 
-.editable-grid__table::-webkit-scrollbar {
+.editableGridTable::-webkit-scrollbar {
   height: 10px;
   width: 10px;
 }
 
-.editable-grid__table::-webkit-scrollbar-thumb {
+.editableGridTable::-webkit-scrollbar-thumb {
   background: #cbd5f5;
   border-radius: 8px;
 }
 
-.editable-grid__table::-webkit-scrollbar-track {
+.editableGridTable::-webkit-scrollbar-track {
   background: #f8fafc;
 }

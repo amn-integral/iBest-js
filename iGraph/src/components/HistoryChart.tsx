@@ -12,11 +12,14 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
   selectedIndex,
   className = "",
   logoUrl,
+  width: propWidth,
+  height: propHeight,
 }) => {
   const { wrapperRef, containerWidth } = useChartResize(240);
 
-  const width = Math.max(320, containerWidth);
-  const height = Math.max(160, Math.min(220, Math.round(width * 0.32)));
+  const width = propWidth ?? Math.max(320, containerWidth);
+  const height =
+    propHeight ?? Math.max(160, Math.min(220, Math.round(width * 0.32)));
 
   // Add padding for ticks and labels
   const padding = { left: 50, right: 10, top: 10, bottom: 35 };
@@ -70,7 +73,7 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
       chartHeight
     );
 
-    const clampedIndex = Math.min(Math.max(selectedIndex, 0), time.length - 1);
+    const clampedIndex = Math.min(Math.max(selectedIndex?? 1, 0), time.length - 1);
     const spanTime = maxTime - minTime || 1;
     const spanVal = maxVal - minVal || 1;
 
@@ -275,3 +278,5 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
     </div>
   );
 };
+
+

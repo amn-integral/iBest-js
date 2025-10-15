@@ -13,7 +13,8 @@ import {
   useState,
 } from "react";
 
-import "./EditableGrid.css";
+import styles from "./EditableGrid.module.css";
+import appStyles from "../App.module.css";
 
 type ColumnParser = (value: string) => number | null;
 
@@ -494,19 +495,19 @@ export function EditableGrid<
           width: column.width,
         }}
         className={classNames(
-          "editable-grid__cellWrapper",
-          isActive && "is-active-column"
+          styles.editableGridCellWrapper,
+          isActive && styles.isActiveColumn
         )}
       >
         <div
-          role="gridcell"
           tabIndex={isActive ? 0 : -1}
           ref={(node) => registerCell(position, node)}
           className={classNames(
-            "editable-grid__cell",
-            isActive && "is-active",
-            isEditing && "is-editing",
-            column.align && `align-${column.align}`
+            styles.editableGridCell,
+            isActive && styles.isActive,
+            isEditing && styles.isEditing,
+            column.align === "right" && styles.alignRight,
+            column.align === "center" && styles.alignCenter
           )}
           onClick={() => {
             setActiveCell(position);
@@ -522,12 +523,14 @@ export function EditableGrid<
               onChange={(event) => handleInputChange(event, position)}
               onKeyDown={(event) => handleInputKeyDown(event, position)}
               onBlur={handleInputBlur}
-              className="editable-grid__input"
+              className={styles.editableGridInput}
               placeholder={column.placeholder}
               inputMode="decimal"
             />
           ) : (
-            <span className="editable-grid__value">{rawValue || "\u00A0"}</span>
+            <span className={styles.editableGridValue}>
+              {rawValue || "\u00A0"}
+            </span>
           )}
         </div>
       </td>
@@ -536,28 +539,28 @@ export function EditableGrid<
 
   return (
     <section
-      className="editable-grid"
+      className={styles.editableGrid}
       ref={containerRef}
       onKeyDown={handleContainerKeyDown}
     >
-      <header className="editable-grid__header">
-        <div className="editable-grid__title">
+      <header className={styles.editableGridHeader}>
+        <div className={styles.editableGridTitle}>
           <h3>{title}</h3>
           <p>
             {rows.length} row{rows.length === 1 ? "" : "s"}
           </p>
         </div>
         {toolbar ? (
-          <div className="editable-grid__actions">{toolbar}</div>
+          <div className={styles.editableGridActions}>{toolbar}</div>
         ) : null}
       </header>
-      <div className="editable-grid__table" style={bodyStyle}>
+      <div className={styles.editableGridTable} >
         {rows.length === 0 ? (
-          <div className="editable-grid__empty-state">
+          <div className={styles.editableGridEmptyState}>
             <p>No rows yet. Use the toolbar to add a new row.</p>
             <button
               type="button"
-              className="secondary-button"
+              className={appStyles.secondaryButton}
               onClick={() => appendRow(0)}
             >
               + Add first row
@@ -567,7 +570,7 @@ export function EditableGrid<
           <table role="grid">
             <thead>
               <tr>
-                <th className="editable-grid__rowHeader" />
+                <th className={styles.editableGridRowHeader} />
                 {columns.map((column) => (
                   <th key={column.key} style={{ width: column.width }}>
                     {column.label}
@@ -582,11 +585,13 @@ export function EditableGrid<
                   <tr
                     key={row.id}
                     className={classNames(
-                      "editable-grid__row",
-                      isActiveRow && "is-active-row"
+                      styles.editableGridRow,
+                      isActiveRow && styles.isActiveRow
                     )}
                   >
-                    <th className="editable-grid__rowHeader">{rowIndex + 1}</th>
+                    <th className={styles.editableGridRowHeader}>
+                      {rowIndex + 1}
+                    </th>
                     {columns.map((_, colIndex) =>
                       renderCell(rowIndex, colIndex)
                     )}

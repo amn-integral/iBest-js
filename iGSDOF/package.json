@@ -1,17 +1,21 @@
 {
-  "name": "ibest",
+  "name": "@integralrsg/igsdof",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build && npm run sync",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "type-check": "tsc -b --noEmit",
+    "sync": "wsl rsync -avz --delete dist /home/projects/www/ibest_root/iGSDOF/static/iGSDOF"
+
   },
   "dependencies": {
-    "@integralrsg/igraph": "file:../iGraph",
-    "@integralrsg/imath": "file:../iMath",
+    "@integralrsg/igraph": "*",
+    "@integralrsg/imath": "*",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "react": "^19.1.1",

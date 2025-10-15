@@ -1,12 +1,7 @@
 import React, { useMemo } from "react";
 import { BackboneChartProps } from "../types";
 import { useChartResize } from "../hooks";
-import {
-  calcTickCount,
-  generateTicks,
-  generateSvgPath,
-  formatLimitValue,
-} from "../utils";
+import { generateTicks, generateSvgPath, formatLimitValue } from "../utils";
 
 export const BackboneChart: React.FC<BackboneChartProps> = ({
   curves,
@@ -205,8 +200,8 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
   }
 
   return (
-    <div className={`chart-wrapper ${className}`} ref={wrapperRef}>
-      <div className="chart-header">
+    <div className={`${styles.chartWrapper} ${className}`} ref={wrapperRef}>
+      <div className={styles.chartHeader}>
         <h4>Hysteresis with Backbone – Step {chartData.stepIndex + 1}</h4>
         <span>
           disp {formatLimitValue(chartData.minX)}..
@@ -216,7 +211,7 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
         </span>
       </div>
       <svg
-        className="chart"
+        className={styles.chart}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label="Backbone curve comparison"
@@ -382,7 +377,7 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
 
         {/* Axis labels */}
         <text
-          className="axis-label axis-label--x"
+          className={`${styles.axisLabel} ${styles.axisLabelX}`}
           x={padding.left + chartWidth / 2}
           y={height - 12}
           textAnchor="middle"
@@ -392,7 +387,7 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
           Displacement
         </text>
         <text
-          className="axis-label axis-label--y"
+          className={`${styles.axisLabel} ${styles.axisLabelY}`}
           transform={`translate(14 ${padding.top + chartHeight / 2}) rotate(-90)`}
           textAnchor="middle"
           fontSize="12"

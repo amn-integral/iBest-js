@@ -4,9 +4,11 @@ export interface HistoryChartProps {
   values: number[];
   color: string;
   units: string;
-  selectedIndex: number;
+  selectedIndex?: number;
   className?: string;
   logoUrl?: string;
+  width?: number; // Add this
+  height?: number; // Add this
 }
 
 export interface BackboneCurves {
@@ -40,3 +42,4 @@ export interface ChartBounds {
   minY: number;
   maxY: number;
 }
+

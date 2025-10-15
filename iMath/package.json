@@ -5,25 +5,27 @@
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "default": "./dist/index.mjs"
+      "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.4.0"
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --sourcemap --clean && tsc -p tsconfig.build.json",
-    "dev": "tsup src/index.ts --format esm,cjs --sourcemap --watch",
-    "typecheck": "tsc --noEmit",
+    "dev": "tsc -p tsconfig.dev.json --watch",
+    "typecheck": "tsc -p tsconfig.dev.json --noEmit",
     "test": "npm run build && node tests/newmark.test.mjs",
     "prepublishOnly": "npm run build"
   }

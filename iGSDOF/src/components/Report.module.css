@@ -4,8 +4,8 @@
   height: 1123px; /* A4 height at 96 DPI */
   background: white;
   display: grid;
-  grid-template-columns: 35fr 65fr;
-  gap: 16px;
+  grid-template-columns: 1fr 3fr;
+  gap:5px;
   padding: 20px;
   box-sizing: border-box;
   font-family: Arial, sans-serif;
@@ -13,17 +13,18 @@
   overflow: hidden;
 }
 
-.report__inputs {
+.report-inputs {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 1 px;
   overflow: hidden;
 }
 
-.report__results {
+.report-results {
+
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0px;
   overflow: hidden;
 }
 
@@ -38,19 +39,19 @@
   margin-bottom: 16px;
 }
 
-.solver-inputs__table {
+.solver-inputs-table {
   display: grid;
   gap: 8px;
 }
 
-.solver-inputs__row {
+.solver-inputs-row {
   display: flex;
   justify-content: space-between;
   padding: 4px 0;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.solver-inputs__label {
+.solver-inputs-label {
   font-weight: 500;
   color: #374151;
 }
@@ -125,16 +126,15 @@
 }
 
 .charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   flex: 1;
   overflow: hidden;
 }
 
 .chart-item {
-  height: 180px;
+  height: 200px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
   border-radius: 4px;

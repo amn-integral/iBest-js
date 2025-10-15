@@ -1,0 +1,16 @@
+# Compiled output
+dist/
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# But allow the gitignore itself and package files
+!.gitignore
+!*.json
+
+# Node modules
+node_modules/
+
+# Build info
+*.tsbuildinfo

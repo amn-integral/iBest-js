@@ -18,6 +18,7 @@ import {
   parseStrictNumber,
   formatLimitValue,
 } from "@integralrsg/igraph";
+import "../../iGraph/dist/igraph.css";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 const integralLogo = `${import.meta.env.BASE_URL}integralLogo.svg`;
@@ -920,6 +921,7 @@ export function App() {
                   displacementHistory={[]}
                   restoringForceHistory={[]}
                   selectedIndex={0}
+                  logoUrl={integralLogo}
                 />
               ) : (
                 <div className={appCss.previewPlaceholder}>
@@ -935,6 +937,7 @@ export function App() {
                   color="#0ea5e9"
                   units=""
                   selectedIndex={forcePreviewSeries.time.length - 1}
+                  logoUrl={integralLogo}
                 />
               ) : (
                 <div className={appCss.previewPlaceholder}>

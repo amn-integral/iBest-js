@@ -9,8 +9,8 @@
     "skipLibCheck": true,
     "outDir": "dist",
     "declaration": true,
-    "jsx": "react-jsx",
+    "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "../iBest/src/components/ReportChart.tsx"],
+  "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]
 }

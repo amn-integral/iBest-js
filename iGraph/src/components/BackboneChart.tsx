@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { BackboneChartProps } from "../types";
 import { useChartResize } from "../hooks";
 import { generateTicks, generateSvgPath, formatLimitValue } from "../utils";
+import styles from "./BackboneChart.module.css";
 
 export const BackboneChart: React.FC<BackboneChartProps> = ({
   curves,
@@ -202,13 +203,7 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
   return (
     <div className={`${styles.chartWrapper} ${className}`} ref={wrapperRef}>
       <div className={styles.chartHeader}>
-        <h4>Hysteresis with Backbone – Step {chartData.stepIndex + 1}</h4>
-        <span>
-          disp {formatLimitValue(chartData.minX)}..
-          {formatLimitValue(chartData.maxX)} | force{" "}
-          {formatLimitValue(chartData.backboneMinY ?? chartData.minY)}..
-          {formatLimitValue(chartData.backboneMaxY ?? chartData.maxY)}
-        </span>
+        <span>Hysteresis with Backbone – Step {chartData.stepIndex + 1}</span>
       </div>
       <svg
         className={styles.chart}

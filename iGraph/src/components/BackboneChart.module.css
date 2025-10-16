@@ -1,0 +1,110 @@
+.charts-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem;
+}
+
+.charts-grid > * {
+  min-width: 0;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+}
+
+.axis-controls {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.axis-controls h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.axis-controls-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.axis-controls label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  gap: 0.25rem;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.axis-controls input[type="number"] {
+  border-radius: 0.5rem;
+  border: 1px solid #d1d9e6;
+  padding: 0.4rem 0.55rem;
+  width: 120px;
+  font-size: 1rem;
+}
+
+.chart-wrapper {
+  background: #fffefe;
+  border-radius: 0.75rem;
+  padding: 0.3rem 0.3rem;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+  width: 100%;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* vertical centering */
+  gap: 0.5rem;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+/* padding: 0.5rem 0; */
+  /* height: 56px; fixed height for strict vertical centering */
+}
+
+.chart-header h4,
+.chart-header span {
+  margin: 0;
+  padding: 0;
+  /* line-height: 1.2; slightly more line height for better spacing */
+  white-space: nowrap; /* prevent wrapping */
+  width: 50%;
+  display: flex;
+  align-items: center;
+}
+
+.chart-header h9 {
+  font-size: 16px;
+  /* font-weight: 700; */
+  color: #0b62dd;
+  justify-content: flex-start;
+}
+
+.chart-header span {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(7, 7, 7);
+  justify-content: left; /* align span content to the right */
+}
+
+.axis-label {
+  fill: #1f2937;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.axis-label--x {
+  text-anchor: middle;
+}
+
+.axis-label--y {
+  text-anchor: middle;
+}
+
+.preview-placeholder {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+}

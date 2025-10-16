@@ -1,3 +1,6 @@
+// Import CSS
+import "./components/BackboneChart.module.css";
+
 // Components
 export * from "./components";
 

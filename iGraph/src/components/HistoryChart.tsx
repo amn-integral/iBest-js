@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { HistoryChartProps } from "../types";
 import { useChartResize } from "../hooks";
-import { calcTickCount, generateTicks, generateSvgPath } from "../utils";
+import { generateTicks, generateSvgPath } from "../utils";
+import styles from "./HistoryChart.module.css";
 
 export const HistoryChart: React.FC<HistoryChartProps> = ({
   title,
@@ -129,18 +130,18 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
   }
 
   return (
-    <div className={`chart-wrapper ${className}`} ref={wrapperRef}>
-      <div className="chart-header">
-        <h4>
+    <div className={`${styles.chartWrapper} ${className}`} ref={wrapperRef}>
+      <div className={styles.chartHeader}>
+        <span>
           {title} – Step {chartData.stepIndex + 1}
-        </h4>
+        </span>
         <span>
           min {chartData.dataMinValue?.toFixed(3) ?? "0.000"} | max{" "}
           {chartData.dataMaxValue?.toFixed(3) ?? "0.000"}
         </span>
       </div>
       <svg
-        className="chart"
+        className={styles.chart }
         viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label={`${title} history`}

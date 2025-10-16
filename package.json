@@ -1,7 +1,20 @@
 {
   "private": true,
-  "workspaces": ["iVentedBlast-js", "iMath", "iGraph", "iGSDOF"],
+  "type": "module",
+  "workspaces": [
+    "iVentedBlast-js",
+    "iMath",
+    "iGraph",
+    "iGSDOF"
+  ],
   "scripts": {
-      "dev": "npm run dev -w iVentedBlast-js"
+    "build_iMath": "npm run build -w iMath",
+    "build_iGraph": "npm run build -w iGraph",
+    "build_iGSDOF": "npm run build_iMath && npm run build_iGraph && npm run build -w iGSDOF",
+    "report-sizes": "node scripts/report-all-sizes.js"
+  },
+  "devDependencies": {
+    "gzip-size": "^7.0.0",
+    "pretty-bytes": "^7.1.0"
   }
 }

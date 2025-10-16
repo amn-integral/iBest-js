@@ -23,8 +23,8 @@
     "typescript": "^5.4.0"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --sourcemap --clean && tsc -p tsconfig.build.json",
-    "dev": "tsc -p tsconfig.dev.json --watch",
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "dev": "vite build --watch",
     "typecheck": "tsc -p tsconfig.dev.json --noEmit",
     "test": "npm run build && node tests/newmark.test.mjs",
     "prepublishOnly": "npm run build"

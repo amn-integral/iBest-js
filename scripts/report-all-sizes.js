@@ -3,46 +3,51 @@ import path from "path";
 import prettyBytes from "pretty-bytes";
 import * as gzipSize from "gzip-size";
 
-const root = path.resolve("./"); // scan root-level folders
+const root = path.resolve("./");
 
-// Scan all directories that have a "dist" folder
+// helper to get all files recursively
+function getAllFiles(dir) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  let files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) files = files.concat(getAllFiles(fullPath));
+    else files.push(fullPath);
+  }
+  return files;
+}
+
+const skipExtensions = [".map", ".tsbuildinfo"];
+
 const dirs = fs.readdirSync(root).filter((dir) => {
   const distPath = path.join(root, dir, "dist");
   return fs.existsSync(distPath);
 });
 
+console.log("\n📦 Build Size Summary");
+console.log("======================================================");
+
 for (const dir of dirs) {
   const dist = path.join(root, dir, "dist");
-  console.log(`\n📦 ${dir}`);
-  console.log("------------------------------------------------------------");
-  console.log("------------------------------------------------------------");
+  const files = getAllFiles(dist);
 
   let totalRaw = 0;
   let totalGzip = 0;
 
-  // Skip irrelevant files
-  const skipExtensions = [".map", ".tsbuildinfo"];
-
-  for (const file of fs.readdirSync(dist)) {
-    const full = path.join(dist, file);
-    const stat = fs.statSync(full);
+  for (const file of files) {
     const ext = path.extname(file);
+    if (skipExtensions.includes(ext)) continue;
 
-    if (stat.isFile() && !skipExtensions.includes(ext)) {
-      const buf = fs.readFileSync(full);
-      const rawBytes = stat.size;
-      const gzBytes = await gzipSize.gzipSize(buf);
-      totalRaw += rawBytes;
-      totalGzip += gzBytes;
+    const buf = fs.readFileSync(file);
+    const stat = fs.statSync(file);
 
-      console.log(
-        `${file.padEnd(25)} raw: ${prettyBytes(rawBytes).padEnd(10)} | gzip: ${prettyBytes(gzBytes)}`
-      );
-    }
+    totalRaw += stat.size;
+    totalGzip += await gzipSize.gzipSize(buf);
   }
 
-  console.log("------------------------------------------------------------");
   console.log(
-    `🧮 Total for ${dir}: raw ${prettyBytes(totalRaw)} | gzip ${prettyBytes(totalGzip)}`
+    `${dir.padEnd(20)} raw: ${prettyBytes(totalRaw).padEnd(10)} | gzip: ${prettyBytes(totalGzip)}`
   );
 }
+
+console.log("======================================================");

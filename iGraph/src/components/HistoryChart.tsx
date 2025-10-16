@@ -257,9 +257,9 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
 
         {/* Axis labels */}
         <text
-          className="axis-label axis-label--x"
+          className={`${styles.axisLabel} ${styles.axisLabelX}`}
           x={padding.left + chartWidth / 2}
-          y={height - 8}
+          y={height - 5}
           textAnchor="middle"
           fontSize="12"
           fill="#64748b"
@@ -267,7 +267,7 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
           Time
         </text>
         <text
-          className="axis-label axis-label--y"
+          className={`${styles.axisLabel} ${styles.axisLabelY}`}
           transform={`translate(14 ${padding.top + chartHeight / 2}) rotate(-90)`}
           textAnchor="middle"
           fontSize="12"

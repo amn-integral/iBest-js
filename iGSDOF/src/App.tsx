@@ -18,7 +18,6 @@ import {
   parseStrictNumber,
   formatLimitValue,
 } from "@integralrsg/igraph";
-import "../../iGraph/dist/igraph.css";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 const integralLogo = `${import.meta.env.BASE_URL}integralLogo.svg`;
@@ -740,6 +739,7 @@ export function App() {
           </section>
 
           <EditableGrid
+            gridClassName={appCss.gridClassName}
             title="Backbone (inbound)"
             columns={backboneColumns}
             rows={inboundRows}
@@ -752,6 +752,7 @@ export function App() {
 
           <EditableGrid
             title="Backbone (rebound)"
+            gridClassName={appCss.gridClassName}
             columns={backboneColumns}
             rows={reboundRows}
             onRowsChange={setReboundRows}
@@ -763,6 +764,7 @@ export function App() {
 
           <EditableGrid
             title="Force history"
+            gridClassName={appCss.gridClassName}
             columns={forceColumns}
             rows={forceRows}
             onRowsChange={setForceRows}
@@ -879,6 +881,7 @@ export function App() {
                       values={series.displacement}
                       color="#3b82f6"
                       units="in"
+                      className={appCss.chartContainer}
                       selectedIndex={selection?.index ?? 0}
                       logoUrl={integralLogo}
                     />
@@ -888,6 +891,7 @@ export function App() {
                       values={series.velocity}
                       color="#16a34a"
                       units="in/s"
+                      className={appCss.chartContainer}
                       selectedIndex={selection?.index ?? 0}
                       logoUrl={integralLogo}
                     />
@@ -898,6 +902,7 @@ export function App() {
                       color="#f97316"
                       units="in/s²"
                       selectedIndex={selection?.index ?? 0}
+                      className={appCss.chartContainer}
                       logoUrl={integralLogo}
                     />
                   </>
@@ -908,6 +913,7 @@ export function App() {
                     displacementHistory={series?.displacement ?? []}
                     restoringForceHistory={series?.restoringForce ?? []}
                     selectedIndex={selection?.index ?? 0}
+                    className={appCss.chartContainer}
                     logoUrl={integralLogo}
                   />
                 )}
@@ -921,6 +927,7 @@ export function App() {
                   displacementHistory={[]}
                   restoringForceHistory={[]}
                   selectedIndex={0}
+                  className={appCss.chartContainer}
                   logoUrl={integralLogo}
                 />
               ) : (
@@ -932,6 +939,7 @@ export function App() {
               {forcePreviewSeries ? (
                 <HistoryChart
                   title="Force preview"
+                  className={appCss.chartContainer}
                   time={forcePreviewSeries.time}
                   values={forcePreviewSeries.values}
                   color="#0ea5e9"

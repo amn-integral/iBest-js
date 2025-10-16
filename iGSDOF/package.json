@@ -1,10 +1,10 @@
 {
   "name": "@integralrsg/igsdof",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --config vite.config.ts --mode development",
     "build": "vite build && npm run sync",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

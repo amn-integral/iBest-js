@@ -39,6 +39,7 @@ type EditableGridProps<K extends string, TRow extends EditableGridRow<K>> = {
   onValidatedRows?: (rows: ParsedRow<K>[]) => void;
   toolbar?: ReactNode;
   maxHeight?: number;
+  gridClassName?: string;
 };
 
 type CellPosition = { row: number; col: number };
@@ -72,6 +73,7 @@ export function EditableGrid<
   createRow,
   onValidatedRows,
   toolbar,
+  gridClassName,
 }: EditableGridProps<K, TRow>) {
   const [activeCell, setActiveCell] = useState<CellPosition | null>(() => {
     if (rows.length === 0 || columns.length === 0) {
@@ -524,7 +526,7 @@ export function EditableGrid<
 
   return (
     <section
-      className={styles.editableGrid}
+      className={`${styles.editableGrid} ${gridClassName}`}
       ref={containerRef}
       onKeyDown={handleContainerKeyDown}
     >

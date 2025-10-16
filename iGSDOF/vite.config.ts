@@ -1,9 +1,23 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import path from 'path'
 
 export default defineConfig(({ mode }) => ({
+  logLevel: 'warn', 
   base: mode === "production" ? "/static/iGSDOF/dist/" : "/",
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@integralrsg/imath': path.resolve(
+        __dirname,
+        mode === 'development' ? '../iMath/src' : '../iMath/dist'
+      ),
+      '@integralrsg/igraph': path.resolve(
+        __dirname,
+        mode === 'development' ? '../iGraph/src' : '../iGraph/dist'
+      ),
+    },
+  },
   server: {
     port: 5173,
     open: true,

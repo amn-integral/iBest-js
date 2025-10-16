@@ -10,8 +10,9 @@
   "scripts": {
     "build_iMath": "npm run build -w iMath",
     "build_iGraph": "npm run build -w iGraph",
-    "build_iGSDOF": "npm run build_iMath && npm run build_iGraph && npm run build -w iGSDOF",
-    "report-sizes": "node scripts/report-all-sizes.js"
+    "build_iGSDOF": "npm run build -w iMath && npm run build -w iGraph && npm run build -w iGSDOF",
+    "report-sizes": "node scripts/report-all-sizes.js",
+    "clean": "rm -rf **/dist/*"
   },
   "devDependencies": {
     "gzip-size": "^7.0.0",

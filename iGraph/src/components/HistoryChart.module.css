@@ -1,7 +1,7 @@
 .charts-grid {
   display: flex !important;
   flex-direction: column !important;
-  gap: 1rem;
+  gap: 0rem;
 }
 
 .charts-grid > * {
@@ -32,7 +32,7 @@
 .axis-controls label {
   display: flex;
   flex-direction: column;
-  font-weight: 600;
+  font-weight: bold;
   gap: 0.25rem;
   font-size: 1rem;
   color: #1f2937;
@@ -75,13 +75,6 @@
   align-items: center;
 }
 
-.chart-header h9 {
-  font-size: 16px;
-  /* font-weight: 700; */
-  color: #0b62dd;
-  justify-content: flex-start;
-}
-
 .chart-header span {
   font-size: 16px;
   font-weight: 700;
@@ -90,16 +83,17 @@
 }
 
 .axis-label {
-  fill: #1f2937;
+  fill: #000000;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: bold;
 }
 
-.axis-label--x {
+.axis-label-x {
   text-anchor: middle;
+  font-weight: bold;
 }
 
-.axis-label--y {
+.axis-label-y {
   text-anchor: middle;
 }
 

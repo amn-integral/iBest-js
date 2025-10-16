@@ -32,7 +32,6 @@
   },
   "scripts": {
     "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
-    "postbuild": "node ../scripts/print-build-size.js",
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"

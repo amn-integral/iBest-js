@@ -16,8 +16,8 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@integralrsg/imath": ["../iMath/src"],
-      "@integralrsg/igraph": ["../iGraph/src"]
+      "@integralrsg/imath": ["../iMath/dist"],
+      "@integralrsg/igraph": ["../iGraph/dist"]
     },
     "strict": true,
     "noUnusedLocals": true,

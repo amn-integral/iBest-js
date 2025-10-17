@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import "./index.css";
+import "../../iGraph/dist/igraph.css";
 import { App } from "./App";
 // import { ReportPage } from "./pages/ReportPage";
 

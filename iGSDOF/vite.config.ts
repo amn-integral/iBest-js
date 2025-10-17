@@ -31,30 +31,8 @@ export default defineConfig(({ mode }) => ({
     modules: {
       scopeBehaviour: "local",
       localsConvention: "camelCase",
-      // Enhanced CSS isolation with stronger scoping
-      // generateScopedName: (name, filename) => {
-      //   // Generate highly unique class names resistant to Django/Bootstrap conflicts
-      //   const fileId =
-      //     filename
-      //       .split("/")
-      //       .pop()
-      //       ?.replace(/\.[^/.]+$/, "")
-      //       .replace(/[^a-zA-Z0-9]/g, "") || "comp";
-      //   // Simple hash generation without Node.js dependencies
-      //   let hash = 0;
-      //   const str = filename + name;
-      //   for (let i = 0; i < str.length; i++) {
-      //     const char = str.charCodeAt(i);
-      //     hash = (hash << 5) - hash + char;
-      //     hash = hash & hash; // Convert to 32bit integer
-      //   }
-      //   const hashStr = Math.abs(hash).toString(36).substring(0, 6);
-      //   return `reactapp-${fileId}-${name}-${hashStr}`;
-      // },
-      // // Ensure all modules get isolated scoping
-      // globalModulePaths: [],
+      generateScopedName: "igdsof_app__[name]__[local]___[hash:base64:5]",
     },
-    // CSS processing options for better isolation
     devSourcemap: true,
   },
   assetsInclude: ["**/*.svg", "**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.gif"],

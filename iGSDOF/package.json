@@ -14,8 +14,8 @@
 
   },
   "dependencies": {
-    "@integralrsg/igraph": "*",
-    "@integralrsg/imath": "*",
+    "@integralrsg/igraph": "workspace:*",
+    "@integralrsg/imath": "workspace:*",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "react": "^19.1.1",

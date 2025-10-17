@@ -27,6 +27,7 @@ export default defineConfig({
     modules: {
       scopeBehaviour: "local",
       localsConvention: "camelCase",
+      generateScopedName: "igraph_app__[name]__[local]___[hash:base64:5]", 
     },
   },
 });

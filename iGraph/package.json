@@ -36,7 +36,7 @@
     "react-dom": ">=16.8.0"
   },
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly --outDir dist && npm run copy-types",
+    "build": "vite build && tsc -p tsconfig.build.json && npm run copy-types",
     "copy-types": "node -e \"const fs=require('fs');const path='dist/styles.d.ts';const content='declare module \\'@integralrsg/igraph/styles\\' { const styles: string; export default styles; }';fs.writeFileSync(path, content);\"",
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",

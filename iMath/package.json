@@ -9,6 +9,7 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
@@ -17,7 +18,7 @@
     "typescript": "^5.4.0"
   },
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "dev": "vite build --watch",
     "typecheck": "tsc -p tsconfig.dev.json --noEmit",
     "test": "npm run build && node tests/newmark.test.mjs",

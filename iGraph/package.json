@@ -13,7 +13,12 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "default": "./dist/index.js"
-    }
+    },
+    "./styles": {
+      "types": "./dist/styles.d.ts",
+      "default": "./dist/igraph.css"
+    },
+    "./dist/igraph.css": "./dist/igraph.css"
   },
   "files": [
     "dist"
@@ -31,7 +36,8 @@
     "react-dom": ">=16.8.0"
   },
   "scripts": {
-    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist && npm run copy-types",
+    "copy-types": "node -e \"const fs=require('fs');const path='dist/styles.d.ts';const content='declare module \\'@integralrsg/igraph/styles\\' { const styles: string; export default styles; }';fs.writeFileSync(path, content);\"",
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"

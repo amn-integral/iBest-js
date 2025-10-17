@@ -7,16 +7,26 @@ export default defineConfig(({ mode }) => ({
   base: mode === "production" ? "/static/iGSDOF/dist/" : "/",
   plugins: [react()],
   resolve: {
-    alias: {
-      '@integralrsg/imath': path.resolve(
-        __dirname,
-        mode === 'development' ? '../iMath/src' : '../iMath/dist'
-      ),
-      '@integralrsg/igraph': path.resolve(
-        __dirname,
-        mode === 'development' ? '../iGraph/src' : '../iGraph/dist'
-      ),
-    },
+    alias: [
+      {
+        find: '@integralrsg/imath',
+        replacement: path.resolve(
+          __dirname,
+          mode === 'development' ? '../iMath/src' : '../iMath/dist'
+        ),
+      },
+      {
+        find: '@integralrsg/igraph/styles',
+        replacement: path.resolve(__dirname, '../iGraph/dist/igraph.css'),
+      },
+      {
+        find: '@integralrsg/igraph',
+        replacement: path.resolve(
+          __dirname,
+          mode === 'development' ? '../iGraph/src' : '../iGraph/dist'
+        ),
+      },
+    ],
   },
   server: {
     port: 5173,

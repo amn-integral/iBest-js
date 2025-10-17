@@ -636,7 +636,7 @@ export function App() {
   );
 
   return (
-    <div className={`${appCss.reactAppContainer} ${appCss.layout}`}>
+    <div className={`$${appCss.layout}`}>
       <main className={appCss.layoutContent}>
         <div className={appCss.panel}>
           <h2>Solver Inputs</h2>

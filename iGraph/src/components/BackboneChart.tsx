@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { BackboneChartProps } from "../types";
 import { useChartResize } from "../hooks";
-import { generateTicks, generateSvgPath, formatLimitValue } from "../utils";
+import { generateTicks, generateSvgPath} from "../utils";
 import styles from "./BackboneChart.module.css";
 
 export const BackboneChart: React.FC<BackboneChartProps> = ({
@@ -11,6 +11,8 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
   selectedIndex,
   className = "",
   logoUrl,
+  xUnits = "",
+  yUnits = "",
 }) => {
   const { wrapperRef, containerWidth } = useChartResize(260);
 
@@ -379,7 +381,7 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
           fontSize="12"
           fill="#64748b"
         >
-          Displacement
+          Displacement ({xUnits})
         </text>
         <text
           className={`${styles.axisLabel} ${styles.axisLabelY}`}
@@ -388,7 +390,7 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
           fontSize="12"
           fill="#64748b"
         >
-          Restoring force
+          Restoring force ({yUnits})
         </text>
       </svg>
     </div>

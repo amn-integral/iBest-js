@@ -53,6 +53,13 @@ interface ReportProps {
   backboneCurves: BackboneCurves;
   backboneColumns: ColumnConfig<"displacement" | "resistance" | "klm">[];
   forceColumns: ColumnConfig<"time" | "force">[];
+  unitLabels?: {
+    displacement: string;
+    velocity: string;
+    acceleration: string;
+    time: string;
+    force: string;
+  };
 }
 
 export const Report: React.FC<ReportProps> = ({
@@ -68,6 +75,13 @@ export const Report: React.FC<ReportProps> = ({
   backboneCurves,
   backboneColumns,
   forceColumns,
+  unitLabels = {
+    displacement: "",
+    velocity: "",
+    acceleration: "",
+    time: "",
+    force: "",
+  },
 }) => {
   return (
     <div className={styles.report}>
@@ -171,14 +185,14 @@ export const Report: React.FC<ReportProps> = ({
                 title="Displacement"
                 data={[
                   {
-                    legend: "Displacement (in)",
+                    legend: "Displacement",
                     xValues: series.time,
                     yValues: series.displacement,
                   },
                 ]}
                 logoUrl={integralLogo}
-                xLabel="Time (s)"
-                yLabel="Displacement (in)"
+                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ""}`}
+                yLabel={`Displacement${unitLabels.displacement ? ` (${unitLabels.displacement})` : ""}`}
               />
             </div>
             <div className={styles.chartItem}>
@@ -193,8 +207,8 @@ export const Report: React.FC<ReportProps> = ({
                   },
                 ]}
                 logoUrl={integralLogo}
-                xLabel="Time (s)"
-                yLabel="Velocity (in/s)"
+                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ""}`}
+                yLabel={`Velocity${unitLabels.velocity ? ` (${unitLabels.velocity})` : ""}`}
               />
             </div>
             <div className={styles.chartItem}>
@@ -209,8 +223,8 @@ export const Report: React.FC<ReportProps> = ({
                   },
                 ]}
                 logoUrl={integralLogo}
-                xLabel="Time (s)"
-                yLabel="Acceleration (in/s²)"
+                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ""}`}
+                yLabel={`Acceleration${unitLabels.acceleration ? ` (${unitLabels.acceleration})` : ""}`}
               />
             </div>
             <div className={styles.chartItem}>
@@ -232,8 +246,8 @@ export const Report: React.FC<ReportProps> = ({
                   },
                 ]}
                 logoUrl={integralLogo}
-                xLabel="Displacement (in)"
-                yLabel="Restoring Force (kips)"
+                xLabel={`Displacement${unitLabels.displacement ? ` (${unitLabels.displacement})` : ""}`}
+                yLabel={`Restoring Force${unitLabels.force ? ` (${unitLabels.force})` : ""}`}
               />
             </div>
           </div>

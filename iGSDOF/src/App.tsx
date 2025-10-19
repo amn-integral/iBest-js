@@ -23,6 +23,7 @@ import html2canvas from "html2canvas";
 const integralLogo = `${import.meta.env.BASE_URL}integralLogo.svg`;
 
 import { EditableGrid } from "./components/EditableGrid";
+import { UnitsTable, UNIT_SYSTEMS } from "./components/UnitsTable";
 import { Report } from "./components/Report";
 import type { ColumnConfig } from "./components/EditableGrid";
 import appCss from "./App.module.css";
@@ -107,6 +108,10 @@ export function App() {
   const [timeStepInput, setTimeStepInput] = useState("0.1");
   const [autoStep, setAutoStep] = useState(false);
 
+  // Unit system state - default to imperial
+  const [selectedUnitSystemId, setSelectedUnitSystemId] =
+    useState<string>("imperial");
+
   const [inboundRows, setInboundRows] = useState<BackboneRow[]>(() =>
     INITIAL_INBOUND_DATA.map((row) => ({
       ...row,
@@ -142,6 +147,31 @@ export function App() {
     () => parseStrictNumber(timeStepInput) ?? Number.NaN,
     [timeStepInput]
   );
+
+  // Derive unit labels from selected unit system
+  const unitLabels = useMemo(() => {
+    const system = UNIT_SYSTEMS.find((s) => s.id === selectedUnitSystemId);
+    if (!system) {
+      return {
+        displacement: "",
+        velocity: "",
+        acceleration: "",
+        time: "",
+        force: "",
+      };
+    }
+    return {
+      displacement: system.length,
+      velocity: `${system.length}/${system.time}`,
+      acceleration: `${system.length}/${system.time}²`,
+      time: system.time,
+      force: system.force,
+    };
+  }, [selectedUnitSystemId]);
+
+  const handleUnitSystemChange = useCallback((unitSystemId: string) => {
+    setSelectedUnitSystemId(unitSystemId);
+  }, []);
 
   const createInboundRow = useCallback(
     () => ({
@@ -217,7 +247,7 @@ export function App() {
     () => [
       {
         key: "time",
-        label: "Time (s)",
+        label: "Time",
         placeholder: "0.00",
         parser: parseStrictNumber,
       },
@@ -636,7 +666,25 @@ export function App() {
   );
 
   return (
-    <div className={`$${appCss.layout}`}>
+    <div className={appCss.appLayout}>
+      <p className={appCss.appHeadingInfo}>
+        All the units must be consistent. For consistent units refer to{" "}
+        <a
+          className={appCss.appHeadingLink}
+          href="https://www.dynasupport.com/howtos/general/consistent-units"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          this guide
+        </a>
+        .
+      </p>
+      <div>
+        <UnitsTable
+          selectedUnitSystem={selectedUnitSystemId}
+          onUnitSystemChange={handleUnitSystemChange}
+        />
+      </div>
       <main className={appCss.layoutContent}>
         <div className={appCss.panel}>
           <h2>Solver Inputs</h2>
@@ -880,30 +928,36 @@ export function App() {
                       time={series.time}
                       values={series.displacement}
                       color="#3b82f6"
-                      units="in"
+                      units={unitLabels.displacement}
                       className={appCss.chartContainer}
                       selectedIndex={selection?.index ?? 0}
                       logoUrl={integralLogo}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.displacement}
                     />
                     <HistoryChart
                       title="Velocity"
                       time={series.time}
                       values={series.velocity}
                       color="#16a34a"
-                      units="in/s"
+                      units={unitLabels.velocity}
                       className={appCss.chartContainer}
                       selectedIndex={selection?.index ?? 0}
                       logoUrl={integralLogo}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.velocity}
                     />
                     <HistoryChart
                       title="Acceleration"
                       time={series.time}
                       values={series.acceleration}
                       color="#f97316"
-                      units="in/s²"
+                      units={unitLabels.acceleration}
                       selectedIndex={selection?.index ?? 0}
                       className={appCss.chartContainer}
                       logoUrl={integralLogo}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.acceleration}
                     />
                   </>
                 )}
@@ -915,6 +969,8 @@ export function App() {
                     selectedIndex={selection?.index ?? 0}
                     className={appCss.chartContainer}
                     logoUrl={integralLogo}
+                    xUnits={unitLabels.displacement}
+                    yUnits={unitLabels.force}
                   />
                 )}
               </div>
@@ -929,6 +985,8 @@ export function App() {
                   selectedIndex={0}
                   className={appCss.chartContainer}
                   logoUrl={integralLogo}
+                  xUnits={unitLabels.displacement}
+                  yUnits={unitLabels.force}
                 />
               ) : (
                 <div className={appCss.previewPlaceholder}>
@@ -943,9 +1001,11 @@ export function App() {
                   time={forcePreviewSeries.time}
                   values={forcePreviewSeries.values}
                   color="#0ea5e9"
-                  units=""
+                  units={unitLabels.force}
                   selectedIndex={forcePreviewSeries.time.length - 1}
                   logoUrl={integralLogo}
+                  xUnits={unitLabels.time}
+                  yUnits={unitLabels.force}
                 />
               ) : (
                 <div className={appCss.previewPlaceholder}>
@@ -974,6 +1034,7 @@ export function App() {
             backboneCurves={backboneCurves}
             backboneColumns={backboneColumns}
             forceColumns={forceColumns}
+            unitLabels={unitLabels}
           />
         )}
       </div>

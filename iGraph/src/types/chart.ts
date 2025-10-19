@@ -9,6 +9,8 @@ export interface HistoryChartProps {
   logoUrl?: string;
   width?: number; // Add this
   height?: number; // Add this
+  xUnits?: string;
+  yUnits?: string;
 }
 
 export interface BackboneCurves {
@@ -23,6 +25,8 @@ export interface BackboneChartProps {
   selectedIndex: number;
   className?: string;
   logoUrl?: string;
+  xUnits?: string;
+  yUnits?: string;
 }
 
 export interface ChartTick {

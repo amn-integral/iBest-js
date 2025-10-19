@@ -15,6 +15,8 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
   logoUrl,
   width: propWidth,
   height: propHeight,
+  xUnits = "",
+  yUnits = "",
 }) => {
   const { wrapperRef, containerWidth } = useChartResize(240);
 
@@ -264,7 +266,7 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
           fontSize="12"
           fill="#64748b"
         >
-          Time
+          Time ({xUnits})
         </text>
         <text
           className={`${styles.axisLabel} ${styles.axisLabelY}`}
@@ -273,7 +275,7 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
           fontSize="12"
           fill="#64748b"
         >
-          {title}
+          {title} ({yUnits})
         </text>
       </svg>
     </div>

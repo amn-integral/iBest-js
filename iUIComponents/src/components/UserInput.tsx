@@ -4,8 +4,9 @@ import styles from "./UserInput.module.css";
 /**
  * Safely evaluates a mathematical expression.
  * Returns the evaluated result or null if invalid.
+ * Export this so parent components can use it when needed.
  */
-function evaluateExpression(expr: string): number | null {
+export function evaluateExpression(expr: string): number | null {
   try {
     // Remove whitespace
     const cleaned = expr.trim();
@@ -59,7 +60,7 @@ export interface UserInputProps {
   onChange: (value: string) => void;
   unit?: string;
   helpText?: string;
-  type?: "text" | "number";
+  type?: "text" | "number" | "expression"; // "expression" allows math like "1*2"
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -90,7 +91,8 @@ export function UserInput({
     if (!validation) return null;
 
     const stringValue = String(inputValue);
-    const numericValue = type === "number" ? parseFloat(inputValue) : NaN;
+    const numericValue =
+      type === "number" || type === "expression" ? parseFloat(inputValue) : NaN;
 
     // Required check
     if (validation.required && !stringValue.trim()) {
@@ -100,8 +102,22 @@ export function UserInput({
     // Skip other validations if empty and not required
     if (!stringValue.trim()) return null;
 
+    // For expression type, validate that it's a valid expression
+    if (type === "expression") {
+      const evaluated = evaluateExpression(stringValue);
+      if (evaluated === null) {
+        return "Invalid mathematical expression";
+      }
+      // Use evaluated value for min/max checks
+      if (validation.min !== undefined && evaluated < validation.min) {
+        return `Value must be at least ${validation.min}`;
+      }
+      if (validation.max !== undefined && evaluated > validation.max) {
+        return `Value must be at most ${validation.max}`;
+      }
+    }
     // Min/Max for numbers
-    if (type === "number" && !isNaN(numericValue)) {
+    else if (type === "number" && !isNaN(numericValue)) {
       if (validation.min !== undefined && numericValue < validation.min) {
         return `Value must be at least ${validation.min}`;
       }
@@ -167,8 +183,22 @@ export function UserInput({
   };
 
   const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
-    // For number inputs, try to evaluate expressions
-    if (type === "number") {
+    // For expression type, validate but don't auto-evaluate
+    // The parent component can choose to evaluate when needed
+    if (type === "expression") {
+      const inputValue = e.target.value.trim();
+      if (inputValue) {
+        const evaluated = evaluateExpression(inputValue);
+        if (evaluated === null) {
+          // Invalid expression - could set an error here
+          // For now, just leave it as-is
+          return;
+        }
+        // Expression is valid but we keep it as-is in the field
+      }
+    }
+    // For number type, still auto-evaluate
+    else if (type === "number") {
       const inputValue = e.target.value.trim();
       if (inputValue) {
         const evaluated = evaluateExpression(inputValue);
@@ -221,7 +251,7 @@ export function UserInput({
 
       <div className={styles.inputWrapper}>
         <input
-          type={type}
+          type={type === "expression" ? "text" : type}
           value={value}
           onChange={handleInputChange}
           onBlur={handleBlur}
@@ -229,6 +259,7 @@ export function UserInput({
           disabled={disabled}
           className={`${styles.input} ${hasError ? styles.inputError : ""}`}
           title={errorMessage || undefined}
+          inputMode={type === "expression" ? "decimal" : undefined}
         />
         {hasError && <div className={styles.errorTooltip}>{errorMessage}</div>}
       </div>

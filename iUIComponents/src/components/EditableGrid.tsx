@@ -11,12 +11,14 @@ import {
 } from "react";
 
 import styles from "./EditableGrid.module.css";
+import { GridCell } from "./GridCell";
 
 type ColumnParser = (value: string) => number | null;
 
 export type ColumnConfig<K extends string> = {
   key: K;
   label: string;
+  unit?: string; // Unit to display in header (e.g., "m", "N", "Pa")
   placeholder?: string;
   parser?: ColumnParser;
   align?: "left" | "center" | "right";
@@ -39,6 +41,10 @@ type EditableGridProps<K extends string, TRow extends EditableGridRow<K>> = {
   toolbar?: ReactNode;
   maxHeight?: number;
   gridClassName?: string;
+  // Row count control
+  minRows?: number; // Minimum number of rows (default: 0)
+  maxRows?: number; // Maximum number of rows (default: unlimited)
+  showRowCount?: boolean; // Show row count input instead of toolbar (default: false)
 };
 
 type CellPosition = { row: number; col: number };
@@ -73,6 +79,9 @@ export function EditableGrid<
   onValidatedRows,
   toolbar,
   gridClassName,
+  minRows = 0,
+  maxRows,
+  showRowCount = false,
 }: EditableGridProps<K, TRow>) {
   const [activeCell, setActiveCell] = useState<CellPosition | null>(() => {
     if (rows.length === 0 || columns.length === 0) {
@@ -146,6 +155,23 @@ export function EditableGrid<
       );
     },
     [onRowsChange]
+  );
+
+  const handleRowCountChange = useCallback(
+    (newCount: number) => {
+      const currentCount = rows.length;
+      const targetCount = Math.max(minRows, maxRows ? Math.min(newCount, maxRows) : newCount);
+
+      if (targetCount > currentCount) {
+        // Add rows
+        const newRows = Array.from({ length: targetCount - currentCount }, () => createRow());
+        onRowsChange((prev) => [...prev, ...newRows]);
+      } else if (targetCount < currentCount) {
+        // Remove rows from the end
+        onRowsChange((prev) => prev.slice(0, targetCount));
+      }
+    },
+    [rows.length, minRows, maxRows, createRow, onRowsChange]
   );
 
   const moveSelection = useCallback(
@@ -486,55 +512,24 @@ export function EditableGrid<
     const rawValue = row[column.key] ?? "";
 
     return (
-      <td
+      <GridCell
         key={column.key}
-        style={{
-          width: column.width,
+        position={position}
+        column={column}
+        value={rawValue}
+        isActive={isActive}
+        isEditing={isEditing}
+        cellRef={(node) => registerCell(position, node)}
+        editingInputRef={editingInputRef}
+        onCellClick={() => {
+          setActiveCell(position);
+          setEditingCell(null);
         }}
-        className={classNames(
-          styles.editableGridCellWrapper,
-          isActive && styles.isActiveColumn
-        )}
-      >
-        <div
-          tabIndex={isActive ? 0 : -1}
-          ref={(node) => registerCell(position, node)}
-          className={classNames(
-            styles.editableGridCell,
-            isActive && styles.isActive,
-            isEditing && styles.isEditing,
-            column.align === "right" && styles.alignRight,
-            column.align === "center" && styles.alignCenter
-          )}
-          onClick={() => {
-            setActiveCell(position);
-            setEditingCell(null);
-          }}
-          onDoubleClick={() => startEditing(position)}
-          onKeyDown={(event) => {
-            // Only handle keydown when not editing
-            if (!isEditing) {
-              handleCellKeyDown(event, position);
-            }
-          }}
-        >
-          {isEditing ? (
-            <input
-              ref={editingInputRef}
-              defaultValue={rawValue}
-              onKeyDown={(event) => handleInputKeyDown(event, position)}
-              onBlur={handleInputBlur}
-              className={styles.editableGridInput}
-              placeholder={column.placeholder}
-              inputMode="decimal"
-            />
-          ) : (
-            <span className={styles.editableGridValue}>
-              {rawValue || "\u00A0"}
-            </span>
-          )}
-        </div>
-      </td>
+        onCellDoubleClick={() => startEditing(position)}
+        onCellKeyDown={(event) => handleCellKeyDown(event, position)}
+        onInputKeyDown={(event) => handleInputKeyDown(event, position)}
+        onInputBlur={handleInputBlur}
+      />
     );
   };
 
@@ -551,7 +546,21 @@ export function EditableGrid<
             {rows.length} row{rows.length === 1 ? "" : "s"}
           </p>
         </div>
-        {toolbar ? (
+        {showRowCount ? (
+          <div className={styles.editableGridActions}>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>Rows:</span>
+              <input
+                type="number"
+                min={minRows}
+                max={maxRows}
+                value={rows.length}
+                onChange={(e) => handleRowCountChange(parseInt(e.target.value) || minRows)}
+                style={{ width: "80px", padding: "4px 8px" }}
+              />
+            </label>
+          </div>
+        ) : toolbar ? (
           <div className={styles.editableGridActions}>{toolbar}</div>
         ) : (
           <div></div>
@@ -571,6 +580,7 @@ export function EditableGrid<
                 {columns.map((column) => (
                   <th key={column.key} style={{ width: column.width }}>
                     {column.label}
+                    {column.unit && <span style={{ fontWeight: "normal", marginLeft: "4px" }}>({column.unit})</span>}
                   </th>
                 ))}
               </tr>

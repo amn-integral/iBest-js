@@ -697,7 +697,7 @@ export function App() {
                 label="Mass"
                 value={massInput}
                 onChange={setMassInput}
-                type="number"
+                type="expression"
                 labelWidth="30%"
                 unit={currentSystem?.mass}
                 validation={{
@@ -711,7 +711,7 @@ export function App() {
                 label="Damping ratio"
                 value={dampingRatioInput}
                 onChange={setDampingRatioInput}
-                type="number"
+                type="expression"
                 labelWidth="30%"
                 validation={{
                   required: true,

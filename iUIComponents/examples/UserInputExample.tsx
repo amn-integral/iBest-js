@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserInput } from "../src/components/UserInput";
+import { UserInput, evaluateExpression  }from "../src/components/UserInput";
 
 /**
  * Example usage of the UserInput component
@@ -37,7 +37,7 @@ export function UserInputExample() {
           onChange={setLength}
           unit="ft"
           helpText="Enter the length of the structure in feet (must be between 1 and 100)"
-          type="number"
+          type="expression"
           placeholder="Enter length"
           validation={{
             required: true,
@@ -162,7 +162,7 @@ export function UserInputExample() {
         }}
       >
         <h3>Current Values:</h3>
-        <p>Length: {length} ft</p>
+        <p>Length: {evaluateExpression(length)} ft</p>
         <p>Width: {width} ft</p>
         <p>Height: {height || "not set"} m</p>
         <p>Name: {name || "not set"}</p>

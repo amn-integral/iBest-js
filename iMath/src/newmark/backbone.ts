@@ -58,9 +58,6 @@ export class BackboneCurve {
         "inboundData and reboundData must be non-empty lists of BackbonePoint",
       );
     }
-    if (inbound.length !== rebound.length) {
-      throw new Error("inboundData and reboundData must have equal length");
-    }
 
     this.originalInbound = clonePoints(inbound);
     this.originalRebound = clonePoints(rebound);

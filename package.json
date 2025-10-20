@@ -5,12 +5,14 @@
     "iVentedBlast-js",
     "iMath",
     "iGraph",
-    "iGSDOF"
+    "iGSDOF",
+    "iUIComponents"
   ],
   "scripts": {
     "build_iMath": "npm run build -w iMath",
     "build_iGraph": "npm run build -w iGraph",
-    "build_iGSDOF": "npm run build -w iMath && npm run build -w iGraph && npm run build -w iGSDOF",
+    "build_iUIComponents": "npm run build -w iUIComponents",
+    "build_iGSDOF": "npm run build -w iMath && npm run build -w iGraph && npm run build -w iUIComponents && npm run build -w iGSDOF",
     "report-sizes": "node scripts/report-all-sizes.js",
     "clean": "rm -rf **/dist/*"
   },

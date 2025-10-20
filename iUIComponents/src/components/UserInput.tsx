@@ -1,0 +1,237 @@
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
+import styles from "./UserInput.module.css";
+
+/**
+ * Safely evaluates a mathematical expression.
+ * Returns the evaluated result or null if invalid.
+ */
+function evaluateExpression(expr: string): number | null {
+  try {
+    // Remove whitespace
+    const cleaned = expr.trim();
+
+    // If it's just a number, return it
+    const directNumber = parseFloat(cleaned);
+    if (!isNaN(directNumber) && cleaned === String(directNumber)) {
+      return directNumber;
+    }
+
+    // Only allow numbers, operators, parentheses, and decimal points
+    if (!/^[\d+\-*/(). ]+$/.test(cleaned)) {
+      return null;
+    }
+
+    // Prevent dangerous patterns
+    if (
+      cleaned.includes("..") ||
+      /[+\-*/]{2,}/.test(cleaned.replace(/\*\*/g, ""))
+    ) {
+      return null;
+    }
+
+    // Evaluate using Function constructor (safer than eval)
+    const result = new Function(`'use strict'; return (${cleaned})`)();
+
+    // Verify result is a valid number
+    if (typeof result === "number" && !isNaN(result) && isFinite(result)) {
+      return result;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export interface ValidationRule {
+  required?: boolean;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: RegExp;
+  custom?: (value: string) => string | null; // Returns error message or null
+}
+
+export interface UserInputProps {
+  label: string;
+  value: string | number;
+  onChange: (value: string) => void;
+  unit?: string;
+  helpText?: string;
+  type?: "text" | "number";
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+  validation?: ValidationRule;
+  labelWidth?: number | string; // Width for label (can be percentage like "15%" or pixels like 120)
+}
+
+export function UserInput({
+  label,
+  value,
+  onChange,
+  unit,
+  helpText,
+  type = "text",
+  placeholder,
+  disabled = false,
+  className = "",
+  validation,
+  labelWidth = "15%",
+}: UserInputProps) {
+  const [showHelp, setShowHelp] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const helpButtonRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // Validate the input value
+  const validateInput = (inputValue: string): string | null => {
+    if (!validation) return null;
+
+    const stringValue = String(inputValue);
+    const numericValue = type === "number" ? parseFloat(inputValue) : NaN;
+
+    // Required check
+    if (validation.required && !stringValue.trim()) {
+      return "This field is required";
+    }
+
+    // Skip other validations if empty and not required
+    if (!stringValue.trim()) return null;
+
+    // Min/Max for numbers
+    if (type === "number" && !isNaN(numericValue)) {
+      if (validation.min !== undefined && numericValue < validation.min) {
+        return `Value must be at least ${validation.min}`;
+      }
+      if (validation.max !== undefined && numericValue > validation.max) {
+        return `Value must be at most ${validation.max}`;
+      }
+    }
+
+    // Min/Max length for text
+    if (
+      validation.minLength !== undefined &&
+      stringValue.length < validation.minLength
+    ) {
+      return `Must be at least ${validation.minLength} characters`;
+    }
+    if (
+      validation.maxLength !== undefined &&
+      stringValue.length > validation.maxLength
+    ) {
+      return `Must be at most ${validation.maxLength} characters`;
+    }
+
+    // Pattern validation
+    if (validation.pattern && !validation.pattern.test(stringValue)) {
+      return "Invalid format";
+    }
+
+    // Custom validation
+    if (validation.custom) {
+      return validation.custom(stringValue);
+    }
+
+    return null;
+  };
+
+  // Validate on value change
+  useEffect(() => {
+    const error = validateInput(String(value));
+    setErrorMessage(error);
+  }, [value, validation]);
+
+  // Close help popup when clicking outside
+  useEffect(() => {
+    if (!showHelp) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popupRef.current &&
+        helpButtonRef.current &&
+        !popupRef.current.contains(event.target as Node) &&
+        !helpButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowHelp(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showHelp]);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  };
+
+  const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
+    // For number inputs, try to evaluate expressions
+    if (type === "number") {
+      const inputValue = e.target.value.trim();
+      if (inputValue) {
+        const evaluated = evaluateExpression(inputValue);
+        if (evaluated !== null) {
+          onChange(String(evaluated));
+        }
+      }
+    }
+  };
+
+  const hasError = !!errorMessage;
+
+  return (
+    <div className={`${styles.userInput} ${className}`}>
+      <label
+        className={styles.label}
+        style={{ width: labelWidth, minWidth: labelWidth }}
+      >
+        {label}
+      </label>
+
+      {/* Always render unit space for consistent alignment */}
+      {unit ? (
+        <span className={styles.unit}>({unit})</span>
+      ) : (
+        <span className={styles.unitPlaceholder} />
+      )}
+
+      {/* Always render help button space for consistent alignment */}
+      {helpText ? (
+        <div className={styles.helpContainer}>
+          <button
+            ref={helpButtonRef}
+            type="button"
+            className={styles.helpButton}
+            onClick={() => setShowHelp(!showHelp)}
+            aria-label="Help"
+          >
+            ?
+          </button>
+          {showHelp && (
+            <div ref={popupRef} className={styles.helpPopup}>
+              {helpText}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className={styles.helpPlaceholder} />
+      )}
+
+      <div className={styles.inputWrapper}>
+        <input
+          type={type}
+          value={value}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`${styles.input} ${hasError ? styles.inputError : ""}`}
+          title={errorMessage || undefined}
+        />
+        {hasError && <div className={styles.errorTooltip}>{errorMessage}</div>}
+      </div>
+    </div>
+  );
+}

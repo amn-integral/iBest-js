@@ -20,12 +20,17 @@ import {
 } from "@integralrsg/igraph";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import {
+  EditableGrid,
+  UnitsTable,
+  UserInput,
+  UNIT_SYSTEMS,
+  type ColumnConfig,
+} from "@integralrsg/iuicomponents";
+import "@integralrsg/iuicomponents/styles";
 const integralLogo = `${import.meta.env.BASE_URL}integralLogo.svg`;
 
-import { EditableGrid } from "./components/EditableGrid";
-import { UnitsTable, UNIT_SYSTEMS } from "./components/UnitsTable";
 import { Report } from "./components/Report";
-import type { ColumnConfig } from "./components/EditableGrid";
 import appCss from "./App.module.css";
 
 type BackboneRow = {
@@ -169,6 +174,10 @@ export function App() {
     };
   }, [selectedUnitSystemId]);
 
+  const currentSystem = useMemo(() => {
+    return UNIT_SYSTEMS.find((s) => s.id === selectedUnitSystemId);
+  }, [selectedUnitSystemId]);
+
   const handleUnitSystemChange = useCallback((unitSystemId: string) => {
     setSelectedUnitSystemId(unitSystemId);
   }, []);
@@ -199,14 +208,6 @@ export function App() {
       time: "",
       force: "",
     }),
-    []
-  );
-
-  const handleScalarChange = useCallback(
-    (setter: (value: string) => void) =>
-      (event: ChangeEvent<HTMLInputElement>) => {
-        setter(event.target.value);
-      },
     []
   );
 
@@ -692,64 +693,49 @@ export function App() {
           <section className={appCss.solverInputs}>
             <h3 className={appCss.solverInputsHeading}>System parameters</h3>
             <div className={appCss.solverInputsTable}>
+              <UserInput
+                label="Mass"
+                value={massInput}
+                onChange={setMassInput}
+                type="number"
+                labelWidth="30%"
+                unit={currentSystem?.mass}
+                validation={{
+                  required: true,
+                  min: 0,
+                }}
+                helpText="Mass of the system"
+              />
+
+              <UserInput
+                label="Damping ratio"
+                value={dampingRatioInput}
+                onChange={setDampingRatioInput}
+                type="number"
+                labelWidth="30%"
+                validation={{
+                  required: true,
+                  min: 0,
+                  max: 1,
+                }}
+                helpText="Damping ratio, 0.02, 0.05 typically for steel and concrete systems respectively"
+              />
+
+              <UserInput
+                label="Total time"
+                value={totalTimeInput}
+                onChange={setTotalTimeInput}
+                type="number"
+                labelWidth="30%"
+                unit={currentSystem?.time}
+                validation={{
+                  required: true,
+                  min: 0,
+                }}
+                helpText="Analysis duration (typically set 2 times the force duration or until response stabilizes)"
+              />
+
               <div className={appCss.solverInputsRow}>
-                <label
-                  className={appCss.solverInputsLabel}
-                  htmlFor="solver-mass"
-                >
-                  Mass
-                </label>
-                <input
-                  id="solver-mass"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  className={appCss.solverInputsInput}
-                  value={massInput}
-                  onChange={handleScalarChange(setMassInput)}
-                />
-              </div>
-              <div className={appCss.solverInputsRow}>
-                <label
-                  className={appCss.solverInputsLabel}
-                  htmlFor="solver-damping-ratio"
-                >
-                  Damping ratio
-                </label>
-                <input
-                  id="solver-damping-ratio"
-                  className={appCss.solverInputsInput}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  value={dampingRatioInput}
-                  onChange={handleScalarChange(setDampingRatioInput)}
-                />
-              </div>
-              <div className={appCss.solverInputsRow}>
-                <label
-                  className={appCss.solverInputsLabel}
-                  htmlFor="solver-total-time"
-                >
-                  Total time
-                </label>
-                <input
-                  id="solver-total-time"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0"
-                  className={appCss.solverInputsInput}
-                  value={totalTimeInput}
-                  onChange={handleScalarChange(setTotalTimeInput)}
-                />
-              </div>
-              <div
-                className={
-                  appCss.solverInputsRow + " " + appCss.solverInputsRowToggle
-                }
-              >
                 <span className={appCss.solverInputsLabel}>
                   Automatic time step
                 </span>
@@ -764,25 +750,20 @@ export function App() {
                   <span className={appCss.solverInputsToggleSlider} />
                 </label>
               </div>
-              <div className={appCss.solverInputsRow}>
-                <label
-                  className={appCss.solverInputsLabel}
-                  htmlFor="solver-time-step"
-                >
-                  Fixed time step
-                </label>
-                <input
-                  id="solver-time-step"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.0001"
-                  min="0"
-                  className={appCss.solverInputsInput}
-                  value={timeStepInput}
-                  onChange={handleScalarChange(setTimeStepInput)}
-                  disabled={autoStep}
-                />
-              </div>
+
+              <UserInput
+                label="Fixed time step"
+                value={timeStepInput}
+                onChange={setTimeStepInput}
+                type="number"
+                labelWidth="30%"
+                unit={currentSystem?.time}
+                disabled={autoStep}
+                validation={{
+                  min: 0,
+                }}
+                helpText="Fixed time step value (only used when automatic time step is off). Automatic time step is period/1000."
+              />
             </div>
           </section>
 

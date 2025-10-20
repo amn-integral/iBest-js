@@ -88,7 +88,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({
       <h2>Unit System Selector (Mass, Length, Time, Force, Stress)</h2>
       <p>The solver is unitless. The units are used for graphs.</p>
       <label htmlFor="unitSelect">
-        Select a Unit System:
+        Select a unit system for graphing:
         <select
           id="unitSelect"
           value={selectedUnitSystem}

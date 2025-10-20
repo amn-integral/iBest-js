@@ -1,5 +1,4 @@
 import {
-  type ChangeEvent,
   type Dispatch,
   type KeyboardEvent,
   type ReactNode,
@@ -192,21 +191,42 @@ export function EditableGrid<
       }
       setActiveCell(position);
       const originalValue = row[column.key] ?? "";
-      if (overwriteValue !== undefined) {
-        const nextValue = overwriteValue === null ? "" : overwriteValue;
-        updateCellValue(position.row, column.key, nextValue);
-      }
+      const initialEditValue =
+        overwriteValue !== undefined
+          ? overwriteValue === null
+            ? ""
+            : overwriteValue
+          : originalValue;
+
       setEditingCell({
         row: position.row,
         col: position.col,
         originalValue,
       });
+
+      // Set input value directly after a small delay to ensure it's mounted
+      setTimeout(() => {
+        if (editingInputRef.current) {
+          editingInputRef.current.value = initialEditValue;
+        }
+      }, 0);
     },
-    [columns, rows, updateCellValue]
+    [columns, rows]
   );
 
   const finishEditing = useCallback(
     (movement?: { rowDelta?: number; colDelta?: number }) => {
+      // Save the editing value to the row before finishing
+      if (editingCell && editingInputRef.current) {
+        const column = columns[editingCell.col];
+        if (column) {
+          updateCellValue(
+            editingCell.row,
+            column.key,
+            editingInputRef.current.value
+          );
+        }
+      }
       setEditingCell(null);
       if (!movement) {
         return;
@@ -231,21 +251,12 @@ export function EditableGrid<
         return { row: nextRow, col: nextCol };
       });
     },
-    [rows.length, columns.length]
+    [editingCell, columns, updateCellValue, rows.length, columns.length]
   );
 
   const cancelEditing = useCallback(() => {
-    setEditingCell((current) => {
-      if (!current) {
-        return null;
-      }
-      const column = columns[current.col];
-      if (column) {
-        updateCellValue(current.row, column.key, current.originalValue);
-      }
-      return null;
-    });
-  }, [columns, updateCellValue]);
+    setEditingCell(null);
+  }, []);
 
   useEffect(() => {
     if (!onValidatedRows) {
@@ -398,69 +409,68 @@ export function EditableGrid<
     }
   };
 
-  const handleInputKeyDown = (
-    event: KeyboardEvent<HTMLInputElement>,
-    position: CellPosition
-  ) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      finishEditing({ rowDelta: event.shiftKey ? -1 : 1 });
-      return;
-    }
-    if (event.key === "Tab") {
-      event.preventDefault();
-      if (event.shiftKey) {
-        finishEditing();
-        if (position.col === 0) {
-          if (position.row > 0) {
-            moveTo(position.row - 1, columns.length - 1);
+  const handleInputKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>, position: CellPosition) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        finishEditing({ rowDelta: event.shiftKey ? -1 : 1 });
+        return;
+      }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        if (event.shiftKey) {
+          finishEditing();
+          if (position.col === 0) {
+            if (position.row > 0) {
+              moveTo(position.row - 1, columns.length - 1);
+            }
+          } else {
+            moveSelection(0, -1);
+          }
+        } else if (position.col === columns.length - 1) {
+          finishEditing();
+          if (position.row === rows.length - 1) {
+            appendRow(0);
+          } else {
+            moveTo(position.row + 1, 0);
           }
         } else {
-          moveSelection(0, -1);
+          finishEditing();
+          moveSelection(0, 1);
         }
-      } else if (position.col === columns.length - 1) {
-        finishEditing();
-        if (position.row === rows.length - 1) {
-          appendRow(0);
-        } else {
-          moveTo(position.row + 1, 0);
-        }
-      } else {
-        finishEditing();
-        moveSelection(0, 1);
+        return;
       }
-      return;
-    }
-    if (event.key === "Escape") {
-      event.preventDefault();
-      cancelEditing();
-      return;
-    }
-    if (event.key === "ArrowUp" && event.ctrlKey) {
-      event.preventDefault();
-      finishEditing({ rowDelta: -1 });
-      return;
-    }
-    if (event.key === "ArrowDown" && event.ctrlKey) {
-      event.preventDefault();
-      finishEditing({ rowDelta: 1 });
-    }
-  };
+      if (event.key === "Escape") {
+        event.preventDefault();
+        cancelEditing();
+        return;
+      }
+      if (event.key === "ArrowUp" && event.ctrlKey) {
+        event.preventDefault();
+        finishEditing({ rowDelta: -1 });
+        return;
+      }
+      if (event.key === "ArrowDown" && event.ctrlKey) {
+        event.preventDefault();
+        finishEditing({ rowDelta: 1 });
+      }
+    },
+    [
+      finishEditing,
+      moveTo,
+      moveSelection,
+      cancelEditing,
+      appendRow,
+      columns.length,
+      rows.length,
+    ]
+  );
 
-  const handleInputChange = (
-    event: ChangeEvent<HTMLInputElement>,
-    position: CellPosition
-  ) => {
-    const column = columns[position.col];
-    if (!column) {
-      return;
-    }
-    updateCellValue(position.row, column.key, event.target.value);
-  };
+  // No need for handleInputChange with uncontrolled input
 
-  const handleInputBlur = () => {
+  const handleInputBlur = useCallback(() => {
     finishEditing();
-  };
+  }, [finishEditing]);
 
   const renderCell = (rowIndex: number, colIndex: number) => {
     const column = columns[colIndex];
@@ -501,13 +511,17 @@ export function EditableGrid<
             setEditingCell(null);
           }}
           onDoubleClick={() => startEditing(position)}
-          onKeyDown={(event) => handleCellKeyDown(event, position)}
+          onKeyDown={(event) => {
+            // Only handle keydown when not editing
+            if (!isEditing) {
+              handleCellKeyDown(event, position);
+            }
+          }}
         >
           {isEditing ? (
             <input
               ref={editingInputRef}
-              value={rawValue}
-              onChange={(event) => handleInputChange(event, position)}
+              defaultValue={rawValue}
               onKeyDown={(event) => handleInputKeyDown(event, position)}
               onBlur={handleInputBlur}
               className={styles.editableGridInput}
@@ -539,17 +553,15 @@ export function EditableGrid<
         </div>
         {toolbar ? (
           <div className={styles.editableGridActions}>{toolbar}</div>
-        ) : <div></div>}
+        ) : (
+          <div></div>
+        )}
       </header>
-      <div className={styles.editableGridTable} >
+      <div className={styles.editableGridTable}>
         {rows.length === 0 ? (
           <div className={styles.editableGridEmptyState}>
             <p>No rows yet. Use the toolbar to add a new row.</p>
-            <button
-              type="button"
-            >
-              + Add first row
-            </button>
+            <button type="button">+ Add first row</button>
           </div>
         ) : (
           <table role="grid">

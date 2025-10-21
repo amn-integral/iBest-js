@@ -6,24 +6,24 @@
  * Useful for production builds or when symlinks cause issues
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const ROOT = path.resolve(__dirname, '..');
-const NODE_MODULES = path.join(ROOT, 'node_modules', '@integralrsg');
+const ROOT = path.resolve(__dirname, "..");
+const NODE_MODULES = path.join(ROOT, "node_modules", "@integralrsg");
 
 const PACKAGES = [
-  { name: 'imath', source: 'iMath' },
-  { name: 'igraph', source: 'iGraph' },
-  { name: 'igsdof', source: 'iGSDOF' },
-  { name: 'iuicomponents', source: 'iUIComponents' },
+  { name: "imath", source: "iMath" },
+  { name: "igraph", source: "iGraph" },
+  { name: "igsdof", source: "iGSDOF" },
+  { name: "iuicomponents", source: "iUIComponents" },
 ];
 
-console.log('🔓 Unlinking workspace packages...\n');
+console.log("🔓 Unlinking workspace packages...\n");
 
 // Ensure @integralrsg directory exists
 if (!fs.existsSync(NODE_MODULES)) {
-  console.log('⚠️  No @integralrsg directory found in node_modules');
+  console.log("⚠️  No @integralrsg directory found in node_modules");
   process.exit(0);
 }
 
@@ -32,8 +32,8 @@ let unlinkedCount = 0;
 PACKAGES.forEach(({ name, source }) => {
   const target = path.join(NODE_MODULES, name);
   const sourcePath = path.join(ROOT, source);
-  const distPath = path.join(sourcePath, 'dist');
-  const packageJsonPath = path.join(sourcePath, 'package.json');
+  const distPath = path.join(sourcePath, "dist");
+  const packageJsonPath = path.join(sourcePath, "package.json");
 
   // Check if target exists
   if (!fs.existsSync(target)) {
@@ -63,11 +63,11 @@ PACKAGES.forEach(({ name, source }) => {
   fs.mkdirSync(target, { recursive: true });
 
   // Copy dist folder
-  copyRecursive(distPath, path.join(target, 'dist'));
-  
+  copyRecursive(distPath, path.join(target, "dist"));
+
   // Copy package.json
   if (fs.existsSync(packageJsonPath)) {
-    fs.copyFileSync(packageJsonPath, path.join(target, 'package.json'));
+    fs.copyFileSync(packageJsonPath, path.join(target, "package.json"));
   }
 
   console.log(`✓ Unlinked ${name} (copied dist + package.json)`);
@@ -75,11 +75,15 @@ PACKAGES.forEach(({ name, source }) => {
 });
 
 if (unlinkedCount === 0) {
-  console.log('\n⚠️  No symlinks were found to unlink.');
+  console.log("\n⚠️  No symlinks were found to unlink.");
 } else {
   console.log(`\n✅ Unlinked ${unlinkedCount} package(s)!`);
-  console.log('\n💡 Tip: Run "npm run sync-builds" after building to update copies.');
-  console.log('💡 Tip: Run "npm run setup-links" to restore symlinks for development.');
+  console.log(
+    '\n💡 Tip: Run "npm run sync-builds" after building to update copies.'
+  );
+  console.log(
+    '💡 Tip: Run "npm run setup-links" to restore symlinks for development.'
+  );
 }
 
 /**

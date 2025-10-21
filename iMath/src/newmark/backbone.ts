@@ -46,11 +46,17 @@ export class BackboneCurve {
   public inboundStiffness = 0;
   public reboundStiffness = 0;
 
+  public  max_resistance: number;
+  public min_resistance: number;
+
+
   private readonly originalInbound: BackbonePoint[];
   private readonly originalRebound: BackbonePoint[];
   private stiffnessCache = new Map<number, number>();
   private klmCache = new Map<number, number>();
   private backboneBuilt = false;
+
+
 
   constructor(inbound: BackbonePoint[], rebound: BackbonePoint[]) {
     if (!inbound.length || !rebound.length) {
@@ -208,6 +214,10 @@ export class BackboneCurve {
 
     this.inboundStiffness = this.getStiffnessInRegion(1);
     this.reboundStiffness = this.getStiffnessInRegion(-1);
+   
+    this.max_resistance = Math.max(...this.yValues);
+    this.min_resistance = Math.min(...this.yValues);
+   
     this.backboneBuilt = true;
   }
 }

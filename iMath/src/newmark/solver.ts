@@ -48,7 +48,10 @@ export function newmarkSolver(
   force: ForceCurve,
   initialConditions: InitialConditions,
   settings: SolverSettings,
-  params: NewmarkParameters = averageAcceleration
+  params: NewmarkParameters = averageAcceleration,
+  gravity_effect: boolean = false,
+  added_weight: number = 0,
+  gravity_constant: number = 386,
 ): NewmarkResponse {
   const beta = params.beta;
   const gamma = params.gamma;
@@ -92,6 +95,12 @@ export function newmarkSolver(
   u[0] = initialConditions.u0;
   v[0] = initialConditions.v0;
 
+  // Gravitational effect
+  let gravity_force = 0.0;
+  if (gravity_effect) {
+    gravity_force += mass * gravity_constant + added_weight;
+  }  
+
   resistance.updateCurrentRegion(u[0]);
 
   const forceDiscretized = force.discretizeCurve(steps, dt);
@@ -100,6 +109,10 @@ export function newmarkSolver(
 
   fs[0] = resistance.getAt(u[0]);
   kT[0] = resistance.getStiffnessInRegion(resistance.currentRegion);
+
+  if (gravity_force > resistance.max_resistance){
+    throw new Error(`Gravitational force ${gravity_force.toPrecision(4)} exceeds maximum backbone resistance ${resistance.max_resistance.toPrecision(4)}.`);
+  }
 
   let klm = resistance.getKlmInRegion();
   const baseMass = mass;

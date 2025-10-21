@@ -160,11 +160,16 @@ export function EditableGrid<
   const handleRowCountChange = useCallback(
     (newCount: number) => {
       const currentCount = rows.length;
-      const targetCount = Math.max(minRows, maxRows ? Math.min(newCount, maxRows) : newCount);
+      const targetCount = Math.max(
+        minRows,
+        maxRows ? Math.min(newCount, maxRows) : newCount
+      );
 
       if (targetCount > currentCount) {
         // Add rows
-        const newRows = Array.from({ length: targetCount - currentCount }, () => createRow());
+        const newRows = Array.from({ length: targetCount - currentCount }, () =>
+          createRow()
+        );
         onRowsChange((prev) => [...prev, ...newRows]);
       } else if (targetCount < currentCount) {
         // Remove rows from the end
@@ -548,14 +553,18 @@ export function EditableGrid<
         </div>
         {showRowCount ? (
           <div className={styles.editableGridActions}>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
               <span>Rows:</span>
               <input
                 type="number"
                 min={minRows}
                 max={maxRows}
                 value={rows.length}
-                onChange={(e) => handleRowCountChange(parseInt(e.target.value) || minRows)}
+                onChange={(e) =>
+                  handleRowCountChange(parseInt(e.target.value) || minRows)
+                }
                 style={{ width: "80px", padding: "4px 8px" }}
               />
             </label>
@@ -580,7 +589,11 @@ export function EditableGrid<
                 {columns.map((column) => (
                   <th key={column.key} style={{ width: column.width }}>
                     {column.label}
-                    {column.unit && <span style={{ fontWeight: "normal", marginLeft: "4px" }}>({column.unit})</span>}
+                    {column.unit && (
+                      <span style={{ fontWeight: "normal", marginLeft: "4px" }}>
+                        ({column.unit})
+                      </span>
+                    )}
                   </th>
                 ))}
               </tr>

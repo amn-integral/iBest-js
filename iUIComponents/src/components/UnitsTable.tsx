@@ -8,66 +8,14 @@ export interface UnitSystem {
   time: string;
   force: string;
   stress: string;
+  gravity: number;
 }
 
 export const UNIT_SYSTEMS: UnitSystem[] = [
-  { id: "si", mass: "kg", length: "m", time: "s", force: "N", stress: "Pa" },
-  {
-    id: "kg-mm-ms",
-    mass: "kg",
-    length: "mm",
-    time: "ms",
-    force: "kN",
-    stress: "GPa",
-  },
-  {
-    id: "cm-gs",
-    mass: "g",
-    length: "cm",
-    time: "s",
-    force: "dyne",
-    stress: "dyne/cm²",
-  },
-  {
-    id: "mm-ms-2",
-    mass: "g",
-    length: "mm",
-    time: "ms",
-    force: "1.0e-06 N",
-    stress: "Pa",
-  },
-  {
-    id: "ton",
-    mass: "ton",
-    length: "mm",
-    time: "ms",
-    force: "N",
-    stress: "MPa",
-  },
-  {
-    id: "imperial",
-    mass: "lbf·s²/in",
-    length: "in",
-    time: "s",
-    force: "lbf",
-    stress: "psi",
-  },
-  {
-    id: "slug",
-    mass: "slug",
-    length: "ft",
-    time: "s",
-    force: "lbf",
-    stress: "psf",
-  },
-  {
-    id: "g-cm-ms",
-    mass: "g",
-    length: "cm",
-    time: "ms",
-    force: "1.0e+01 N",
-    stress: "1.0e+05 Pa",
-  },
+  { id: "kg-m-s", mass: "kg", length: "m", time: "s", force: "N", stress: "Pa", gravity: 9.806 },
+  { id: "kg-mm-msecs", mass: "kg", length: "mm", time: "msecs", force: "kN", stress: "GPa", gravity: 9.806E-3 },
+  { id: "lbf-s^2/in-in-secs", mass: "lbf-s^2/in", length: "in", time: "secs", force: "psi", stress: "lbf-in", gravity: 386.0 },
+  { id: "slug-ft-secs", mass: "slug", length: "ft", time: "secs", force: "lbf", stress: "psf", gravity: 32.17 },
 ];
 
 interface UnitsTableProps {
@@ -97,8 +45,7 @@ export const UnitsTable: React.FC<UnitsTableProps> = ({
           <option value="">-- Select --</option>
           {UNIT_SYSTEMS.map((unit) => (
             <option key={unit.id} value={unit.id}>
-              {unit.mass}, {unit.length}, {unit.time}, {unit.force},{" "}
-              {unit.stress}
+              {unit.mass}, {unit.length}, {unit.time}, {unit.force}, {unit.stress}, Gravity Constant: {unit.gravity}
             </option>
           ))}
         </select>

@@ -128,7 +128,7 @@ export function newmarkSolver(
     c = -c;
   }
 
-  a[0] = (applied[0] - c * v[0] - fs[0]) / effectiveMass;
+  a[0] = (applied[0] - c * v[0] - fs[0] + gravity_force) / effectiveMass;
 
   let a1 = effectiveMass * invBetaDt2 + c * gammaOverBetaDt;
   let a2 = effectiveMass * invBetaDt - c * oneMinusGammaOverBeta;
@@ -144,7 +144,7 @@ export function newmarkSolver(
 
     applied[i + 1] = forces[i + 1];
 
-    pHat[i + 1] = applied[i + 1] + a1 * u[i] + a2 * v[i] + a3 * a[i];
+    pHat[i + 1] = applied[i + 1] + a1 * u[i] + a2 * v[i] + a3 * a[i] + gravity_force;
 
     let iterations = 0;
     while (true) {

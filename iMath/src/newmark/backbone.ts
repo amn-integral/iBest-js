@@ -46,8 +46,8 @@ export class BackboneCurve {
   public inboundStiffness = 0;
   public reboundStiffness = 0;
 
-  public  max_resistance: number;
-  public min_resistance: number;
+  public  max_resistance: number = 0.0;
+  public min_resistance: number = 0.0;
 
 
   private readonly originalInbound: BackbonePoint[];

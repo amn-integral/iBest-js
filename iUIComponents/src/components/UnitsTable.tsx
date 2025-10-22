@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import style from "./UnitsTable.module.css";
 
 export interface UnitSystem {
@@ -27,7 +27,7 @@ interface UnitsTableProps {
 export const UnitsTable: React.FC<UnitsTableProps> = ({
   selectedUnitSystem,
   onUnitSystemChange,
-}) => {
+}: UnitsTableProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onUnitSystemChange(e.target.value);
   };

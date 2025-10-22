@@ -65,7 +65,6 @@ export interface UserInputProps {
   disabled?: boolean;
   className?: string;
   validation?: ValidationRule;
-  labelWidth?: number | string; // Width for label (can be percentage like "15%" or pixels like 120)
 }
 
 export function UserInput({
@@ -79,7 +78,6 @@ export function UserInput({
   disabled = false,
   className = "",
   validation,
-  labelWidth = "15%",
 }: UserInputProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -212,44 +210,37 @@ export function UserInput({
   const hasError = !!errorMessage;
 
   return (
-    <div className={`${styles.userInput} ${className}`}>
-      <label
-        className={styles.label}
-        style={{ width: labelWidth, minWidth: labelWidth }}
-      >
-        {label}
-      </label>
+    <div className={styles.userInput}>
+      <label className={styles.uiLabel}>{label}</label>
 
       {/* Always render unit space for consistent alignment */}
-      {unit ? (
-        <span className={styles.unit}>({unit})</span>
-      ) : (
-        <span className={styles.unitPlaceholder} />
-      )}
+        <span className={styles.uiUnit}>       
+          {unit ? "(" + unit + ")": ""}
+        </span>
 
       {/* Always render help button space for consistent alignment */}
       {helpText ? (
-        <div className={styles.helpContainer}>
+        <div className={styles.uiHelpContainer}>
           <button
             ref={helpButtonRef}
             type="button"
-            className={styles.helpButton}
+            className={styles.uiHelpButton}
             onClick={() => setShowHelp(!showHelp)}
             aria-label="Help"
           >
             ?
           </button>
           {showHelp && (
-            <div ref={popupRef} className={styles.helpPopup}>
+            <div ref={popupRef} className={styles.uiHelpPopup}>
               {helpText}
             </div>
           )}
         </div>
       ) : (
-        <div className={styles.helpPlaceholder} />
+        <div className={styles.uiHelpPlaceholder} />
       )}
 
-      <div className={styles.inputWrapper}>
+      <div className={styles.uiInputWrapper}>
         <input
           type={type === "expression" ? "text" : type}
           value={value}
@@ -257,11 +248,11 @@ export function UserInput({
           onBlur={handleBlur}
           placeholder={placeholder}
           disabled={disabled}
-          className={`${styles.input} ${hasError ? styles.inputError : ""}`}
+          className={`${styles.uiInput} ${hasError ? styles.uiInputError : ""}`}
           title={errorMessage || undefined}
           inputMode={type === "expression" ? "decimal" : undefined}
         />
-        {hasError && <div className={styles.errorTooltip}>{errorMessage}</div>}
+        {hasError && <div className={styles.uiErrorTooltip}>{errorMessage}</div>}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@
 
 .ui-label {
   font-weight: normal;
-  font-size: 14px;
+  font-size: medium;
   color: #000000;
   white-space: nowrap;
   text-align: left;
@@ -19,7 +19,7 @@
 
 .ui-unit {
   font-weight: normal;
-  font-size: 14px;
+  font-size: small;
   color: #000000;
   white-space: nowrap;
   text-align: center;
@@ -59,7 +59,7 @@
   background-color: #a9f0fa;
   color: #000;
   font-weight: bold;
-  font-size: 14px;
+  font-size: small;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -100,7 +100,7 @@
   border-radius: 4px;
   background-color: #fff;
   color: #000;
-  font-size: 14px;
+  font-size: medium;
   font-family: Arial, sans-serif;
   outline: none;
 }

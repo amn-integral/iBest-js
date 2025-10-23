@@ -9,6 +9,7 @@
     "baseUrl": ".",
     "paths": {
       "@integralrsg/imath": ["iMath/src"],
+      "@integralrsg/iuicomponents": ["iUIComponents/src"],
       "@integralrsg/igraph": ["iGraph/src"]
     }
   }

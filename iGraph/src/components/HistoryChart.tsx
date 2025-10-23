@@ -9,7 +9,6 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
   time,
   values,
   color,
-  units,
   selectedIndex,
   className = "",
   logoUrl,

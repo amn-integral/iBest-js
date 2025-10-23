@@ -3,7 +3,6 @@ export interface HistoryChartProps {
   time: number[];
   values: number[];
   color: string;
-  units: string;
   selectedIndex?: number;
   className?: string;
   logoUrl?: string;

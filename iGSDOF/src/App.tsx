@@ -11,6 +11,10 @@ import {
   ForceCurve,
   newmarkSolver,
   averageAcceleration,
+  type InitialConditions,
+  type SolverSettings,
+  type NewmarkParameters,
+  type NewmarkResponse,
 } from "@integralrsg/imath";
 import {
   HistoryChart,
@@ -108,14 +112,18 @@ export function App() {
   const forceIdRef = useRef(1);
 
   const [massInput, setMassInput] = useState("0.2553");
+  const [rotationLengthInput, setRotationLengthInput] = useState("10.0");
   const [dampingRatioInput, setDampingRatioInput] = useState("0.05");
   const [totalTimeInput, setTotalTimeInput] = useState("1.0");
-  const [timeStepInput, setTimeStepInput] = useState("0.1");
   const [autoStep, setAutoStep] = useState(false);
+  const [timeStepInput, setTimeStepInput] = useState("0.1");
+  const [orientation, setOrientation] = useState<"Vertical" | "Horizontal">(
+    "Vertical"
+  );
 
   // Unit system state - default to imperial
   const [selectedUnitSystemId, setSelectedUnitSystemId] =
-    useState<string>("imperial");
+    useState<string>("lbf-s^2/in-in-secs");
 
   const [inboundRows, setInboundRows] = useState<BackboneRow[]>(() =>
     INITIAL_INBOUND_DATA.map((row) => ({
@@ -140,6 +148,12 @@ export function App() {
     () => parseStrictNumber(massInput) ?? Number.NaN,
     [massInput]
   );
+
+  const length = useMemo(
+    () => parseStrictNumber(rotationLengthInput) ?? Number.NaN,
+    [rotationLengthInput]
+  );
+
   const dampingRatio = useMemo(
     () => parseStrictNumber(dampingRatioInput) ?? Number.NaN,
     [dampingRatioInput]
@@ -155,7 +169,9 @@ export function App() {
 
   // Derive unit labels from selected unit system
   const unitLabels = useMemo(() => {
-    const system = UNIT_SYSTEMS.find((s) => s.id === selectedUnitSystemId);
+    const system = UNIT_SYSTEMS.find(
+      (s: { id: string }) => s.id === selectedUnitSystemId
+    );
     if (!system) {
       return {
         displacement: "",
@@ -175,7 +191,9 @@ export function App() {
   }, [selectedUnitSystemId]);
 
   const currentSystem = useMemo(() => {
-    return UNIT_SYSTEMS.find((s) => s.id === selectedUnitSystemId);
+    return UNIT_SYSTEMS.find(
+      (s: { id: string }) => s.id === selectedUnitSystemId
+    );
   }, [selectedUnitSystemId]);
 
   const handleUnitSystemChange = useCallback((unitSystemId: string) => {
@@ -284,18 +302,6 @@ export function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const reportRef = useRef<HTMLDivElement | null>(null);
 
-  const handleAddInboundRow = () => {
-    setInboundRows((prev) => [...prev, createInboundRow()]);
-  };
-
-  const handleAddReboundRow = () => {
-    setReboundRows((prev) => [...prev, createReboundRow()]);
-  };
-
-  const handleAddForceRow = () => {
-    setForceRows((prev) => [...prev, createForceRow()]);
-  };
-
   const handleForceCsvImport = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -363,22 +369,6 @@ export function App() {
 
     reader.readAsText(file);
   };
-
-  const copyForceTable = useCallback(async () => {
-    const text = forceRows
-      .map((row) => forceColumns.map((column) => row[column.key]).join("\t"))
-      .join("\n");
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-    }
-  }, [forceRows, forceColumns]);
 
   const generatePdf = useCallback(async () => {
     if (!reportRef.current) {
@@ -504,6 +494,11 @@ export function App() {
     }
   }, [series]);
 
+  // Rotation calculations
+  const [rotationHistory, setRotationHistory] = useState<{
+    angle: number[];
+  }>({  angle: [] });
+
   const runSolver = () => {
     const validationErrors: string[] = [];
 
@@ -559,22 +554,40 @@ export function App() {
       );
 
       const start = performance.now();
-      const response = newmarkSolver(
+
+      const initialConditions: InitialConditions = { u0: 0, v0: 0 };
+      const solverSettings: SolverSettings = autoStep
+        ? { t: totalTime, auto: true }
+        : { t: totalTime, dt: timeStep, auto: false };
+      const newmarkParams: NewmarkParameters = averageAcceleration;
+
+      const response: NewmarkResponse = newmarkSolver(
         mass,
         backbone,
         dampingRatio,
         force,
-        { u0: 0, v0: 0 },
-        autoStep
-          ? { t: totalTime, auto: true }
-          : { t: totalTime, dt: timeStep, auto: false },
-        averageAcceleration
+        initialConditions,
+        solverSettings,
+        newmarkParams,
+        orientation === "Vertical" ? false : true,
+        0.0,
+        currentSystem!.gravity
       );
       const runtime = performance.now() - start;
 
       const maxDisplacement = Math.max(...response.displacement);
       const finalDisplacement =
         response.displacement[response.displacement.length - 1];
+
+      // Rotation is calculated as atan of response.displacement / (length / 2)
+      const rotationAngles = response.displacement.map((disp) => {
+        const angleRad = Math.atan(disp / length);
+        return angleRad * (180 / Math.PI);
+      });
+
+      setRotationHistory({
+        angle: rotationAngles,
+      });
 
       setSummary({
         maxDisplacement,
@@ -611,26 +624,6 @@ export function App() {
     }
   };
 
-  const inboundToolbar = (
-    <button
-      type="button"
-      className={appCss.gridButton}
-      onClick={handleAddInboundRow}
-    >
-      + Add row
-    </button>
-  );
-
-  const reboundToolbar = (
-    <button
-      type="button"
-      className={appCss.gridButton}
-      onClick={handleAddReboundRow}
-    >
-      + Add row
-    </button>
-  );
-
   const forceToolbar = (
     <>
       {/* Hidden file input */}
@@ -643,26 +636,10 @@ export function App() {
         className={appCss.hiddenInput}
       />
 
-      <button
-        type="button"
-        className={appCss.gridButton}
-        onClick={handleAddForceRow}
-      >
-        + Add row
-      </button>
-
       {/* Use label as stylable trigger */}
       <label htmlFor="force-csv-input" className={appCss.gridButton}>
         Import CSV
       </label>
-
-      <button
-        type="button"
-        className={appCss.gridButton}
-        onClick={copyForceTable}
-      >
-        Copy table
-      </button>
     </>
   );
 
@@ -691,14 +668,12 @@ export function App() {
           <h2>Solver Inputs</h2>
 
           <section className={appCss.solverInputs}>
-            <h3 className={appCss.solverInputsHeading}>System parameters</h3>
             <div className={appCss.solverInputsTable}>
               <UserInput
                 label="Mass"
                 value={massInput}
                 onChange={setMassInput}
                 type="expression"
-                labelWidth="30%"
                 unit={currentSystem?.mass}
                 validation={{
                   required: true,
@@ -708,11 +683,23 @@ export function App() {
               />
 
               <UserInput
+                label="Rotation Length"
+                value={rotationLengthInput}
+                onChange={setRotationLengthInput}
+                type="expression"
+                unit={currentSystem?.length}
+                validation={{
+                  required: true,
+                  min: 0,
+                }}
+                helpText="Rotation length of the system to calculate rotation vs time"
+              />
+
+              <UserInput
                 label="Damping ratio"
                 value={dampingRatioInput}
                 onChange={setDampingRatioInput}
                 type="expression"
-                labelWidth="30%"
                 validation={{
                   required: true,
                   min: 0,
@@ -726,7 +713,6 @@ export function App() {
                 value={totalTimeInput}
                 onChange={setTotalTimeInput}
                 type="number"
-                labelWidth="30%"
                 unit={currentSystem?.time}
                 validation={{
                   required: true,
@@ -736,9 +722,9 @@ export function App() {
               />
 
               <div className={appCss.solverInputsRow}>
-                <span className={appCss.solverInputsLabel}>
-                  Automatic time step
-                </span>
+                <span>Automatic time step</span>
+                <div />
+                <div />
                 <label className={appCss.solverInputsToggle}>
                   <input
                     aria-label=""
@@ -756,13 +742,45 @@ export function App() {
                 value={timeStepInput}
                 onChange={setTimeStepInput}
                 type="number"
-                labelWidth="30%"
                 unit={currentSystem?.time}
                 disabled={autoStep}
                 validation={{
                   min: 0,
                 }}
                 helpText="Fixed time step value (only used when automatic time step is off). Automatic time step is period/1000."
+              />
+
+              <div className={appCss.solverInputsRow}>
+                <span>Orientation</span>
+                <div />
+                <div />
+                <div className={appCss.orientationSelector}>
+                  <select
+                    name="te"
+                    title="Select orientation direction"
+                    value={orientation}
+                    onChange={(e) =>
+                      setOrientation(
+                        e.target.value as "Vertical" | "Horizontal"
+                      )
+                    }
+                  >
+                    <option value="Vertical">Vertical</option>
+                    <option value="Horizontal">Horizontal</option>
+                  </select>
+                </div>
+              </div>
+
+              <UserInput
+                label="Gravity Constant"
+                type="number"
+                onChange={() => {
+                  // Do nothing as this is read-only
+                }}
+                value={currentSystem!.gravity}
+                unit={currentSystem!.acceleration}
+                disabled={true}
+                helpText="Gravity constant used if the gravity is enabled"
               />
             </div>
           </section>
@@ -775,8 +793,9 @@ export function App() {
             onRowsChange={setInboundRows}
             createRow={createInboundRow}
             onValidatedRows={setInboundValidRows}
-            toolbar={inboundToolbar}
-            maxHeight={240}
+            rowCountType="dropdown"
+            minRows={2}
+            maxRows={50}
           />
 
           <EditableGrid
@@ -787,8 +806,9 @@ export function App() {
             onRowsChange={setReboundRows}
             createRow={createReboundRow}
             onValidatedRows={setReboundValidRows}
-            toolbar={reboundToolbar}
-            maxHeight={240}
+            rowCountType="dropdown"
+            minRows={2}
+            maxRows={50}
           />
 
           <EditableGrid
@@ -800,7 +820,8 @@ export function App() {
             createRow={createForceRow}
             onValidatedRows={setForceValidRows}
             toolbar={forceToolbar}
-            maxHeight={280}
+            rowCountType="input"
+            maxRows={5000}
           />
 
           <button
@@ -909,7 +930,6 @@ export function App() {
                       time={series.time}
                       values={series.displacement}
                       color="#3b82f6"
-                      units={unitLabels.displacement}
                       className={appCss.chartContainer}
                       selectedIndex={selection?.index ?? 0}
                       logoUrl={integralLogo}
@@ -917,11 +937,21 @@ export function App() {
                       yUnits={unitLabels.displacement}
                     />
                     <HistoryChart
+                      title="Rotation"
+                      time={series.time}
+                      values={rotationHistory.angle}
+                      color="#3b82f6"
+                      className={appCss.chartContainer}
+                      selectedIndex={selection?.index ?? 0}
+                      logoUrl={integralLogo}
+                      xUnits={unitLabels.time}
+                      yUnits="degree"
+                    />
+                    <HistoryChart
                       title="Velocity"
                       time={series.time}
                       values={series.velocity}
                       color="#16a34a"
-                      units={unitLabels.velocity}
                       className={appCss.chartContainer}
                       selectedIndex={selection?.index ?? 0}
                       logoUrl={integralLogo}
@@ -933,7 +963,6 @@ export function App() {
                       time={series.time}
                       values={series.acceleration}
                       color="#f97316"
-                      units={unitLabels.acceleration}
                       selectedIndex={selection?.index ?? 0}
                       className={appCss.chartContainer}
                       logoUrl={integralLogo}
@@ -982,7 +1011,6 @@ export function App() {
                   time={forcePreviewSeries.time}
                   values={forcePreviewSeries.values}
                   color="#0ea5e9"
-                  units={unitLabels.force}
                   selectedIndex={forcePreviewSeries.time.length - 1}
                   logoUrl={integralLogo}
                   xUnits={unitLabels.time}

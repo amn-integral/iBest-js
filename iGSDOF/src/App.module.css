@@ -70,12 +70,6 @@
   margin-bottom: 0.5rem;
 }
 
-.solver-inputs-heading {
-  margin: 0 0 0.65rem;
-  font-size: large;
-  font-weight: bold;
-  color: #111827;
-}
 
 .grid-class-name{
   margin: 0.5rem 0rem 0.5rem 0.0rem;
@@ -89,35 +83,48 @@
 
 .solver-inputs-row {
   display: grid;
-  grid-template-columns: minmax(150px, 0.9fr) minmax(0, 1fr);
+  grid-template-columns: 30% 25% 5% 40%;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0.1rem;
   border-radius: 0.55rem;
+  font-family: Arial, sans-serif;
 }
 
-.solver-inputs-row-toggle {
-  grid-template-columns: minmax(150px, 0.9fr) minmax(0, 1fr);
-}
-
-/* Align toggle to the left within its column like other inputs */
-.solver-inputs-row-toggle .solver-inputs-toggle {
-  justify-self: center;
-}
-
-/* Bold black labels for solver inputs */
-.solver-inputs-label {
-  font-family:
-    "Segoe UI",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 600;
+.solver-inputs-row span{
+  font-weight: normal;
+  font-size: medium;
   color: #000000;
+  white-space: nowrap;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  margin: 0px;
 }
+
+.orientation-selector{
+  position: relative;
+  margin: 0px;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+}
+
+.orientation-selector select{
+  margin: 0px;
+  width: 100%;
+  padding: 6px 0px;
+  border: 1px solid #000;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #000;
+  font-size: medium;
+  font-family: Arial, sans-serif;
+  font-weight: normal;
+  outline: none;
+}
+
+
+
 
 .solver-inputs-input {
   width: 100% !important;
@@ -155,11 +162,11 @@
 }
 
 .solver-inputs-toggle {
-
+  padding: 8px !important;
+  margin: 0 !important;
   position: relative !important;
   display: inline-block !important;
   cursor: pointer !important;
-
 }
 
 .solver-inputs-toggle input {
@@ -515,11 +522,6 @@
   .solver-inputs-row {
     grid-template-columns: 1fr;
     align-items: flex-start;
-  }
-
-  .solver-inputs-row-toggle {
-    grid-template-columns: 1fr;
-    justify-items: flex-start;
   }
 }
 

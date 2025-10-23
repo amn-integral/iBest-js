@@ -1,29 +1,52 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from 'path'
+import path from "path";
 
 export default defineConfig(({ mode }) => ({
-  logLevel: 'warn', 
+  logLevel: "warn",
   base: mode === "production" ? "/static/iGSDOF/dist/" : "/",
   plugins: [react()],
   resolve: {
     alias: [
       {
-        find: '@integralrsg/imath',
+        find: "@integralrsg/imath",
         replacement: path.resolve(
           __dirname,
-          mode === 'development' ? '../iMath/src' : '../iMath/dist'
+          mode === "development" ? "../iMath/src" : "../iMath/dist"
         ),
       },
       {
-        find: '@integralrsg/igraph/styles',
-        replacement: path.resolve(__dirname, '../iGraph/dist/igraph.css'),
-      },
-      {
-        find: '@integralrsg/igraph',
+        find: "@integralrsg/igraph/styles",
         replacement: path.resolve(
           __dirname,
-          mode === 'development' ? '../iGraph/src' : '../iGraph/dist'
+          mode === "development"
+            ? "../iGraph/src/styles.ts"
+            : "../iGraph/dist/igraph.css"
+        ),
+      },
+      {
+        find: "@integralrsg/igraph",
+        replacement: path.resolve(
+          __dirname,
+          mode === "development" ? "../iGraph/src" : "../iGraph/dist"
+        ),
+      },
+      {
+        find: "@integralrsg/iuicomponents/styles",
+        replacement: path.resolve(
+          __dirname,
+          mode === "development"
+            ? "../iUIComponents/src/styles.ts"
+            : "../iUIComponents/dist/iuicomponents.css"
+        ),
+      },
+      {
+        find: "@integralrsg/iuicomponents",
+        replacement: path.resolve(
+          __dirname,
+          mode === "development"
+            ? "../iUIComponents/src/index.ts"
+            : "../iUIComponents/dist"
         ),
       },
     ],

@@ -5,7 +5,8 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" },
     { "path": "../iMath" },
-    { "path": "../iGraph" }
+    { "path": "../iGraph" },
+    { "path": "../iUIComponents" }
   ],
   "compilerOptions": {
     "rootDir": "src",

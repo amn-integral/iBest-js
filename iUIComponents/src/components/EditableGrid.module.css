@@ -11,45 +11,92 @@
 }
 
 .editable-grid-header {
-  display: grid;
-  align-items: center;
-  grid-template-rows: auto auto ;
+  display: flex;
   justify-content: space-between;
-  padding: 1px 1px;
+  align-items: center;
+  padding: 8px 12px;
   border-bottom: 1px solid #d0d5dd;
   background: linear-gradient(180deg, #f8fafc 0%, #f2f4f7 100%);
 }
 
-.editable-grid-title {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-}
-
-.editable-grid-title h3 {
-  margin: 0 !important;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-  font-size: large !important;
-  font-weight: bold !important;
-  color: #1f2937 !important;
-}
-
-.editable-grid-title p {
-  margin: 2px 0 0;
-  color: #6b7280;
-  font-size: medium;
+.editable-grid-header h3 {
+  font-size: large;
   font-weight: bold;
+  color: #101828;
+  margin: 0;
 }
 
 .editable-grid-actions {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 0.3rem;
+  align-items: center;
+  gap: 12px;
+}
+
+.editable-grid-actions label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #344054;
+  font-size: 14px;
+}
+
+.editable-grid-actions select,
+.editable-grid-actions input[type="number"] {
+  padding: 4px 8px;
+  min-width: 60px;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+  outline: none;
+}
+
+.editable-grid-actions select:hover,
+.editable-grid-actions input[type="number"]:hover {
+  border-color: #98a2b3;
+}
+
+.editable-grid-actions select:focus,
+.editable-grid-actions input[type="number"]:focus {
+  border-color: #007acc;
+  box-shadow: 0 0 0 1px #007acc;
+}
+
+/* Hide spinner arrows */
+.editable-grid-actions input[type="number"]::-webkit-inner-spin-button,
+.editable-grid-actions input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.editable-grid-actions input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .editable-grid-table {
   position: relative;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.editable-grid-table::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editable-grid-table::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.editable-grid-table::-webkit-scrollbar-thumb {
+  background: #98a2b3;
+  border-radius: 4px;
+}
+
+.editable-grid-table::-webkit-scrollbar-thumb:hover {
+  background: #667085;
 }
 
 .editable-grid-table table {
@@ -65,7 +112,12 @@
   z-index: 2;
   background: #f8fafc !important;
   text-align: center !important;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
   padding: 0.3rem 0.3rem;
   font-size: medium !important;
   font-weight: bold !important;
@@ -124,8 +176,6 @@
 .editable-grid-cell-wrapper:last-child {
   border-right: none;
 }
-
-
 
 .alignRight {
   justify-content: flex-end;
@@ -189,15 +239,20 @@
   padding: 0.3rem 0.3rem;
   cursor: cell !important;
   outline: none !important;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
   color: #1f2937 !important;
 }
 
 .editable-grid-table th,
 .editable-grid-table td {
-  height: 20px !important;         /* fixed row height */
+  height: 20px !important; /* fixed row height */
   min-height: 20px !important;
-  line-height: 20px !important;    /* vertically align text */
-  padding: 0 !important;           /* no extra spacing */
+  line-height: 20px !important; /* vertically align text */
+  padding: 0 !important; /* no extra spacing */
   vertical-align: middle !important;
 }

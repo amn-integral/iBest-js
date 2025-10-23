@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -39,12 +40,11 @@ type EditableGridProps<K extends string, TRow extends EditableGridRow<K>> = {
   createRow: () => TRow;
   onValidatedRows?: (rows: ParsedRow<K>[]) => void;
   toolbar?: ReactNode;
-  maxHeight?: number;
   gridClassName?: string;
   // Row count control
-  minRows?: number; // Minimum number of rows (default: 0)
-  maxRows?: number; // Maximum number of rows (default: unlimited)
-  showRowCount?: boolean; // Show row count input instead of toolbar (default: false)
+  minRows?: number; // Minimum number of rows (default: 2)
+  maxRows?: number; // Maximum number of rows (default: 50 for dropdown, 9999 for input)
+  rowCountType?: "dropdown" | "input"; // Type of row count control (default: "dropdown")
 };
 
 type CellPosition = { row: number; col: number };
@@ -79,16 +79,11 @@ export function EditableGrid<
   onValidatedRows,
   toolbar,
   gridClassName,
-  minRows = 0,
+  minRows = 2,
   maxRows,
-  showRowCount = false,
+  rowCountType = "dropdown",
 }: EditableGridProps<K, TRow>) {
-  const [activeCell, setActiveCell] = useState<CellPosition | null>(() => {
-    if (rows.length === 0 || columns.length === 0) {
-      return null;
-    }
-    return { row: 0, col: 0 };
-  });
+  const [activeCell, setActiveCell] = useState<CellPosition | null>(null);
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -122,7 +117,7 @@ export function EditableGrid<
   const ensureActiveCellInBounds = useCallback(
     (position: CellPosition | null): CellPosition | null => {
       if (!position || rows.length === 0 || columns.length === 0) {
-        return rows.length && columns.length ? { row: 0, col: 0 } : null;
+        return null;
       }
       const nextRow = clamp(position.row, 0, rows.length - 1);
       const nextCol = clamp(position.col, 0, columns.length - 1);
@@ -331,12 +326,24 @@ export function EditableGrid<
     }
   }, [activeCell, editingCell, focusCell]);
 
+  // Deactivate cell when clicking outside the grid
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setActiveCell(null);
+        setEditingCell(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleContainerKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!containerRef.current?.contains(event.target as Node)) {
       return;
-    }
-    if (!activeCell && rows.length && columns.length) {
-      setActiveCell({ row: 0, col: 0 });
     }
     if (event.key === "PageDown") {
       event.preventDefault();
@@ -538,6 +545,19 @@ export function EditableGrid<
     );
   };
 
+  // Generate row count options for dropdown
+  const rowCountOptions = useMemo(() => {
+    const minAllowed = Math.max(minRows, 2);
+    const maxAllowed = maxRows || 50; // Default to 50 if no max specified
+    const options = [];
+
+    for (let i = minAllowed; i <= maxAllowed; i++) {
+      options.push(i);
+    }
+
+    return options;
+  }, [minRows, maxRows]);
+
   return (
     <section
       className={`${styles.editableGrid} ${gridClassName}`}
@@ -545,37 +565,58 @@ export function EditableGrid<
       onKeyDown={handleContainerKeyDown}
     >
       <header className={styles.editableGridHeader}>
-        <div className={styles.editableGridTitle}>
-          <h3>{title}</h3>
-          <p>
-            {rows.length} row{rows.length === 1 ? "" : "s"}
-          </p>
-        </div>
-        {showRowCount ? (
-          <div className={styles.editableGridActions}>
-            <label
-              style={{ display: "flex", alignItems: "center", gap: "8px" }}
-            >
-              <span>Rows:</span>
+        <h3>{title}</h3>
+
+        <div className={styles.editableGridActions}>
+          <label>
+            Rows:
+            {rowCountType === "dropdown" ? (
+              <select
+                value={rows.length}
+                onChange={(e) => handleRowCountChange(parseInt(e.target.value))}
+                aria-label="Number of rows"
+              >
+                {rowCountOptions.map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
+              </select>
+            ) : (
               <input
                 type="number"
-                min={minRows}
-                max={maxRows}
+                min={Math.max(minRows, 2)}
+                max={maxRows || 9999}
                 value={rows.length}
-                onChange={(e) =>
-                  handleRowCountChange(parseInt(e.target.value) || minRows)
-                }
-                style={{ width: "80px", padding: "4px 8px" }}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val)) handleRowCountChange(val);
+                }}
+                onBlur={(e) => {
+                  const val = parseInt(e.target.value);
+                  const min = Math.max(minRows, 2);
+                  const max = maxRows || 9999;
+                  if (isNaN(val) || val < min) handleRowCountChange(min);
+                  else if (val > max) handleRowCountChange(max);
+                }}
+                onKeyDown={(e) => {
+                  if ([".", "-", "e", "E"].includes(e.key)) e.preventDefault();
+                }}
+                aria-label="Number of rows"
               />
-            </label>
-          </div>
-        ) : toolbar ? (
-          <div className={styles.editableGridActions}>{toolbar}</div>
-        ) : (
-          <div></div>
-        )}
+            )}
+          </label>
+          {toolbar}
+        </div>
       </header>
-      <div className={styles.editableGridTable}>
+
+      <div
+        className={styles.editableGridTable}
+        style={{
+          maxHeight: rows.length > 10 ? "400px" : "none",
+          overflowY: rows.length > 10 ? "auto" : "visible",
+        }}
+      >
         {rows.length === 0 ? (
           <div className={styles.editableGridEmptyState}>
             <p>No rows yet. Use the toolbar to add a new row.</p>

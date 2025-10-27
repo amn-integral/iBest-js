@@ -304,11 +304,97 @@ export function App() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isSolverRunning, setIsSolverRunning] = useState(false);
 
+  // Memory optimization: convert charts to static images
+  const [chartImages, setChartImages] = useState<{ [key: string]: string }>({});
+  const [useStaticCharts, setUseStaticCharts] = useState(false);
+  const [isCapturingCharts, setIsCapturingCharts] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const reportRef = useRef<HTMLDivElement | null>(null);
+  const chartsContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Web Worker for solver
   const { runSolver: runSolverWorker, terminateWorker } = useSolverWorker();
+
+  // Simple component to render either static image or interactive chart
+  const ChartOrImage = ({
+    chartId,
+    children,
+    alt,
+  }: {
+    chartId: string;
+    children: React.ReactNode;
+    alt: string;
+  }) => {
+    if (useStaticCharts && chartImages[chartId]) {
+      return (
+        <div className={appCss.chartContainer} data-chart-id={chartId}>
+          <img
+            src={chartImages[chartId]}
+            alt={alt}
+            style={{ width: "100%", height: "auto" }}
+          />
+        </div>
+      );
+    }
+    return <div data-chart-id={chartId}>{children}</div>;
+  };
+
+  // Function to capture charts as static images for memory optimization
+  const captureChartsAsImages = useCallback(async () => {
+    if (!chartsContainerRef.current || !series) return;
+
+    setIsCapturingCharts(true);
+    const images: { [key: string]: string } = {};
+
+    try {
+      // Find all chart elements
+      const chartElements =
+        chartsContainerRef.current.querySelectorAll("[data-chart-id]");
+
+      for (const element of chartElements) {
+        const chartId = element.getAttribute("data-chart-id");
+        if (chartId && element instanceof HTMLElement) {
+          const canvas = await html2canvas(element, {
+            backgroundColor: "#ffffff",
+            scale: 1,
+            logging: false,
+            useCORS: true,
+          });
+          images[chartId] = canvas.toDataURL("image/png", 0.8);
+        }
+      }
+
+      setChartImages(images);
+      setUseStaticCharts(true);
+
+      // Clear large data arrays to free memory
+      setTimeout(() => {
+        if (series) {
+          // Keep only summary data, clear large arrays
+          setSeries((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  time: [],
+                  displacement: [],
+                  velocity: [],
+                  acceleration: [],
+                  restoringForce: [],
+                  appliedForce: [],
+                }
+              : null
+          );
+        }
+      }, 1000);
+
+      console.log("Charts converted to static images, memory freed");
+    } catch (error) {
+      console.error("Failed to capture charts:", error);
+    } finally {
+      setIsCapturingCharts(false);
+    }
+  }, [series]);
 
   const handleForceCsvImport = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -605,10 +691,10 @@ export function App() {
         result.response.displacement.length.toExponential()
       );
 
-      console.log("Number of worker steps:", result.response.time.length/1e6);
+      console.log("Number of worker steps:", result.response.time.length / 1e6);
 
       const totalPoints = result.response.time.length;
-      
+
       const finalDisplacement = result.response.displacement[totalPoints - 1];
 
       setRotationHistory({
@@ -649,6 +735,12 @@ export function App() {
       setErrors([]);
       setPlayIndex(0);
       setIsPlaying(false);
+
+      // Automatically capture charts as static images after a short delay
+      // This dramatically reduces memory usage by replacing interactive charts
+      setTimeout(() => {
+        captureChartsAsImages();
+      }, 2000); // Wait 2 seconds for charts to render fully
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to run solver.";
@@ -880,6 +972,34 @@ export function App() {
             {isGeneratingPdf ? "Generating PDF..." : "Print to PDF"}
           </button>
 
+          {series && !useStaticCharts && (
+            <button
+              type="button"
+              className={appCss.appButton}
+              onClick={captureChartsAsImages}
+              disabled={isCapturingCharts}
+              style={{ backgroundColor: "#ff6b6b", color: "white" }}
+            >
+              {isCapturingCharts
+                ? "Converting Charts..."
+                : "Reduce Memory Usage"}
+            </button>
+          )}
+
+          {useStaticCharts && (
+            <div
+              style={{
+                padding: "10px",
+                backgroundColor: "#d4edda",
+                border: "1px solid #c3e6cb",
+                borderRadius: "4px",
+                color: "#155724",
+              }}
+            >
+              ✅ Memory optimized: Charts converted to static images
+            </div>
+          )}
+
           {errors.length > 0 ? (
             <ul className="error-list">
               {errors.map((message) => (
@@ -889,7 +1009,7 @@ export function App() {
           ) : null}
         </div>
 
-        {/* <div className={appCss.panelResults}>
+        <div className={appCss.panelResults} ref={chartsContainerRef}>
           <h2>Results</h2>
           {summary && series && backboneCurves ? (
             <>
@@ -965,84 +1085,99 @@ export function App() {
               <div className={appCss.chartsGrid}>
                 {series && (
                   <>
-                    <HistoryChart
-                      title="Displacement"
-                      time={series.time}
-                      values={series.displacement}
-                      color="#3b82f6"
-                      className={appCss.chartContainer}
-                      selectedIndex={selection?.index ?? 0}
-                      logoUrl={integralLogo}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.displacement}
-                      minValue={series.bounds?.displacement.min}
-                      maxValue={series.bounds?.displacement.max}
-                    />
-                    <HistoryChart
-                      title="Rotation"
-                      time={series.time}
-                      values={rotationHistory.angle}
-                      color="#3b82f6"
-                      className={appCss.chartContainer}
-                      selectedIndex={selection?.index ?? 0}
-                      logoUrl={integralLogo}
-                      xUnits={unitLabels.time}
-                      yUnits="degree"
-                      minValue={rotationHistory.min}
-                      maxValue={rotationHistory.max}
-                    />
-                    <HistoryChart
-                      title="Velocity"
-                      time={series.time}
-                      values={series.velocity}
-                      color="#16a34a"
-                      className={appCss.chartContainer}
-                      selectedIndex={selection?.index ?? 0}
-                      logoUrl={integralLogo}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.velocity}
-                      minValue={series.bounds?.velocity.min}
-                      maxValue={series.bounds?.velocity.max}
-                    />
-                    <HistoryChart
-                      title="Acceleration"
-                      time={series.time}
-                      values={series.acceleration}
-                      color="#dc2626"
-                      className={appCss.chartContainer}
-                      selectedIndex={selection?.index ?? 0}
-                      logoUrl={integralLogo}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.acceleration}
-                      minValue={series.bounds?.acceleration.min}
-                      maxValue={series.bounds?.acceleration.max}
-                    />
-                    <HistoryChart
-                      title="Restoring force"
-                      time={series.time}
-                      values={series.restoringForce}
-                      color="#f59e0b"
-                      className={appCss.chartContainer}
-                      selectedIndex={selection?.index ?? 0}
-                      logoUrl={integralLogo}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.force}
-                      minValue={series.bounds?.restoringForce.min}
-                      maxValue={series.bounds?.restoringForce.max}
-                    />
-                    <HistoryChart
-                      title="Applied force"
-                      time={series.time}
-                      values={series.appliedForce}
-                      color="#9333ea"
-                      className={appCss.chartContainer}
-                      selectedIndex={selection?.index ?? 0}
-                      logoUrl={integralLogo}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.force}
-                      minValue={series.bounds?.appliedForce.min}
-                      maxValue={series.bounds?.appliedForce.max}
-                    />
+                    <ChartOrImage
+                      chartId="displacement"
+                      alt="Displacement Chart"
+                    >
+                      <HistoryChart
+                        title="Displacement"
+                        time={series.time}
+                        values={series.displacement}
+                        color="#3b82f6"
+                        className={appCss.chartContainer}
+                        selectedIndex={selection?.index ?? 0}
+                        logoUrl={integralLogo}
+                        xUnits={unitLabels.time}
+                        yUnits={unitLabels.displacement}
+                        minValue={series.bounds?.displacement.min}
+                        maxValue={series.bounds?.displacement.max}
+                      />
+                    </ChartOrImage>
+                    <ChartOrImage chartId="rotation" alt="Rotation Chart">
+                      <HistoryChart
+                        title="Rotation"
+                        time={series.time}
+                        values={rotationHistory.angle}
+                        color="#3b82f6"
+                        className={appCss.chartContainer}
+                        selectedIndex={selection?.index ?? 0}
+                        logoUrl={integralLogo}
+                        xUnits={unitLabels.time}
+                        yUnits="degree"
+                        minValue={rotationHistory.min}
+                        maxValue={rotationHistory.max}
+                      />
+                    </ChartOrImage>
+                    <ChartOrImage chartId="velocity" alt="Velocity Chart">
+                      <HistoryChart
+                        title="Velocity"
+                        time={series.time}
+                        values={series.velocity}
+                        color="#16a34a"
+                        className={appCss.chartContainer}
+                        selectedIndex={selection?.index ?? 0}
+                        logoUrl={integralLogo}
+                        xUnits={unitLabels.time}
+                        yUnits={unitLabels.velocity}
+                        minValue={series.bounds?.velocity.min}
+                        maxValue={series.bounds?.velocity.max}
+                      />
+                    </ChartOrImage>
+                    <ChartOrImage chartId="acceleration" alt="Acceleration Chart">
+                      <HistoryChart
+                        title="Acceleration"
+                        time={series.time}
+                        values={series.acceleration}
+                        color="#dc2626"
+                        className={appCss.chartContainer}
+                        selectedIndex={selection?.index ?? 0}
+                        logoUrl={integralLogo}
+                        xUnits={unitLabels.time}
+                        yUnits={unitLabels.acceleration}
+                        minValue={series.bounds?.acceleration.min}
+                        maxValue={series.bounds?.acceleration.max}
+                      />
+                    </ChartOrImage>
+                    <ChartOrImage chartId="restoringForce" alt="Restoring Force Chart">
+                      <HistoryChart
+                        title="Restoring force"
+                        time={series.time}
+                        values={series.restoringForce}
+                        color="#f59e0b"
+                        className={appCss.chartContainer}
+                        selectedIndex={selection?.index ?? 0}
+                        logoUrl={integralLogo}
+                        xUnits={unitLabels.time}
+                        yUnits={unitLabels.force}
+                        minValue={series.bounds?.restoringForce.min}
+                        maxValue={series.bounds?.restoringForce.max}
+                      />
+                    </ChartOrImage>
+                    <ChartOrImage chartId="appliedForce" alt="Applied Force Chart">
+                      <HistoryChart
+                        title="Applied force"
+                        time={series.time}
+                        values={series.appliedForce}
+                        color="#9333ea"
+                        className={appCss.chartContainer}
+                        selectedIndex={selection?.index ?? 0}
+                        logoUrl={integralLogo}
+                        xUnits={unitLabels.time}
+                        yUnits={unitLabels.force}
+                        minValue={series.bounds?.appliedForce.min}
+                        maxValue={series.bounds?.appliedForce.max}
+                      />
+                    </ChartOrImage>
                   </>
                 )}
                 {backboneCurves && (
@@ -1098,7 +1233,7 @@ export function App() {
               )}
             </div>
           )}
-        </div> */}
+        </div>
       </main>
 
       {/* Lazy-rendered Report component for PDF generation - only renders when needed */}

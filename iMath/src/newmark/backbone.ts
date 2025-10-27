@@ -1,4 +1,5 @@
 import { interpolateSorted } from "./helpers";
+import { findMinMax } from "../core/arrayStats";
 
 export interface BackbonePoint {
   displacement: number;
@@ -46,9 +47,8 @@ export class BackboneCurve {
   public inboundStiffness = 0;
   public reboundStiffness = 0;
 
-  public  max_resistance: number = 0.0;
+  public max_resistance: number = 0.0;
   public min_resistance: number = 0.0;
-
 
   private readonly originalInbound: BackbonePoint[];
   private readonly originalRebound: BackbonePoint[];
@@ -56,12 +56,10 @@ export class BackboneCurve {
   private klmCache = new Map<number, number>();
   private backboneBuilt = false;
 
-
-
   constructor(inbound: BackbonePoint[], rebound: BackbonePoint[]) {
     if (!inbound.length || !rebound.length) {
       throw new Error(
-        "inboundData and reboundData must be non-empty lists of BackbonePoint",
+        "inboundData and reboundData must be non-empty lists of BackbonePoint"
       );
     }
 
@@ -214,10 +212,12 @@ export class BackboneCurve {
 
     this.inboundStiffness = this.getStiffnessInRegion(1);
     this.reboundStiffness = this.getStiffnessInRegion(-1);
-   
-    this.max_resistance = Math.max(...this.yValues);
-    this.min_resistance = Math.min(...this.yValues);
-   
+
+    // Use optimized min/max calculation instead of spread operator
+    const resistanceBounds = findMinMax(this.yValues);
+    this.max_resistance = resistanceBounds.max;
+    this.min_resistance = resistanceBounds.min;
+
     this.backboneBuilt = true;
   }
 }

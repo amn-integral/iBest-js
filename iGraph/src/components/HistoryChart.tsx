@@ -4,6 +4,56 @@ import { useChartResize } from "../hooks";
 import { generateTicks, generateSvgPath } from "../utils";
 import styles from "./HistoryChart.module.css";
 
+// Optimized min/max function to avoid stack overflow with large arrays
+const findMinMax = (arr: number[]) => {
+  if (arr.length === 0) return { min: 0, max: 0 };
+  if (arr.length === 1) return { min: arr[0], max: arr[0] };
+
+  let min = arr[0];
+  let max = arr[0];
+
+  // Process pairs for efficiency (33% fewer comparisons)
+  const len = arr.length;
+  let i = 1;
+
+  if (len % 2 === 0) {
+    // Even length - compare pairs
+    for (; i < len; i += 2) {
+      const a = arr[i];
+      const b = arr[i + 1];
+
+      if (a > b) {
+        if (a > max) max = a;
+        if (b < min) min = b;
+      } else {
+        if (b > max) max = b;
+        if (a < min) min = a;
+      }
+    }
+  } else {
+    // Odd length - handle last element separately
+    for (; i < len - 1; i += 2) {
+      const a = arr[i];
+      const b = arr[i + 1];
+
+      if (a > b) {
+        if (a > max) max = a;
+        if (b < min) min = b;
+      } else {
+        if (b > max) max = b;
+        if (a < min) min = a;
+      }
+    }
+
+    // Handle the last element
+    const last = arr[len - 1];
+    if (last > max) max = last;
+    if (last < min) min = last;
+  }
+
+  return { min, max };
+};
+
 export const HistoryChart: React.FC<HistoryChartProps> = ({
   title,
   time,
@@ -49,8 +99,7 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
 
     const minTime = time[0];
     const maxTime = time[time.length - 1];
-    const minValOriginal = Math.min(...values);
-    const maxValOriginal = Math.max(...values);
+    const { min: minValOriginal, max: maxValOriginal } = findMinMax(values);
 
     // Use exact data bounds without any padding
     const dataMinVal = minValOriginal;
@@ -75,7 +124,10 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
       chartHeight
     );
 
-    const clampedIndex = Math.min(Math.max(selectedIndex?? 1, 0), time.length - 1);
+    const clampedIndex = Math.min(
+      Math.max(selectedIndex ?? 1, 0),
+      time.length - 1
+    );
     const spanTime = maxTime - minTime || 1;
     const spanVal = maxVal - minVal || 1;
 
@@ -142,7 +194,7 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
         </span>
       </div>
       <svg
-        className={styles.chart }
+        className={styles.chart}
         viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label={`${title} history`}
@@ -280,5 +332,3 @@ export const HistoryChart: React.FC<HistoryChartProps> = ({
     </div>
   );
 };
-
-

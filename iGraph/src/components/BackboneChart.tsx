@@ -1,8 +1,58 @@
 import React, { useMemo } from "react";
 import { BackboneChartProps } from "../types";
 import { useChartResize } from "../hooks";
-import { generateTicks, generateSvgPath} from "../utils";
+import { generateTicks, generateSvgPath } from "../utils";
 import styles from "./BackboneChart.module.css";
+
+// Optimized min/max function to avoid stack overflow with large arrays
+const findMinMax = (arr: number[]) => {
+  if (arr.length === 0) return { min: 0, max: 0 };
+  if (arr.length === 1) return { min: arr[0], max: arr[0] };
+
+  let min = arr[0];
+  let max = arr[0];
+
+  // Process pairs for efficiency (33% fewer comparisons)
+  const len = arr.length;
+  let i = 1;
+
+  if (len % 2 === 0) {
+    // Even length - compare pairs
+    for (; i < len; i += 2) {
+      const a = arr[i];
+      const b = arr[i + 1];
+
+      if (a > b) {
+        if (a > max) max = a;
+        if (b < min) min = b;
+      } else {
+        if (b > max) max = b;
+        if (a < min) min = a;
+      }
+    }
+  } else {
+    // Odd length - handle last element separately
+    for (; i < len - 1; i += 2) {
+      const a = arr[i];
+      const b = arr[i + 1];
+
+      if (a > b) {
+        if (a > max) max = a;
+        if (b < min) min = b;
+      } else {
+        if (b > max) max = b;
+        if (a < min) min = a;
+      }
+    }
+
+    // Handle the last element
+    const last = arr[len - 1];
+    if (last > max) max = last;
+    if (last < min) min = last;
+  }
+
+  return { min, max };
+};
 
 export const BackboneChart: React.FC<BackboneChartProps> = ({
   curves,
@@ -62,20 +112,18 @@ export const BackboneChart: React.FC<BackboneChartProps> = ({
       ...restoringForceHistory,
     ];
 
-    // Store backbone-only min/max for display labels
-    const backboneMinY = backboneY.length > 0 ? Math.min(...backboneY) : 0;
-    const backboneMaxY = backboneY.length > 0 ? Math.max(...backboneY) : 0;
+    // Store backbone-only min/max for display labels using optimized function
+    const { min: backboneMinY, max: backboneMaxY } =
+      backboneY.length > 0 ? findMinMax(backboneY) : { min: 0, max: 0 };
 
-    const minXOriginal = Math.min(...allX);
-    const maxXOriginal = Math.max(...allX);
-    const minYOriginal = Math.min(...allY);
-    const maxYOriginal = Math.max(...allY);
+    const { min: minXOriginal, max: maxXOriginal } = findMinMax(allX);
+    const { min: minYOriginal, max: maxYOriginal } = findMinMax(allY);
 
     // Use exact backbone data bounds without any padding or axis extensions
-    let minXValue = backboneX.length > 0 ? Math.min(...backboneX) : 0;
-    let maxXValue = backboneX.length > 0 ? Math.max(...backboneX) : 0;
-    let minYValue = backboneMinY;
-    let maxYValue = backboneMaxY;
+    const { min: minXValue, max: maxXValue } =
+      backboneX.length > 0 ? findMinMax(backboneX) : { min: 0, max: 0 };
+    const minYValue = backboneMinY;
+    const maxYValue = backboneMaxY;
 
     const initialPath = generateSvgPath(
       curves.initial.x,

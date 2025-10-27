@@ -13,6 +13,7 @@ import {
   parseStrictNumber,
   formatLimitValue,
 } from "@integralrsg/igraph";
+import { ChartJSChart } from "./components/ChartJSChart";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -340,70 +341,156 @@ export function App() {
     return <div data-chart-id={chartId}>{children}</div>;
   };
 
-  // Function to capture charts as static images for memory optimization
-  const captureChartsAsImages = useCallback(async () => {
-    if (!chartsContainerRef.current) return;
+  // Function to directly render charts to images without storing data in React state
+  const renderChartsDirectlyToImages = useCallback(
+    async (
+      resultData: any,
+      rotationData: any,
+      backboneData: any,
+      unitLabels: any
+    ) => {
+      setIsCapturingCharts(true);
+      const images: { [key: string]: string } = {};
 
-    setIsCapturingCharts(true);
-    const images: { [key: string]: string } = {};
+      try {
+        // Create a temporary container for rendering charts
+        const tempContainer = document.createElement("div");
+        tempContainer.style.position = "absolute";
+        tempContainer.style.left = "-9999px";
+        tempContainer.style.top = "-9999px";
+        tempContainer.style.width = "800px";
+        tempContainer.style.height = "400px";
+        document.body.appendChild(tempContainer);
 
-    try {
-      // Find all chart elements
-      const chartElements =
-        chartsContainerRef.current.querySelectorAll("[data-chart-id]");
+        // Chart configurations
+        const chartConfigs = [
+          {
+            id: "displacement",
+            title: "Displacement",
+            time: resultData.time,
+            values: resultData.displacement,
+            color: "#3b82f6",
+            yUnits: unitLabels.displacement,
+          },
+          {
+            id: "rotation",
+            title: "Rotation",
+            time: resultData.time,
+            values: rotationData.angle,
+            color: "#3b82f6",
+            yUnits: "degree",
+          },
+          {
+            id: "velocity",
+            title: "Velocity",
+            time: resultData.time,
+            values: resultData.velocity,
+            color: "#16a34a",
+            yUnits: unitLabels.velocity,
+          },
+          {
+            id: "acceleration",
+            title: "Acceleration",
+            time: resultData.time,
+            values: resultData.acceleration,
+            color: "#dc2626",
+            yUnits: unitLabels.acceleration,
+          },
+          {
+            id: "restoringForce",
+            title: "Restoring Force",
+            time: resultData.time,
+            values: resultData.restoringForce,
+            color: "#7c3aed",
+            yUnits: unitLabels.force,
+          },
+          {
+            id: "appliedForce",
+            title: "Applied Force",
+            time: resultData.time,
+            values: resultData.appliedForce,
+            color: "#f59e0b",
+            yUnits: unitLabels.force,
+          },
+        ];
 
-      for (const element of chartElements) {
-        const chartId = element.getAttribute("data-chart-id");
-        if (chartId && element instanceof HTMLElement) {
-          const canvas = await html2canvas(element, {
-            backgroundColor: "#ffffff",
-            scale: 0.8, // Reduce for memory savings
-            logging: false,
-            useCORS: true,
-            height: element.offsetHeight,
-            width: element.offsetWidth,
-          });
-          images[chartId] = canvas.toDataURL("image/png", 0.6); // Lower quality
+        // Render each chart directly to canvas and convert to image
+        for (const config of chartConfigs) {
+          // Create minimal chart visualization using Canvas API directly
+          const canvas = document.createElement("canvas");
+          canvas.width = 400; // Small size for memory efficiency
+          canvas.height = 200;
+          const ctx = canvas.getContext("2d")!;
+
+          // Simple chart rendering - just the data line
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          if (config.values && config.values.length > 0) {
+            const minVal = Math.min(...config.values);
+            const maxVal = Math.max(...config.values);
+            const range = maxVal - minVal || 1;
+
+            ctx.strokeStyle = config.color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+
+            for (let i = 0; i < config.values.length; i++) {
+              const x = (i / (config.values.length - 1)) * canvas.width;
+              const y =
+                canvas.height -
+                ((config.values[i] - minVal) / range) * canvas.height;
+
+              if (i === 0) {
+                ctx.moveTo(x, y);
+              } else {
+                ctx.lineTo(x, y);
+              }
+            }
+            ctx.stroke();
+          }
+
+          // Add title
+          ctx.fillStyle = "#000000";
+          ctx.font = "12px Arial";
+          ctx.fillText(config.title, 10, 20);
+
+          images[config.id] = canvas.toDataURL("image/jpeg", 0.3); // Very low quality
         }
+
+        // Add backbone chart
+        if (backboneData) {
+          const canvas = document.createElement("canvas");
+          canvas.width = 400;
+          canvas.height = 200;
+          const ctx = canvas.getContext("2d")!;
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "#000000";
+          ctx.font = "12px Arial";
+          ctx.fillText("Backbone Chart", 10, 20);
+
+          images["backbone"] = canvas.toDataURL("image/jpeg", 0.3);
+        }
+
+        // Clean up temp container
+        document.body.removeChild(tempContainer);
+
+        setChartImages(images);
+        setUseStaticCharts(true);
+
+        console.log(
+          `Charts rendered directly to ${Object.keys(images).length} static images, no data stored in React state`
+        );
+      } catch (error) {
+        console.error("Failed to capture charts:", error);
+      } finally {
+        setIsCapturingCharts(false);
       }
-
-      setChartImages(images);
-      setUseStaticCharts(true);
-
-      // IMMEDIATELY clear all large data arrays - no delay
-      setSeries((prev) =>
-        prev
-          ? {
-              ...prev,
-              time: [],
-              displacement: [],
-              velocity: [],
-              acceleration: [],
-              restoringForce: [],
-              appliedForce: [],
-            }
-          : null
-      );
-
-      // Clear rotation history too
-      setRotationHistory((prev) =>
-        prev
-          ? {
-              ...prev,
-              angle: [],
-            }
-          : prev
-      );
-
-      console.log(
-        `Charts converted to ${Object.keys(images).length} static images, all data cleared immediately`
-      );
-    } catch (error) {
-      console.error("Failed to capture charts:", error);
-    } finally {
-      setIsCapturingCharts(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   const handleForceCsvImport = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -703,15 +790,9 @@ export function App() {
       console.log("Number of worker steps:", result.response.time.length / 1e6);
 
       const totalPoints = result.response.time.length;
-
       const finalDisplacement = result.response.displacement[totalPoints - 1];
 
-      setRotationHistory({
-        angle: result.rotationArray,
-        min: result.rotationBounds.min,
-        max: result.rotationBounds.max,
-      });
-
+      // Set minimal summary data only
       setSummary({
         maxDisplacement: result.bounds.displacement.max,
         finalDisplacement,
@@ -719,6 +800,7 @@ export function App() {
         steps: totalPoints,
       });
 
+      // LIGHTWEIGHT CHART APPROACH: Use simple canvas-based charts
       setSeries({
         time: result.response.time,
         displacement: result.response.displacement,
@@ -726,14 +808,15 @@ export function App() {
         acceleration: result.response.acceleration,
         restoringForce: result.response.restoringForce,
         appliedForce: result.response.appliedForce,
-        bounds: {
-          displacement: result.bounds.displacement,
-          velocity: result.bounds.velocity,
-          acceleration: result.bounds.acceleration,
-          restoringForce: result.bounds.restoringForce,
-          appliedForce: result.bounds.appliedForce,
-        },
+        bounds: result.bounds,
       });
+
+      setRotationHistory({
+        angle: result.rotationArray,
+        min: result.rotationBounds.min,
+        max: result.rotationBounds.max,
+      });
+
       setBackboneCurves({
         initial: initialCurve,
         final: {
@@ -741,15 +824,14 @@ export function App() {
           y: [...backbone.yValues],
         },
       });
+
       setErrors([]);
       setPlayIndex(0);
       setIsPlaying(false);
 
-      // Immediately capture charts as static images to reduce memory usage
-      // No delay - aggressive memory optimization
-      setTimeout(() => {
-        captureChartsAsImages();
-      }, 100); // Minimal delay just for DOM rendering
+      console.log(
+        "Using lightweight canvas-based charts for better memory performance"
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to run solver.";
@@ -1028,96 +1110,60 @@ export function App() {
               <div className={appCss.chartsGrid}>
                 {series && (
                   <>
-                    <ChartOrImage
-                      chartId="displacement"
-                      alt="Displacement Chart"
-                    >
-                      <HistoryChart
-                        title="Displacement"
-                        time={series.time}
-                        values={series.displacement}
-                        color="#3b82f6"
-                        className={appCss.chartContainer}
-                        selectedIndex={0}
-                        logoUrl={integralLogo}
-                        xUnits={unitLabels.time}
-                        yUnits={unitLabels.displacement}
-                      />
-                    </ChartOrImage>
-                    <ChartOrImage chartId="rotation" alt="Rotation Chart">
-                      <HistoryChart
-                        title="Rotation"
-                        time={series.time}
-                        values={rotationHistory.angle}
-                        color="#3b82f6"
-                        className={appCss.chartContainer}
-                        selectedIndex={0}
-                        logoUrl={integralLogo}
-                        xUnits={unitLabels.time}
-                        yUnits="degree"
-                      />
-                    </ChartOrImage>
-                    <ChartOrImage chartId="velocity" alt="Velocity Chart">
-                      <HistoryChart
-                        title="Velocity"
-                        time={series.time}
-                        values={series.velocity}
-                        color="#16a34a"
-                        className={appCss.chartContainer}
-                        selectedIndex={0}
-                        logoUrl={integralLogo}
-                        xUnits={unitLabels.time}
-                        yUnits={unitLabels.velocity}
-                      />
-                    </ChartOrImage>
-                    <ChartOrImage
-                      chartId="acceleration"
-                      alt="Acceleration Chart"
-                    >
-                      <HistoryChart
-                        title="Acceleration"
-                        time={series.time}
-                        values={series.acceleration}
-                        color="#dc2626"
-                        className={appCss.chartContainer}
-                        selectedIndex={0}
-                        logoUrl={integralLogo}
-                        xUnits={unitLabels.time}
-                        yUnits={unitLabels.acceleration}
-                      />
-                    </ChartOrImage>
-                    <ChartOrImage
-                      chartId="restoringForce"
-                      alt="Restoring Force Chart"
-                    >
-                      <HistoryChart
-                        title="Restoring force"
-                        time={series.time}
-                        values={series.restoringForce}
-                        color="#f59e0b"
-                        className={appCss.chartContainer}
-                        selectedIndex={0}
-                        logoUrl={integralLogo}
-                        xUnits={unitLabels.time}
-                        yUnits={unitLabels.force}
-                      />
-                    </ChartOrImage>
-                    <ChartOrImage
-                      chartId="appliedForce"
-                      alt="Applied Force Chart"
-                    >
-                      <HistoryChart
-                        title="Applied force"
-                        time={series.time}
-                        values={series.appliedForce}
-                        color="#9333ea"
-                        className={appCss.chartContainer}
-                        selectedIndex={0}
-                        logoUrl={integralLogo}
-                        xUnits={unitLabels.time}
-                        yUnits={unitLabels.force}
-                      />
-                    </ChartOrImage>
+                    <ChartJSChart
+                      title="Displacement"
+                      time={series.time}
+                      values={series.displacement}
+                      color="#3b82f6"
+                      className={appCss.chartContainer}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.displacement}
+                    />
+                    <ChartJSChart
+                      title="Rotation"
+                      time={series.time}
+                      values={rotationHistory.angle}
+                      color="#3b82f6"
+                      className={appCss.chartContainer}
+                      xUnits={unitLabels.time}
+                      yUnits="degree"
+                    />
+                    <ChartJSChart
+                      title="Velocity"
+                      time={series.time}
+                      values={series.velocity}
+                      color="#16a34a"
+                      className={appCss.chartContainer}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.velocity}
+                    />
+                    <ChartJSChart
+                      title="Acceleration"
+                      time={series.time}
+                      values={series.acceleration}
+                      color="#dc2626"
+                      className={appCss.chartContainer}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.acceleration}
+                    />
+                    <ChartJSChart
+                      title="Restoring Force"
+                      time={series.time}
+                      values={series.restoringForce}
+                      color="#f59e0b"
+                      className={appCss.chartContainer}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.force}
+                    />
+                    <ChartJSChart
+                      title="Applied Force"
+                      time={series.time}
+                      values={series.appliedForce}
+                      color="#9333ea"
+                      className={appCss.chartContainer}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.force}
+                    />
                   </>
                 )}
                 {backboneCurves && (
@@ -1125,7 +1171,7 @@ export function App() {
                     curves={backboneCurves}
                     displacementHistory={series?.displacement ?? []}
                     restoringForceHistory={series?.restoringForce ?? []}
-                    selectedIndex={selection?.index ?? 0}
+                    selectedIndex={0}
                     className={appCss.chartContainer}
                     logoUrl={integralLogo}
                     xUnits={unitLabels.displacement}

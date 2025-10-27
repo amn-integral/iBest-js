@@ -16,9 +16,11 @@
     "@integralrsg/igraph": "workspace:*",
     "@integralrsg/imath": "workspace:*",
     "@integralrsg/iuicomponents": "workspace:*",
+    "chart.js": "^4.4.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "react": "^19.1.1",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {

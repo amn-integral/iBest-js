@@ -6,16 +6,7 @@ import {
   useState,
   type ChangeEvent,
 } from "react";
-import {
-  BackboneCurve,
-  ForceCurve,
-  newmarkSolver,
-  averageAcceleration,
-  type InitialConditions,
-  type SolverSettings,
-  type NewmarkParameters,
-  type NewmarkResponse,
-} from "@integralrsg/imath";
+import { BackboneCurve } from "@integralrsg/imath";
 import {
   HistoryChart,
   BackboneChart,
@@ -36,6 +27,7 @@ const integralLogo = `${import.meta.env.BASE_URL}integralLogo.svg`;
 
 import { Report } from "./components/Report";
 import appCss from "./App.module.css";
+import { useSolverWorker } from "./hooks/useSolverWorker";
 
 type BackboneRow = {
   id: number;
@@ -75,6 +67,14 @@ type SolverSeries = {
   acceleration: number[];
   restoringForce: number[];
   appliedForce: number[];
+  // Pre-computed bounds to avoid expensive min/max on large arrays
+  bounds?: {
+    displacement: { min: number; max: number };
+    velocity: { min: number; max: number };
+    acceleration: { min: number; max: number };
+    restoringForce: { min: number; max: number };
+    appliedForce: { min: number; max: number };
+  };
 };
 
 type BackboneCurves = {
@@ -114,7 +114,7 @@ export function App() {
   const [massInput, setMassInput] = useState("0.2553");
   const [rotationLengthInput, setRotationLengthInput] = useState("10.0");
   const [dampingRatioInput, setDampingRatioInput] = useState("0.05");
-  const [totalTimeInput, setTotalTimeInput] = useState("1.0");
+  const [totalTimeInput, setTotalTimeInput] = useState("100000");
   const [autoStep, setAutoStep] = useState(false);
   const [timeStepInput, setTimeStepInput] = useState("0.1");
   const [orientation, setOrientation] = useState<"Vertical" | "Horizontal">(
@@ -299,8 +299,16 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
+  // Lazy render Report component only when needed for PDF
+  const [shouldRenderReport, setShouldRenderReport] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSolverRunning, setIsSolverRunning] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const reportRef = useRef<HTMLDivElement | null>(null);
+
+  // Web Worker for solver
+  const { runSolver: runSolverWorker, terminateWorker } = useSolverWorker();
 
   const handleForceCsvImport = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -371,18 +379,29 @@ export function App() {
   };
 
   const generatePdf = useCallback(async () => {
+    setIsGeneratingPdf(true);
+
+    // Trigger Report component rendering
+    setShouldRenderReport(true);
+
+    // Wait for rendering to complete - give it more time for charts
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     if (!reportRef.current) {
       console.error("Report component is not available.");
+      setShouldRenderReport(false);
+      setIsGeneratingPdf(false);
       return;
     }
 
     try {
       // Capture the report component as canvas
       const canvas = await html2canvas(reportRef.current, {
-        scale: 2, // Higher scale for better quality
+        scale: 1.5, // Reduced from 2 for faster capture
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#ffffff",
+        logging: false, // Disable logging for better performance
         width: 794, // A4 width in pixels at 96 DPI
         height: 1123, // A4 height in pixels at 96 DPI
       });
@@ -403,9 +422,15 @@ export function App() {
 
       // Save the PDF
       pdf.save("solver-report.pdf");
+
+      // Optional: Keep rendered for subsequent PDF generations
+      // setShouldRenderReport(false);
     } catch (error) {
       console.error("Failed to generate PDF:", error);
       alert("Failed to generate PDF. Please try again.");
+      setShouldRenderReport(false);
+    } finally {
+      setIsGeneratingPdf(false);
     }
   }, []);
 
@@ -497,9 +522,11 @@ export function App() {
   // Rotation calculations
   const [rotationHistory, setRotationHistory] = useState<{
     angle: number[];
-  }>({  angle: [] });
+    min?: number;
+    max?: number;
+  }>({ angle: [] });
 
-  const runSolver = () => {
+  const runSolver = async () => {
     const validationErrors: string[] = [];
 
     if (!Number.isFinite(mass) || mass <= 0) {
@@ -542,66 +569,75 @@ export function App() {
       return;
     }
 
+    setIsSolverRunning(true);
+
     try {
       const backbone = new BackboneCurve(inboundValidRows, reboundValidRows);
       const initialCurve = {
         x: [...backbone.xValues],
         y: [...backbone.yValues],
       };
-      const force = new ForceCurve(
-        forceValidRows.map((sample) => sample.time),
-        forceValidRows.map((sample) => sample.force)
-      );
+
+      // Prepare data for Web Worker
+      const solverInput = {
+        mass,
+        dampingRatio,
+        totalTime,
+        timeStep,
+        autoStep,
+        orientation,
+        gravity: currentSystem!.gravity,
+        length,
+        inboundValidRows,
+        reboundValidRows,
+        forceValidRows,
+      };
 
       const start = performance.now();
 
-      const initialConditions: InitialConditions = { u0: 0, v0: 0 };
-      const solverSettings: SolverSettings = autoStep
-        ? { t: totalTime, auto: true }
-        : { t: totalTime, dt: timeStep, auto: false };
-      const newmarkParams: NewmarkParameters = averageAcceleration;
+      // Run solver in Web Worker
+      const result = await runSolverWorker(solverInput);
 
-      const response: NewmarkResponse = newmarkSolver(
-        mass,
-        backbone,
-        dampingRatio,
-        force,
-        initialConditions,
-        solverSettings,
-        newmarkParams,
-        orientation === "Vertical" ? false : true,
-        0.0,
-        currentSystem!.gravity
-      );
       const runtime = performance.now() - start;
+      console.log(
+        "Web Worker solver runtime (ms):",
+        runtime,
+        result.response.displacement.length.toExponential()
+      );
 
-      const maxDisplacement = Math.max(...response.displacement);
-      const finalDisplacement =
-        response.displacement[response.displacement.length - 1];
+      console.log("Number of worker steps:", result.response.time.length/1e6);
 
-      // Rotation is calculated as atan of response.displacement / (length / 2)
-      const rotationAngles = response.displacement.map((disp) => {
-        const angleRad = Math.atan(disp / length);
-        return angleRad * (180 / Math.PI);
-      });
+      const totalPoints = result.response.time.length;
+      
+      const finalDisplacement = result.response.displacement[totalPoints - 1];
 
       setRotationHistory({
-        angle: rotationAngles,
+        angle: result.rotationArray,
+        min: result.rotationBounds.min,
+        max: result.rotationBounds.max,
       });
 
       setSummary({
-        maxDisplacement,
+        maxDisplacement: result.bounds.displacement.max,
         finalDisplacement,
         runtimeMs: runtime,
-        steps: response.time.length,
+        steps: totalPoints,
       });
+
       setSeries({
-        time: response.time,
-        displacement: response.displacement,
-        velocity: response.velocity,
-        acceleration: response.acceleration,
-        restoringForce: response.restoringForce,
-        appliedForce: response.appliedForce,
+        time: result.response.time,
+        displacement: result.response.displacement,
+        velocity: result.response.velocity,
+        acceleration: result.response.acceleration,
+        restoringForce: result.response.restoringForce,
+        appliedForce: result.response.appliedForce,
+        bounds: {
+          displacement: result.bounds.displacement,
+          velocity: result.bounds.velocity,
+          acceleration: result.bounds.acceleration,
+          restoringForce: result.bounds.restoringForce,
+          appliedForce: result.bounds.appliedForce,
+        },
       });
       setBackboneCurves({
         initial: initialCurve,
@@ -621,6 +657,8 @@ export function App() {
       setSeries(null);
       setBackboneCurves(null);
       setIsPlaying(false);
+    } finally {
+      setIsSolverRunning(false);
     }
   };
 
@@ -828,16 +866,18 @@ export function App() {
             type="button"
             className={appCss.appButton}
             onClick={runSolver}
+            disabled={isSolverRunning}
           >
-            Run GSDOF Solver
+            {isSolverRunning ? "Running Solver..." : "Run GSDOF Solver"}
           </button>
 
           <button
             type="button"
             className={appCss.appButton}
             onClick={generatePdf}
+            disabled={isGeneratingPdf || !series || !backboneCurves}
           >
-            Print to PDF
+            {isGeneratingPdf ? "Generating PDF..." : "Print to PDF"}
           </button>
 
           {errors.length > 0 ? (
@@ -849,7 +889,7 @@ export function App() {
           ) : null}
         </div>
 
-        <div className={appCss.panelResults}>
+        {/* <div className={appCss.panelResults}>
           <h2>Results</h2>
           {summary && series && backboneCurves ? (
             <>
@@ -935,6 +975,8 @@ export function App() {
                       logoUrl={integralLogo}
                       xUnits={unitLabels.time}
                       yUnits={unitLabels.displacement}
+                      minValue={series.bounds?.displacement.min}
+                      maxValue={series.bounds?.displacement.max}
                     />
                     <HistoryChart
                       title="Rotation"
@@ -946,6 +988,8 @@ export function App() {
                       logoUrl={integralLogo}
                       xUnits={unitLabels.time}
                       yUnits="degree"
+                      minValue={rotationHistory.min}
+                      maxValue={rotationHistory.max}
                     />
                     <HistoryChart
                       title="Velocity"
@@ -957,17 +1001,47 @@ export function App() {
                       logoUrl={integralLogo}
                       xUnits={unitLabels.time}
                       yUnits={unitLabels.velocity}
+                      minValue={series.bounds?.velocity.min}
+                      maxValue={series.bounds?.velocity.max}
                     />
                     <HistoryChart
                       title="Acceleration"
                       time={series.time}
                       values={series.acceleration}
-                      color="#f97316"
-                      selectedIndex={selection?.index ?? 0}
+                      color="#dc2626"
                       className={appCss.chartContainer}
+                      selectedIndex={selection?.index ?? 0}
                       logoUrl={integralLogo}
                       xUnits={unitLabels.time}
                       yUnits={unitLabels.acceleration}
+                      minValue={series.bounds?.acceleration.min}
+                      maxValue={series.bounds?.acceleration.max}
+                    />
+                    <HistoryChart
+                      title="Restoring force"
+                      time={series.time}
+                      values={series.restoringForce}
+                      color="#f59e0b"
+                      className={appCss.chartContainer}
+                      selectedIndex={selection?.index ?? 0}
+                      logoUrl={integralLogo}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.force}
+                      minValue={series.bounds?.restoringForce.min}
+                      maxValue={series.bounds?.restoringForce.max}
+                    />
+                    <HistoryChart
+                      title="Applied force"
+                      time={series.time}
+                      values={series.appliedForce}
+                      color="#9333ea"
+                      className={appCss.chartContainer}
+                      selectedIndex={selection?.index ?? 0}
+                      logoUrl={integralLogo}
+                      xUnits={unitLabels.time}
+                      yUnits={unitLabels.force}
+                      minValue={series.bounds?.appliedForce.min}
+                      maxValue={series.bounds?.appliedForce.max}
                     />
                   </>
                 )}
@@ -1024,12 +1098,12 @@ export function App() {
               )}
             </div>
           )}
-        </div>
+        </div> */}
       </main>
 
-      {/* Hidden Report component for PDF generation */}
-      <div className={appCss.printContainer} ref={reportRef}>
-        {series && backboneCurves && (
+      {/* Lazy-rendered Report component for PDF generation - only renders when needed */}
+      {/* <div className={appCss.printContainer} ref={reportRef}>
+        {shouldRenderReport && series && backboneCurves && (
           <Report
             mass={massInput}
             dampingRatio={dampingRatioInput}
@@ -1046,7 +1120,7 @@ export function App() {
             unitLabels={unitLabels}
           />
         )}
-      </div>
+      </div> */}
     </div>
   );
 }

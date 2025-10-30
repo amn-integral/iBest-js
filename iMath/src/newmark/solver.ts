@@ -1,31 +1,6 @@
 import { BackboneCurve } from "./backbone";
 import { ForceCurve } from "./force";
-
-export interface InitialConditions {
-  u0: number;
-  v0: number;
-}
-
-export interface SolverSettings {
-  t: number;
-  dt?: number;
-  auto?: boolean;
-}
-
-export interface NewmarkParameters {
-  gamma: number;
-  beta: number;
-}
-
-export interface NewmarkResponse {
-  time: number[];
-  displacement: number[];
-  velocity: number[];
-  acceleration: number[];
-  stiffness: number[];
-  restoringForce: number[];
-  appliedForce: number[];
-}
+import type { InitialConditions, SolverSettings, NewmarkParameters, NewmarkResponse } from "./types";
 
 export const averageAcceleration: NewmarkParameters = {
   gamma: 0.5,

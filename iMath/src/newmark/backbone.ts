@@ -1,11 +1,7 @@
 import { interpolateSorted } from "./helpers";
 import { findMinMax } from "../core/arrayStats";
+import { BackbonePoint } from "./types";
 
-export interface BackbonePoint {
-  displacement: number;
-  resistance: number;
-  klm?: number;
-}
 
 function clonePoints(points: BackbonePoint[]): BackbonePoint[] {
   return points.map((point) => ({

@@ -1,6 +1,6 @@
 import { interpolateSorted, interpolateSortedBatch } from "./helpers";
 
-export interface DiscretizedCurve {
+interface DiscretizedCurve {
   t: number[];
   f: number[];
 }

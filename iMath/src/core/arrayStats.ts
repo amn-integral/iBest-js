@@ -14,7 +14,7 @@ export interface MinMax {
  * @param arr - Array of numbers
  * @returns Object with min and max values
  */
-export function findMinMax(arr: number[]): MinMax {
+export function findMinMax(arr: number[] | Float32Array): MinMax {
   if (arr.length === 0) {
     return { min: 0, max: 0 };
   }
@@ -63,7 +63,7 @@ export function findMinMax(arr: number[]): MinMax {
  * @param arrays - Object with named arrays
  * @returns Object with min/max for each array
  */
-export function findMultipleMinMax<T extends Record<string, number[]>>(
+export function findMultipleMinMax<T extends Record<string, number[] | Float32Array>>(
   arrays: T
 ): { [K in keyof T]: MinMax } {
   const result = {} as { [K in keyof T]: MinMax };

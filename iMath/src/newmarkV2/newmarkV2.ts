@@ -20,7 +20,7 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
   }
 
   const naturalPeriod = TWO_PI * Math.sqrt(mass / resistance.inboundStiffness);
-  const dt = auto ? 0.001 * naturalPeriod : (settings.dt as number);
+  const dt = auto ? naturalPeriod / 50 : (settings.dt as number);
   const steps = Math.floor(totalTime / dt) + 1;
 
   const inv_beta = 1 / beta;
@@ -50,8 +50,8 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
 
   let gravity_force = 0.0;
   if (gravity_effect) {
-    // gravity_force += mass * gravity_constant + added_weight;
-    // u[0] = u[0] + gravity_force / resistance.inboundStiffness;
+    gravity_force += mass * gravity_constant + added_weight;
+    u[0] = u[0] + gravity_force / resistance.inboundStiffness;
   }
 
   // Discretize force curve
@@ -89,12 +89,25 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
     pHat[i + 1] = p[i + 1] + a1 * u[i] + a2 * v[i] + a3 * a[i] + gravity_force;
     let j = 1; // iteration counter
 
+    // These are float64 by default
+    let u_num = u[i + 1];
+    let fs_num = fs[i + 1];
+    let kT_num = kT[i + 1];
+    let kTHat_num = kTHat[i + 1];
+    let rHat_num = 0;
     let du = 0.0;
-    // Loop breaking when set true something is fishy
+    
     while (true) {
-      rHat[i + 1] = pHat[i + 1] - fs[i + 1] - a1 * u[i + 1];
+      rHat_num = pHat[i + 1] - fs_num - a1 * u_num;
       // Check convergence
-      if (rHat[i + 1] * rHat[i + 1] < CONVERGNCE_TOLERANCE) {
+      if (rHat_num * rHat_num < CONVERGNCE_TOLERANCE) {
+
+        u[i+1] = u_num;
+        fs[i+1] = fs_num;
+        kT[i+1] = kT_num;
+        rHat[i+1] = rHat_num;
+        kTHat[i+1] = kTHat_num;
+
         v[i + 1] = gamma_over_beta_dt * (u[i + 1] - u[i]) + one_minus_gamma_over_beta * v[i] + dt_one_minus_gamma_over_2beta * a[i];
         a[i + 1] = inv_beta_dt2 * (u[i + 1] - u[i]) - inv_beta_dt * v[i] - inv_2beta_minus_one * a[i];
 
@@ -111,10 +124,10 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
         break;
       }
 
-      kTHat[i + 1] = kT[i + 1] + a1;
-      du = rHat[i + 1] / kTHat[i + 1];
-      u[i + 1] = u[i + 1] + du;
-      [fs[i + 1], kT[i + 1]] = resistance.getAt(u[i + 1]);
+      kTHat_num = kT_num + a1;
+      du = rHat_num / kTHat_num;
+      u_num = u_num + du;
+      [fs_num, kT_num] = resistance.getAt(u_num);
 
       if (j === 1) {
         console.log([t[i + 1].toFixed(4).padStart(10), p[i + 1].toFixed(4).padStart(10), rHat[i + 1].toFixed(4).padStart(10), kT[i + 1].toFixed(0).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));

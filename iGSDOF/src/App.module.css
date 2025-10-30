@@ -54,7 +54,7 @@
 
 .panel-results{
   padding: 0rem 2rem 0rem 1rem;
-  max-width: 60%;
+  max-width: 80%;
 }
 
 .panel-results h2{
@@ -296,20 +296,12 @@
   width: 100%;
 }
 
-.chart-display {
-  max-width: 100%;
-  margin-top: 0.3rem;
-  height: auto;
-  object-fit: contain;
-  display: block;
-  border: #000000 solid 1px;
-}
 
-.chart-display img {
-  width: 100%;        
-  height: auto;       
-  object-fit: contain;
+.chart-container img {
   display: block;
+  margin: 0.1rem;
+  border: #000000 solid 1px;
+  border-radius: 1rem;
 }
 
 

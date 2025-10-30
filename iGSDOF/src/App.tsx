@@ -11,6 +11,8 @@ import { validateSolverInput } from './utils/validateSolverInput';
 import { useSolverWorkerV2 } from './hooks/useSolverWorkerV2';
 
 const MAX_SOLVER_STEPS = 1000000;
+const CHART_DIMENSIONS = { width: 600, height: 300 };
+// const IMAGE_DIMENSIONS = { width: 800, height: 400 };
 
 export function App() {
   const [massInput, setMassInput] = useState('0.2553');
@@ -192,8 +194,8 @@ export function App() {
         const imageUrl = await renderChartJS('png', timeDataCopy, displacementDataCopy, {
           title: 'Displacement vs Time',
           color: '#3b82f6',
-          width: 800,
-          height: 400,
+          width: CHART_DIMENSIONS.width,
+          height: CHART_DIMENSIONS.height,
           xUnits: unitLabels.time,
           yUnits: unitLabels.displacement
         });
@@ -210,8 +212,8 @@ export function App() {
         const rotationUrl = await renderChartJS('png', timeDataRotationCopy, rotationDataCopy, {
           title: 'Rotation vs Time',
           color: '#10b981',
-          width: 800,
-          height: 400,
+          width: CHART_DIMENSIONS.width,
+          height: CHART_DIMENSIONS.height,
           xUnits: unitLabels.time,
           yUnits: 'Degrees'
         });
@@ -226,8 +228,8 @@ export function App() {
       }
 
       const totalPoints = result.response.t.length; // Use validated data length
-      const finalDisplacement = result.response.u[totalPoints - 1]?.toFixed(4) ?? '0';
-      const maxDisp = result.bounds?.displacement?.max?.toFixed(4) ?? '0';
+      const finalDisplacement = result.response.u[totalPoints - 1]?.toFixed(2) ?? 'NA';
+      const maxDisp = result.bounds?.displacement?.max?.toFixed(2) ?? '0';
 
       // Set minimal summary data only
       setSummary({
@@ -461,27 +463,22 @@ export function App() {
             <div>
               <div
                 style={{
-                  padding: '20px',
+                  padding: '1px',
                   backgroundColor: '#f8f9fa',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  textAlign: 'center'
                 }}
               >
-                <h3>Solver Results Complete</h3>
-                <p>
-                  ✅ Analysis completed successfully
-                  {dispImage || rotationImage ? ' - charts generated' : ' - results ready'}
-                </p>
                 <p>
                   <strong>Max Displacement:</strong> {summary.maxDisplacement} {unitLabels.displacement}
-                </p>
-                <p>
-                  <strong>Final Displacement:</strong> {summary.finalDisplacement} {unitLabels.displacement}
                 </p>
                 <p>
                   <strong>Runtime:</strong> {summary.runtimeMs.toFixed(1)} ms
                 </p>
                 <p>
-                  <strong>Steps:</strong> {summary.steps} calculation steps
+                  <strong>Steps:</strong> {summary.steps} 
                 </p>
               </div>
               {isGeneratingChart ? (
@@ -499,14 +496,30 @@ export function App() {
               ) : dispImage || rotationImage ? (
                 <div className={appCss.chartContainer}>
                   {dispImage && (
-                    <div className={appCss.chartDisplay}>
-                      <img src={dispImage} alt="Displacement vs Time" />
-                    </div>
+                      <img
+                        src={dispImage}
+                        alt="Displacement vs Time"
+                        width={CHART_DIMENSIONS.width}
+                        height={CHART_DIMENSIONS.height}
+                        style={{
+                          width: `${CHART_DIMENSIONS.width}px`,
+                          height: `${CHART_DIMENSIONS.height}px`,
+                          boxSizing: 'content-box'
+                        }}
+                      />
                   )}
                   {rotationImage && (
-                    <div className={appCss.chartDisplay}>
-                      <img src={rotationImage} alt="Rotation vs Time" />
-                    </div>
+                      <img
+                        src={rotationImage}
+                        alt="Rotation vs Time"
+                        width={CHART_DIMENSIONS.width}
+                        height={CHART_DIMENSIONS.height}
+                        style={{
+                          width: `${CHART_DIMENSIONS.width}px`,
+                          height: `${CHART_DIMENSIONS.height}px`,
+                          boxSizing: 'content-box'
+                        }}
+                      />
                   )}
                   {!rotationImage && dispImage && (
                     <div

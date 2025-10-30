@@ -1,185 +1,53 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from "react";
-import { BackboneCurve } from "@integralrsg/imath";
-import {
-  HistoryChart,
-  BackboneChart,
-  parseStrictNumber,
-  formatLimitValue,
-} from "@integralrsg/igraph";
-import { ChartJSChart } from "./components/ChartJSChart";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import {
-  EditableGrid,
-  UnitsTable,
-  UserInput,
-  UNIT_SYSTEMS,
-  type ColumnConfig,
-} from "@integralrsg/iuicomponents";
-import "@integralrsg/iuicomponents/styles";
-const integralLogo = `${import.meta.env.BASE_URL}integralLogo.svg`;
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import renderChartJS from './utils/renderChartJSImage';
 
-import { Report } from "./components/Report";
-import appCss from "./App.module.css";
-import { useSolverWorker } from "./hooks/useSolverWorker";
+import { parseStrictNumber } from '@integralrsg/igraph';
 
-type BackboneRow = {
-  id: number;
-  displacement: string;
-  resistance: string;
-  klm: string;
-};
+import { UnitsTable, UserInput, UNIT_SYSTEMS, evaluateExpression } from '@integralrsg/iuicomponents';
+import '@integralrsg/iuicomponents/styles';
+import appCss from './App.module.css';
+import type { SolverSummary, SolverWorkerInputV2 } from './types';
+import { validateSolverInput } from './utils/validateSolverInput';
+import { useSolverWorkerV2 } from './hooks/useSolverWorkerV2';
 
-type BackboneNumeric = {
-  displacement: number;
-  resistance: number;
-  klm: number;
-};
-
-type ForceRow = {
-  id: number;
-  time: string;
-  force: string;
-};
-
-type ForceNumeric = {
-  time: number;
-  force: number;
-};
-
-type SolverSummary = {
-  maxDisplacement: number;
-  finalDisplacement: number;
-  runtimeMs: number;
-  steps: number;
-};
-
-type SolverSeries = {
-  time: number[];
-  displacement: number[];
-  velocity: number[];
-  acceleration: number[];
-  restoringForce: number[];
-  appliedForce: number[];
-  // Pre-computed bounds to avoid expensive min/max on large arrays
-  bounds?: {
-    displacement: { min: number; max: number };
-    velocity: { min: number; max: number };
-    acceleration: { min: number; max: number };
-    restoringForce: { min: number; max: number };
-    appliedForce: { min: number; max: number };
-  };
-};
-
-type BackboneCurves = {
-  initial: { x: number[]; y: number[] };
-  final: { x: number[]; y: number[] };
-};
-
-const INITIAL_INBOUND_DATA: Array<Omit<BackboneRow, "id">> = [
-  { displacement: "0.75", resistance: "7.5", klm: "1" },
-  { displacement: "10", resistance: "7.5", klm: "1" },
-];
-
-const INITIAL_REBOUND_DATA: Array<Omit<BackboneRow, "id">> = [
-  { displacement: "-0.75", resistance: "-7.5", klm: "1" },
-  { displacement: "-10", resistance: "-7.5", klm: "1" },
-];
-
-const INITIAL_FORCE_DATA: Array<Omit<ForceRow, "id">> = [
-  { time: "0.0", force: "0.0" },
-  { time: "0.1", force: "5.0" },
-  { time: "0.2", force: "8.66" },
-  { time: "0.3", force: "10.0" },
-  { time: "0.4", force: "8.66" },
-  { time: "0.5", force: "5.0" },
-  { time: "0.6", force: "0.0" },
-  { time: "0.7", force: "0.0" },
-  { time: "0.8", force: "0.0" },
-  { time: "0.9", force: "0.0" },
-  { time: "1.0", force: "0.0" },
-];
+const MAX_SOLVER_STEPS = 1000000;
 
 export function App() {
-  const inboundIdRef = useRef(1);
-  const reboundIdRef = useRef(1);
-  const forceIdRef = useRef(1);
+  const [massInput, setMassInput] = useState('0.2553');
+  const [rotationLengthInput, setRotationLengthInput] = useState('10.0');
+  const [dampingRatioInput, setDampingRatioInput] = useState('0.05');
+  const [totalTime, setTotalTime] = useState(1);
+  const [autoAnalysis, setAutoAnalysis] = useState(true);
+  const [timeStep, setTimeStep] = useState(0.1);
+  const [orientation, setOrientation] = useState<'Vertical' | 'Horizontal'>('Vertical');
+  const [dispImage, setDispImage] = useState<string | null>(null);
+  const [rotationImage, setRotationImage] = useState<string | null>(null);
+  const [isGeneratingChart, setIsGeneratingChart] = useState(false);
+  const [resistance, setResistance] = useState('-7.5,0,7.5');
+  const [displacement, setDisplacement] = useState('-0.75,0,0.75');
+  const [klm, setKlm] = useState(1.0);
+  const [u0, setU0] = useState(0.0);
+  const [v0, setV0] = useState(0.0);
+  const [force, setForce] = useState('0.0, 5.0, 8.66, 10.0, 8.66, 5.0, 0, 0, 0, 0, 0');
+  const [time, setTime] = useState('0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0');
 
-  const [massInput, setMassInput] = useState("0.2553");
-  const [rotationLengthInput, setRotationLengthInput] = useState("10.0");
-  const [dampingRatioInput, setDampingRatioInput] = useState("0.05");
-  const [totalTimeInput, setTotalTimeInput] = useState("100000");
-  const [autoStep, setAutoStep] = useState(false);
-  const [timeStepInput, setTimeStepInput] = useState("0.1");
-  const [orientation, setOrientation] = useState<"Vertical" | "Horizontal">(
-    "Vertical"
-  );
+  const massValue = useMemo(() => evaluateExpression(massInput), [massInput]);
+  const rotationLengthValue = useMemo(() => evaluateExpression(rotationLengthInput), [rotationLengthInput]);
+  const dampingRatioValue = useMemo(() => evaluateExpression(dampingRatioInput), [dampingRatioInput]);
 
   // Unit system state - default to imperial
-  const [selectedUnitSystemId, setSelectedUnitSystemId] =
-    useState<string>("lbf-s^2/in-in-secs");
-
-  const [inboundRows, setInboundRows] = useState<BackboneRow[]>(() =>
-    INITIAL_INBOUND_DATA.map((row) => ({
-      ...row,
-      id: inboundIdRef.current++,
-    }))
-  );
-  const [reboundRows, setReboundRows] = useState<BackboneRow[]>(() =>
-    INITIAL_REBOUND_DATA.map((row) => ({
-      ...row,
-      id: reboundIdRef.current++,
-    }))
-  );
-  const [forceRows, setForceRows] = useState<ForceRow[]>(() =>
-    INITIAL_FORCE_DATA.map((row) => ({
-      ...row,
-      id: forceIdRef.current++,
-    }))
-  );
-
-  const mass = useMemo(
-    () => parseStrictNumber(massInput) ?? Number.NaN,
-    [massInput]
-  );
-
-  const length = useMemo(
-    () => parseStrictNumber(rotationLengthInput) ?? Number.NaN,
-    [rotationLengthInput]
-  );
-
-  const dampingRatio = useMemo(
-    () => parseStrictNumber(dampingRatioInput) ?? Number.NaN,
-    [dampingRatioInput]
-  );
-  const totalTime = useMemo(
-    () => parseStrictNumber(totalTimeInput) ?? Number.NaN,
-    [totalTimeInput]
-  );
-  const timeStep = useMemo(
-    () => parseStrictNumber(timeStepInput) ?? Number.NaN,
-    [timeStepInput]
-  );
+  const [selectedUnitSystemId, setSelectedUnitSystemId] = useState<string>('lbf-s^2/in-in-secs');
 
   // Derive unit labels from selected unit system
   const unitLabels = useMemo(() => {
-    const system = UNIT_SYSTEMS.find(
-      (s: { id: string }) => s.id === selectedUnitSystemId
-    );
+    const system = UNIT_SYSTEMS.find((s: { id: string }) => s.id === selectedUnitSystemId);
     if (!system) {
       return {
-        displacement: "",
-        velocity: "",
-        acceleration: "",
-        time: "",
-        force: "",
+        displacement: '',
+        velocity: '',
+        acceleration: '',
+        time: '',
+        force: ''
       };
     }
     return {
@@ -187,702 +55,220 @@ export function App() {
       velocity: `${system.length}/${system.time}`,
       acceleration: `${system.length}/${system.time}²`,
       time: system.time,
-      force: system.force,
+      force: system.force
     };
   }, [selectedUnitSystemId]);
 
   const currentSystem = useMemo(() => {
-    return UNIT_SYSTEMS.find(
-      (s: { id: string }) => s.id === selectedUnitSystemId
-    );
+    return UNIT_SYSTEMS.find((s: { id: string }) => s.id === selectedUnitSystemId);
   }, [selectedUnitSystemId]);
 
   const handleUnitSystemChange = useCallback((unitSystemId: string) => {
     setSelectedUnitSystemId(unitSystemId);
   }, []);
 
-  const createInboundRow = useCallback(
-    () => ({
-      id: inboundIdRef.current++,
-      displacement: "",
-      resistance: "",
-      klm: "1",
-    }),
-    []
-  );
-
-  const createReboundRow = useCallback(
-    () => ({
-      id: reboundIdRef.current++,
-      displacement: "",
-      resistance: "",
-      klm: "1",
-    }),
-    []
-  );
-
-  const createForceRow = useCallback(
-    () => ({
-      id: forceIdRef.current++,
-      time: "",
-      force: "",
-    }),
-    []
-  );
-
-  const handleAutoStepChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setAutoStep(event.target.checked);
-    },
-    []
-  );
-
-  const backboneColumns = useMemo<
-    ColumnConfig<"displacement" | "resistance" | "klm">[]
-  >(
-    () => [
-      {
-        key: "displacement",
-        label: "Displacement",
-        placeholder: "0.00",
-        parser: parseStrictNumber,
-      },
-      {
-        key: "resistance",
-        label: "Force",
-        placeholder: "0.00",
-        parser: parseStrictNumber,
-      },
-      {
-        key: "klm",
-        label: "k_lm",
-        placeholder: "1.0",
-        parser: parseStrictNumber,
-      },
-    ],
-    []
-  );
-
-  const forceColumns = useMemo<ColumnConfig<"time" | "force">[]>(
-    () => [
-      {
-        key: "time",
-        label: "Time",
-        placeholder: "0.00",
-        parser: parseStrictNumber,
-      },
-      {
-        key: "force",
-        label: "Force",
-        placeholder: "0.00",
-        parser: parseStrictNumber,
-      },
-    ],
-    []
-  );
-
-  const [inboundValidRows, setInboundValidRows] = useState<BackboneNumeric[]>(
-    []
-  );
-  const [reboundValidRows, setReboundValidRows] = useState<BackboneNumeric[]>(
-    []
-  );
-  const [forceValidRows, setForceValidRows] = useState<ForceNumeric[]>([]);
+  const handleAutoAnalysisChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setAutoAnalysis(event.target.checked);
+  }, []);
 
   const [errors, setErrors] = useState<string[]>([]);
   const [summary, setSummary] = useState<SolverSummary | null>(null);
-  const [series, setSeries] = useState<SolverSeries | null>(null);
-  const [backboneCurves, setBackboneCurves] = useState<BackboneCurves | null>(
-    null
-  );
-
-  const [playIndex, setPlayIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-
-  // Lazy render Report component only when needed for PDF
-  const [shouldRenderReport, setShouldRenderReport] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isSolverRunning, setIsSolverRunning] = useState(false);
 
-  // Memory optimization: convert charts to static images
-  const [chartImages, setChartImages] = useState<{ [key: string]: string }>({});
-  const [useStaticCharts, setUseStaticCharts] = useState(false);
-  const [isCapturingCharts, setIsCapturingCharts] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const reportRef = useRef<HTMLDivElement | null>(null);
-  const chartsContainerRef = useRef<HTMLDivElement | null>(null);
-
   // Web Worker for solver
-  const { runSolver: runSolverWorker, terminateWorker } = useSolverWorker();
+  const { runSolver: runSolverWorker, terminateWorker } = useSolverWorkerV2();
 
-  // Simple component to render either static image or interactive chart
-  const ChartOrImage = ({
-    chartId,
-    children,
-    alt,
-  }: {
-    chartId: string;
-    children: React.ReactNode;
-    alt: string;
-  }) => {
-    if (useStaticCharts && chartImages[chartId]) {
-      return (
-        <div className={appCss.chartContainer} data-chart-id={chartId}>
-          <img
-            src={chartImages[chartId]}
-            alt={alt}
-            style={{ width: "100%", height: "auto" }}
-          />
-        </div>
-      );
-    }
-    return <div data-chart-id={chartId}>{children}</div>;
-  };
-
-  // Function to directly render charts to images without storing data in React state
-  const renderChartsDirectlyToImages = useCallback(
-    async (
-      resultData: any,
-      rotationData: any,
-      backboneData: any,
-      unitLabels: any
-    ) => {
-      setIsCapturingCharts(true);
-      const images: { [key: string]: string } = {};
-
-      try {
-        // Create a temporary container for rendering charts
-        const tempContainer = document.createElement("div");
-        tempContainer.style.position = "absolute";
-        tempContainer.style.left = "-9999px";
-        tempContainer.style.top = "-9999px";
-        tempContainer.style.width = "800px";
-        tempContainer.style.height = "400px";
-        document.body.appendChild(tempContainer);
-
-        // Chart configurations
-        const chartConfigs = [
-          {
-            id: "displacement",
-            title: "Displacement",
-            time: resultData.time,
-            values: resultData.displacement,
-            color: "#3b82f6",
-            yUnits: unitLabels.displacement,
-          },
-          {
-            id: "rotation",
-            title: "Rotation",
-            time: resultData.time,
-            values: rotationData.angle,
-            color: "#3b82f6",
-            yUnits: "degree",
-          },
-          {
-            id: "velocity",
-            title: "Velocity",
-            time: resultData.time,
-            values: resultData.velocity,
-            color: "#16a34a",
-            yUnits: unitLabels.velocity,
-          },
-          {
-            id: "acceleration",
-            title: "Acceleration",
-            time: resultData.time,
-            values: resultData.acceleration,
-            color: "#dc2626",
-            yUnits: unitLabels.acceleration,
-          },
-          {
-            id: "restoringForce",
-            title: "Restoring Force",
-            time: resultData.time,
-            values: resultData.restoringForce,
-            color: "#7c3aed",
-            yUnits: unitLabels.force,
-          },
-          {
-            id: "appliedForce",
-            title: "Applied Force",
-            time: resultData.time,
-            values: resultData.appliedForce,
-            color: "#f59e0b",
-            yUnits: unitLabels.force,
-          },
-        ];
-
-        // Render each chart directly to canvas and convert to image
-        for (const config of chartConfigs) {
-          // Create minimal chart visualization using Canvas API directly
-          const canvas = document.createElement("canvas");
-          canvas.width = 400; // Small size for memory efficiency
-          canvas.height = 200;
-          const ctx = canvas.getContext("2d")!;
-
-          // Simple chart rendering - just the data line
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          if (config.values && config.values.length > 0) {
-            const minVal = Math.min(...config.values);
-            const maxVal = Math.max(...config.values);
-            const range = maxVal - minVal || 1;
-
-            ctx.strokeStyle = config.color;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-
-            for (let i = 0; i < config.values.length; i++) {
-              const x = (i / (config.values.length - 1)) * canvas.width;
-              const y =
-                canvas.height -
-                ((config.values[i] - minVal) / range) * canvas.height;
-
-              if (i === 0) {
-                ctx.moveTo(x, y);
-              } else {
-                ctx.lineTo(x, y);
-              }
-            }
-            ctx.stroke();
-          }
-
-          // Add title
-          ctx.fillStyle = "#000000";
-          ctx.font = "12px Arial";
-          ctx.fillText(config.title, 10, 20);
-
-          images[config.id] = canvas.toDataURL("image/jpeg", 0.3); // Very low quality
-        }
-
-        // Add backbone chart
-        if (backboneData) {
-          const canvas = document.createElement("canvas");
-          canvas.width = 400;
-          canvas.height = 200;
-          const ctx = canvas.getContext("2d")!;
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = "#000000";
-          ctx.font = "12px Arial";
-          ctx.fillText("Backbone Chart", 10, 20);
-
-          images["backbone"] = canvas.toDataURL("image/jpeg", 0.3);
-        }
-
-        // Clean up temp container
-        document.body.removeChild(tempContainer);
-
-        setChartImages(images);
-        setUseStaticCharts(true);
-
-        console.log(
-          `Charts rendered directly to ${Object.keys(images).length} static images, no data stored in React state`
-        );
-      } catch (error) {
-        console.error("Failed to capture charts:", error);
-      } finally {
-        setIsCapturingCharts(false);
-      }
-    },
-    []
-  );
-
-  const handleForceCsvImport = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = typeof reader.result === "string" ? reader.result : "";
-      const rows = text
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0 && !line.startsWith("#"));
-
-      if (!rows.length) {
-        setErrors(["CSV file is empty."]);
-        event.target.value = "";
-        return;
-      }
-
-      const parsed: ForceRow[] = [];
-      let parseError: string | null = null;
-
-      rows.forEach((row, index) => {
-        if (parseError) {
-          return;
-        }
-
-        const parts = row.split(/,|;|\t/).map((part) => part.trim());
-        if (parts.length < 2) {
-          parseError = `Row ${index + 1}: expected at least two columns (time, force).`;
-          return;
-        }
-
-        const time = Number(parts[0]);
-        const force = Number(parts[1]);
-        if (!Number.isFinite(time) || !Number.isFinite(force)) {
-          parseError = `Row ${index + 1}: time and force must be numeric.`;
-          return;
-        }
-
-        parsed.push({
-          id: forceIdRef.current++,
-          time: String(time),
-          force: String(force),
-        });
-      });
-
-      if (parseError) {
-        setErrors([parseError]);
-        event.target.value = "";
-        return;
-      }
-
-      if (parsed.length < 2) {
-        setErrors(["CSV must contain at least two samples."]);
-        event.target.value = "";
-        return;
-      }
-
-      setForceRows(parsed);
-      setErrors([]);
-      event.target.value = "";
-    };
-
-    reader.readAsText(file);
-  };
-
-  const generatePdf = useCallback(async () => {
-    setIsGeneratingPdf(true);
-
-    // Trigger Report component rendering
-    setShouldRenderReport(true);
-
-    // Wait for rendering to complete - give it more time for charts
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    if (!reportRef.current) {
-      console.error("Report component is not available.");
-      setShouldRenderReport(false);
-      setIsGeneratingPdf(false);
-      return;
-    }
-
-    try {
-      // Capture the report component as canvas
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 1.5, // Reduced from 2 for faster capture
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false, // Disable logging for better performance
-        width: 794, // A4 width in pixels at 96 DPI
-        height: 1123, // A4 height in pixels at 96 DPI
-      });
-
-      // Create PDF with A4 dimensions
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      // Calculate dimensions to fit the canvas on A4 page
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-
-      // Save the PDF
-      pdf.save("solver-report.pdf");
-
-      // Optional: Keep rendered for subsequent PDF generations
-      // setShouldRenderReport(false);
-    } catch (error) {
-      console.error("Failed to generate PDF:", error);
-      alert("Failed to generate PDF. Please try again.");
-      setShouldRenderReport(false);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  }, []);
-
-  const backbonePreview = useMemo(() => {
-    try {
-      if (inboundValidRows.length >= 2 && reboundValidRows.length >= 2) {
-        const previewCurve = new BackboneCurve(
-          inboundValidRows,
-          reboundValidRows
-        );
-        return {
-          initial: {
-            x: [...previewCurve.xValues],
-            y: [...previewCurve.yValues],
-          },
-          final: {
-            x: [...previewCurve.xValues],
-            y: [...previewCurve.yValues],
-          },
-        };
-      }
-    } catch {
-      // ignore preview errors
-    }
-    return null;
-  }, [inboundValidRows, reboundValidRows]);
-
-  const forcePreviewSeries = useMemo(() => {
-    if (forceValidRows.length >= 2) {
-      return {
-        time: forceValidRows.map((row) => row.time),
-        values: forceValidRows.map((row) => row.force),
-      };
-    }
-    return null;
-  }, [forceValidRows]);
-
-  const selection = useMemo(() => {
-    if (!series || series.time.length === 0) {
-      return null;
-    }
-    const clampedIndex = Math.min(
-      Math.max(playIndex, 0),
-      series.time.length - 1
-    );
-    return {
-      index: clampedIndex,
-      time: series.time[clampedIndex],
-      displacement: series.displacement[clampedIndex],
-      velocity: series.velocity[clampedIndex],
-      acceleration: series.acceleration[clampedIndex],
-      restoringForce: series.restoringForce[clampedIndex],
-      appliedForce: series.appliedForce[clampedIndex],
-    };
-  }, [series, playIndex]);
-
+  // CLEANUP: Terminate worker on component unmount to prevent memory leaks
   useEffect(() => {
-    if (!isPlaying || !series) {
-      return;
-    }
-    if (playIndex >= series.time.length - 1) {
-      setIsPlaying(false);
-      return;
-    }
-
-    const nextIndex = playIndex + 1;
-    const dt =
-      series.time[nextIndex] - series.time[playIndex] <= 0
-        ? 0.016
-        : series.time[nextIndex] - series.time[playIndex];
-    const delay = Math.max((dt / playbackSpeed) * 1000, 16);
-    const timeout = window.setTimeout(() => {
-      setPlayIndex(nextIndex);
-    }, delay);
-    return () => window.clearTimeout(timeout);
-  }, [isPlaying, playIndex, playbackSpeed, series]);
-
-  useEffect(() => {
-    if (!series) {
-      setPlayIndex(0);
-      setIsPlaying(false);
-    } else {
-      setPlayIndex((index) =>
-        Math.min(index, series.time.length ? series.time.length - 1 : 0)
-      );
-    }
-  }, [series]);
-
-  // Rotation calculations
-  const [rotationHistory, setRotationHistory] = useState<{
-    angle: number[];
-    min?: number;
-    max?: number;
-  }>({ angle: [] });
+    return () => {
+      terminateWorker();
+    };
+  }, [terminateWorker]);
 
   const runSolver = async () => {
     const validationErrors: string[] = [];
 
-    if (!Number.isFinite(mass) || mass <= 0) {
-      validationErrors.push("Mass must be a positive number.");
-    }
-    if (!Number.isFinite(dampingRatio) || dampingRatio < 0) {
-      validationErrors.push("Damping ratio must be a non-negative number.");
-    }
-    if (!Number.isFinite(totalTime) || totalTime <= 0) {
-      validationErrors.push("Total time must be greater than zero.");
-    }
-    if (!autoStep && (!Number.isFinite(timeStep) || timeStep <= 0)) {
-      validationErrors.push(
-        "Time step must be a positive number when automatic stepping is disabled."
-      );
+    if (massValue === null) {
+      validationErrors.push('Mass must be a valid expression');
     }
 
-    if (inboundValidRows.length < 2) {
-      validationErrors.push(
-        "Inbound backbone must contain at least two valid points."
-      );
+    if (rotationLengthValue === null) {
+      validationErrors.push('Rotation length must be a valid expression');
     }
-    if (reboundValidRows.length < 2) {
-      validationErrors.push(
-        "Rebound backbone must contain at least two valid points."
-      );
+
+    if (dampingRatioValue === null) {
+      validationErrors.push('Damping ratio must be a valid expression');
     }
-    if (forceValidRows.length < 2) {
-      validationErrors.push(
-        "Force history must contain at least two valid samples."
-      );
+
+    const forceList: number[] = parseCSVtoNumberArray(force);
+    const timeList: number[] = parseCSVtoNumberArray(time);
+    const displacementList: number[] = parseCSVtoNumberArray(displacement);
+    const resistanceList: number[] = parseCSVtoNumberArray(resistance);
+    const initialConditions = { u0: u0, v0: v0 };
+    const solverSettings = {
+      t: autoAnalysis ? timeList[timeList.length - 1] * 1: totalTime,
+      dt: timeStep,
+      auto: autoAnalysis
+    };
+
+    const mass = massValue ?? 0;
+    const rotationLength = rotationLengthValue ?? 0;
+    const dampingRatio = dampingRatioValue ?? 0;
+
+    const solverInput: SolverWorkerInputV2 = {
+      mass: mass,
+      klm: klm,
+      resistance: resistanceList,
+      displacement: displacementList,
+      dampingRatio: dampingRatio,
+      force: forceList,
+      time: timeList,
+      initialConditions: initialConditions,
+      solverSettings: solverSettings,
+      gravity_effect: orientation === 'Horizontal',
+      added_weight: 0.0,
+      gravity_constant: currentSystem!.gravity
+    };
+
+    validationErrors.push(...validateSolverInput(solverInput));
+
+    // Add step limit validation to prevent Web Worker memory issues
+    const estimatedSteps = autoAnalysis
+      ? Math.ceil(totalTime / 0.001) // Conservative estimate for auto step
+      : Math.ceil(totalTime / timeStep);
+
+    if (estimatedSteps > MAX_SOLVER_STEPS) {
+      validationErrors.push(`Estimated ${estimatedSteps.toLocaleString()} steps exceeds maximum limit of ${MAX_SOLVER_STEPS.toLocaleString()}. ` + `Reduce total time or increase time step to prevent memory issues. ` + `Suggested: Total time ≤ ${(MAX_SOLVER_STEPS * (autoAnalysis ? 0.001 : timeStep)).toFixed(1)} ${unitLabels.time}`);
     }
 
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
       setSummary(null);
-      setSeries(null);
-      setBackboneCurves(null);
-      setIsPlaying(false);
+      setDispImage(null);
+      setRotationImage(null);
+      setIsGeneratingChart(false);
       return;
     }
 
     setIsSolverRunning(true);
 
     try {
-      const backbone = new BackboneCurve(inboundValidRows, reboundValidRows);
-      const initialCurve = {
-        x: [...backbone.xValues],
-        y: [...backbone.yValues],
-      };
-
-      // Prepare data for Web Worker
-      const solverInput = {
-        mass,
-        dampingRatio,
-        totalTime,
-        timeStep,
-        autoStep,
-        orientation,
-        gravity: currentSystem!.gravity,
-        length,
-        inboundValidRows,
-        reboundValidRows,
-        forceValidRows,
-      };
-
-      const start = performance.now();
-
       // Run solver in Web Worker
       const result = await runSolverWorker(solverInput);
 
-      const runtime = performance.now() - start;
-      console.log(
-        "Web Worker solver runtime (ms):",
-        runtime,
-        result.response.displacement.length.toExponential()
-      );
+      // Add validation for the Web Worker result
+      if (!result || !result.response) {
+        throw new Error('Web Worker returned invalid response');
+      }
 
-      console.log("Number of worker steps:", result.response.time.length / 1e6);
+      if (!result.response.t || !result.response.u) {
+        throw new Error('Web Worker returned invalid response data - missing time or displacement arrays');
+      }
 
-      const totalPoints = result.response.time.length;
-      const finalDisplacement = result.response.displacement[totalPoints - 1];
+      // Use full resolution data - no sampling
+      const timeData = result.response.t;
+      const displacementData = result.response.u;
+
+      // Add validation that arrays have data
+      if (!timeData.length || !displacementData.length) {
+        throw new Error('Solver returned empty data arrays');
+      }
+
+      if (timeData.length !== displacementData.length) {
+        throw new Error('Time and displacement data arrays have mismatched lengths');
+      }
+
+      console.log(`Solver completed: ${timeData.length} data points - using full resolution for charts`);
+
+      setIsGeneratingChart(true);
+
+      try {
+        // Create copies of data to prevent mutation by Chart.js
+        const timeDataCopy = [...timeData];
+        const displacementDataCopy = [...displacementData];
+
+        console.log(`Before chart generation: timeData=${timeData.length}, displacementData=${displacementData.length}`);
+
+        const imageUrl = await renderChartJS('png', timeDataCopy, displacementDataCopy, {
+          title: 'Displacement vs Time',
+          color: '#3b82f6',
+          width: 800,
+          height: 400,
+          xUnits: unitLabels.time,
+          yUnits: unitLabels.displacement
+        });
+
+        const rotationLengthForChart = rotationLength === 0 ? Number.EPSILON : rotationLength;
+        const rotationData = displacementData.map((disp) => {
+          const angleRad = Math.atan(disp / rotationLengthForChart);
+          return angleRad * (180 / Math.PI);
+        });
+
+        const timeDataRotationCopy = [...timeData];
+        const rotationDataCopy = [...rotationData];
+
+        const rotationUrl = await renderChartJS('png', timeDataRotationCopy, rotationDataCopy, {
+          title: 'Rotation vs Time',
+          color: '#10b981',
+          width: 800,
+          height: 400,
+          xUnits: unitLabels.time,
+          yUnits: 'Degrees'
+        });
+        setRotationImage(rotationUrl);
+        setDispImage(imageUrl);
+      } catch (chartError) {
+        console.warn('Chart generation failed:', chartError);
+        setDispImage(null);
+        setRotationImage(null);
+      } finally {
+        setIsGeneratingChart(false);
+      }
+
+      const totalPoints = result.response.t.length; // Use validated data length
+      const finalDisplacement = result.response.u[totalPoints - 1]?.toFixed(4) ?? '0';
+      const maxDisp = result.bounds?.displacement?.max?.toFixed(4) ?? '0';
 
       // Set minimal summary data only
       setSummary({
-        maxDisplacement: result.bounds.displacement.max,
-        finalDisplacement,
-        runtimeMs: runtime,
-        steps: totalPoints,
-      });
-
-      // LIGHTWEIGHT CHART APPROACH: Use simple canvas-based charts
-      setSeries({
-        time: result.response.time,
-        displacement: result.response.displacement,
-        velocity: result.response.velocity,
-        acceleration: result.response.acceleration,
-        restoringForce: result.response.restoringForce,
-        appliedForce: result.response.appliedForce,
-        bounds: result.bounds,
-      });
-
-      setRotationHistory({
-        angle: result.rotationArray,
-        min: result.rotationBounds.min,
-        max: result.rotationBounds.max,
-      });
-
-      setBackboneCurves({
-        initial: initialCurve,
-        final: {
-          x: [...backbone.xValues],
-          y: [...backbone.yValues],
-        },
+        maxDisplacement: maxDisp,
+        finalDisplacement: finalDisplacement,
+        runtimeMs: result.runtimeMs,
+        steps: totalPoints
       });
 
       setErrors([]);
-      setPlayIndex(0);
-      setIsPlaying(false);
 
-      console.log(
-        "Using lightweight canvas-based charts for better memory performance"
-      );
+      // MEMORY OPTIMIZATION: Clear data after solver completes
+      setTimeout(() => {
+        // Force garbage collection if available
+        if ((window as any).gc) {
+          (window as any).gc();
+        }
+      }, 100);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to run solver.";
+      const message = error instanceof Error ? error.message : 'Failed to run solver.';
       setErrors([message]);
       setSummary(null);
-      setSeries(null);
-      setBackboneCurves(null);
-      setIsPlaying(false);
+      setDispImage(null);
+      setRotationImage(null);
+      setIsGeneratingChart(false);
     } finally {
       setIsSolverRunning(false);
     }
   };
 
-  const forceToolbar = (
-    <>
-      {/* Hidden file input */}
-      <input
-        id="force-csv-input"
-        ref={fileInputRef}
-        type="file"
-        accept=".csv,text/csv"
-        onChange={handleForceCsvImport}
-        className={appCss.hiddenInput}
-      />
-
-      {/* Use label as stylable trigger */}
-      <label htmlFor="force-csv-input" className={appCss.gridButton}>
-        Import CSV
-      </label>
-    </>
-  );
-
   return (
     <div className={appCss.appLayout}>
       <p className={appCss.appHeadingInfo}>
-        All the units must be consistent. For consistent units refer to{" "}
-        <a
-          className={appCss.appHeadingLink}
-          href="https://www.dynasupport.com/howtos/general/consistent-units"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        All the units must be consistent. For consistent units refer to{' '}
+        <a className={appCss.appHeadingLink} href="https://www.dynasupport.com/howtos/general/consistent-units" target="_blank" rel="noopener noreferrer">
           this guide
         </a>
         .
       </p>
       <div>
-        <UnitsTable
-          selectedUnitSystem={selectedUnitSystemId}
-          onUnitSystemChange={handleUnitSystemChange}
-        />
+        <UnitsTable selectedUnitSystem={selectedUnitSystemId} onUnitSystemChange={handleUnitSystemChange} />
       </div>
       <main className={appCss.layoutContent}>
         <div className={appCss.panel}>
@@ -893,99 +279,97 @@ export function App() {
               <UserInput
                 label="Mass"
                 value={massInput}
-                onChange={setMassInput}
+                onChange={(value) => setMassInput(value)}
                 type="expression"
                 unit={currentSystem?.mass}
                 validation={{
                   required: true,
                   min: 0,
+                  max: 1
                 }}
                 helpText="Mass of the system"
               />
 
+              <UserInput 
+                label="KLM Factor"
+                type="number"
+                onChange={(value) => setKlm(parseFloat(value))}
+                value={klm}
+                helpText="KLM factor for mass"
+                unit={currentSystem?.length + "/" + currentSystem?.time} />    
+
               <UserInput
                 label="Rotation Length"
                 value={rotationLengthInput}
-                onChange={setRotationLengthInput}
+                onChange={(value) => setRotationLengthInput(value)}
                 type="expression"
                 unit={currentSystem?.length}
                 validation={{
                   required: true,
-                  min: 0,
+                  min: 0
                 }}
                 helpText="Rotation length of the system to calculate rotation vs time"
               />
 
-              <UserInput
-                label="Damping ratio"
-                value={dampingRatioInput}
-                onChange={setDampingRatioInput}
-                type="expression"
-                validation={{
-                  required: true,
-                  min: 0,
-                  max: 1,
-                }}
-                helpText="Damping ratio, 0.02, 0.05 typically for steel and concrete systems respectively"
-              />
-
-              <UserInput
-                label="Total time"
-                value={totalTimeInput}
-                onChange={setTotalTimeInput}
-                type="number"
-                unit={currentSystem?.time}
-                validation={{
-                  required: true,
-                  min: 0,
-                }}
-                helpText="Analysis duration (typically set 2 times the force duration or until response stabilizes)"
-              />
-
               <div className={appCss.solverInputsRow}>
-                <span>Automatic time step</span>
+                <span>Automatic Analysis</span>
                 <div />
                 <div />
                 <label className={appCss.solverInputsToggle}>
-                  <input
-                    aria-label=""
-                    title="Automatic time step"
-                    type="checkbox"
-                    checked={autoStep}
-                    onChange={handleAutoStepChange}
-                  />
+                  <input aria-label="" title="Automatic time step" type="checkbox" checked={autoAnalysis} onChange={handleAutoAnalysisChange} />
                   <span className={appCss.solverInputsToggleSlider} />
                 </label>
               </div>
 
-              <UserInput
-                label="Fixed time step"
-                value={timeStepInput}
-                onChange={setTimeStepInput}
-                type="number"
-                unit={currentSystem?.time}
-                disabled={autoStep}
-                validation={{
-                  min: 0,
-                }}
-                helpText="Fixed time step value (only used when automatic time step is off). Automatic time step is period/1000."
-              />
+              {!autoAnalysis && (
+                <>
+                  <UserInput
+                    label="Damping ratio"
+                    value={dampingRatioInput}
+                    onChange={(value) => setDampingRatioInput(value)}
+                    type="expression"
+                    validation={{
+                      required: true,
+                      min: 0,
+                      max: 1
+                    }}
+                    helpText="Damping ratio, 0.02, 0.05 typically for steel and concrete systems respectively"
+                  />
+
+                  <UserInput
+                    label="Total time"
+                    value={totalTime}
+                    onChange={(value) => setTotalTime(parseFloat(value) || 0)}
+                    type="number"
+                    unit={currentSystem?.time}
+                    validation={{
+                      required: true,
+                      min: 0
+                    }}
+                    helpText="Analysis duration (typically set 2 times the force duration or until response stabilizes)"
+                  />
+
+                  <UserInput
+                    label="Fixed time step"
+                    value={timeStep}
+                    onChange={(value) => setTimeStep(parseFloat(value) || 0)}
+                    type="number"
+                    unit={currentSystem?.time}
+                    disabled={autoAnalysis}
+                    validation={{
+                      min: 0
+                    }}
+                    helpText="Fixed time step value (only used when automatic time step is off). Automatic time step is period/1000."
+                  />
+                </>
+              )}
 
               <div className={appCss.solverInputsRow}>
                 <span>Orientation</span>
                 <div />
                 <div />
                 <div className={appCss.orientationSelector}>
-                  <select
-                    name="te"
-                    title="Select orientation direction"
-                    value={orientation}
-                    onChange={(e) =>
-                      setOrientation(
-                        e.target.value as "Vertical" | "Horizontal"
-                      )
-                    }
-                  >
+                  <select name="te" title="Select orientation direction" value={orientation} onChange={(e) => setOrientation(e.target.value as 'Vertical' | 'Horizontal')}>
                     <option value="Vertical">Vertical</option>
                     <option value="Horizontal">Horizontal</option>
                   </select>
@@ -1003,64 +387,63 @@ export function App() {
                 disabled={true}
                 helpText="Gravity constant used if the gravity is enabled"
               />
+
+              <UserInput 
+                label="Resistance" 
+                type="csv"
+                onChange={(value) => setResistance(value)}
+                value={resistance}
+                helpText="Enter resistance values as a comma-separated list"
+                unit={currentSystem?.force} />
+
+              <UserInput 
+                 label="Displacement"
+                 type="csv"
+                 onChange={(value) => setDisplacement(value)}
+                 value={displacement}
+                 helpText="Enter displacement values of resistance displacement curve as a comma-separated list"
+                 unit={currentSystem?.length} />
+
+              <UserInput
+               label="Force" 
+               type="csv"
+               onChange={(value) => setForce(value)}
+               value={force}
+               helpText="Enter force values as a comma-separated list"
+               unit={currentSystem?.force} />
+
+              <UserInput 
+                label="Time"
+                type="csv"
+                onChange={(value) => setTime(value)}
+                value={time}
+                helpText="Enter time values as a comma-separated list"
+                unit={currentSystem?.time} />
+            
+              <UserInput 
+                label="uo"
+                type="number"
+                onChange={(value) => {
+                  setU0(parseFloat(value));
+                }}
+                value={u0}
+                helpText="Initial displacement"
+                validation={{ min: -100, max: 100 }}
+                unit={currentSystem?.length} />
+              
+              <UserInput 
+                label="vo"
+                type="number"
+                onChange={(value) => setV0(parseFloat(value))}
+                value={v0}
+                helpText="Initial velocity"
+                unit={currentSystem?.length + "/" + currentSystem?.time} />
+            
             </div>
           </section>
 
-          <EditableGrid
-            gridClassName={appCss.gridClassName}
-            title="Backbone (inbound)"
-            columns={backboneColumns}
-            rows={inboundRows}
-            onRowsChange={setInboundRows}
-            createRow={createInboundRow}
-            onValidatedRows={setInboundValidRows}
-            rowCountType="dropdown"
-            minRows={2}
-            maxRows={50}
-          />
-
-          <EditableGrid
-            title="Backbone (rebound)"
-            gridClassName={appCss.gridClassName}
-            columns={backboneColumns}
-            rows={reboundRows}
-            onRowsChange={setReboundRows}
-            createRow={createReboundRow}
-            onValidatedRows={setReboundValidRows}
-            rowCountType="dropdown"
-            minRows={2}
-            maxRows={50}
-          />
-
-          <EditableGrid
-            title="Force history"
-            gridClassName={appCss.gridClassName}
-            columns={forceColumns}
-            rows={forceRows}
-            onRowsChange={setForceRows}
-            createRow={createForceRow}
-            onValidatedRows={setForceValidRows}
-            toolbar={forceToolbar}
-            rowCountType="input"
-            maxRows={5000}
-          />
-
-          <button
-            type="button"
-            className={appCss.appButton}
-            onClick={runSolver}
-            disabled={isSolverRunning}
-          >
-            {isSolverRunning ? "Running Solver..." : "Run GSDOF Solver"}
-          </button>
-
-          <button
-            type="button"
-            className={appCss.appButton}
-            onClick={generatePdf}
-            disabled={isGeneratingPdf || !series || !backboneCurves}
-          >
-            {isGeneratingPdf ? "Generating PDF..." : "Print to PDF"}
+          <button type="button" className={appCss.appButton} onClick={runSolver} disabled={isSolverRunning}>
+            {isSolverRunning ? 'Running Solver...' : 'Run GSDOF Solver'}
           </button>
 
           {errors.length > 0 ? (
@@ -1072,152 +455,89 @@ export function App() {
           ) : null}
         </div>
 
-        <div className={appCss.panelResults} ref={chartsContainerRef}>
+        <div className={appCss.panelResults}>
           <h2>Results</h2>
-          {summary && (series || useStaticCharts) && backboneCurves ? (
-            <>
-              {isCapturingCharts && (
-                <div
-                  style={{
-                    padding: "10px",
-                    backgroundColor: "#fff3cd",
-                    border: "1px solid #ffeaa7",
-                    borderRadius: "4px",
-                    color: "#856404",
-                    marginBottom: "10px",
-                  }}
-                >
-                  🔄 Converting charts to images and freeing memory...
-                </div>
-              )}
-
-              {useStaticCharts && (
-                <div
-                  style={{
-                    padding: "10px",
-                    backgroundColor: "#d4edda",
-                    border: "1px solid #c3e6cb",
-                    borderRadius: "4px",
-                    color: "#155724",
-                    marginBottom: "10px",
-                  }}
-                >
-                  ✅ Memory optimized: Interactive data converted to static
-                  images ({Object.keys(chartImages).length} charts)
-                </div>
-              )}
-
-              <div className={appCss.chartsGrid}>
-                {series && (
-                  <>
-                    <ChartJSChart
-                      title="Displacement"
-                      time={series.time}
-                      values={series.displacement}
-                      color="#3b82f6"
-                      className={appCss.chartContainer}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.displacement}
-                    />
-                    <ChartJSChart
-                      title="Rotation"
-                      time={series.time}
-                      values={rotationHistory.angle}
-                      color="#3b82f6"
-                      className={appCss.chartContainer}
-                      xUnits={unitLabels.time}
-                      yUnits="degree"
-                    />
-                    <ChartJSChart
-                      title="Velocity"
-                      time={series.time}
-                      values={series.velocity}
-                      color="#16a34a"
-                      className={appCss.chartContainer}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.velocity}
-                    />
-                    <ChartJSChart
-                      title="Acceleration"
-                      time={series.time}
-                      values={series.acceleration}
-                      color="#dc2626"
-                      className={appCss.chartContainer}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.acceleration}
-                    />
-                    <ChartJSChart
-                      title="Restoring Force"
-                      time={series.time}
-                      values={series.restoringForce}
-                      color="#f59e0b"
-                      className={appCss.chartContainer}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.force}
-                    />
-                    <ChartJSChart
-                      title="Applied Force"
-                      time={series.time}
-                      values={series.appliedForce}
-                      color="#9333ea"
-                      className={appCss.chartContainer}
-                      xUnits={unitLabels.time}
-                      yUnits={unitLabels.force}
-                    />
-                  </>
-                )}
-                {backboneCurves && (
-                  <BackboneChart
-                    curves={backboneCurves}
-                    displacementHistory={series?.displacement ?? []}
-                    restoringForceHistory={series?.restoringForce ?? []}
-                    selectedIndex={0}
-                    className={appCss.chartContainer}
-                    logoUrl={integralLogo}
-                    xUnits={unitLabels.displacement}
-                    yUnits={unitLabels.force}
-                  />
-                )}
+          {summary ? (
+            <div>
+              <div
+                style={{
+                  padding: '20px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px'
+                }}
+              >
+                <h3>Solver Results Complete</h3>
+                <p>
+                  ✅ Analysis completed successfully
+                  {dispImage || rotationImage ? ' - charts generated' : ' - results ready'}
+                </p>
+                <p>
+                  <strong>Max Displacement:</strong> {summary.maxDisplacement} {unitLabels.displacement}
+                </p>
+                <p>
+                  <strong>Final Displacement:</strong> {summary.finalDisplacement} {unitLabels.displacement}
+                </p>
+                <p>
+                  <strong>Runtime:</strong> {summary.runtimeMs.toFixed(1)} ms
+                </p>
+                <p>
+                  <strong>Steps:</strong> {summary.steps} calculation steps
+                </p>
               </div>
-            </>
-          ) : (
-            <div className={appCss.previewGrid}>
-              {backbonePreview ? (
-                <BackboneChart
-                  curves={backbonePreview}
-                  displacementHistory={[]}
-                  restoringForceHistory={[]}
-                  selectedIndex={0}
-                  className={appCss.chartContainer}
-                  logoUrl={integralLogo}
-                  xUnits={unitLabels.displacement}
-                  yUnits={unitLabels.force}
-                />
-              ) : (
-                <div className={appCss.previewPlaceholder}>
-                  Provide at least two inbound and two rebound points to preview
-                  the backbone curve.
+              {isGeneratingChart ? (
+                <div
+                  style={{
+                    padding: '20px',
+                    backgroundColor: '#d1ecf1',
+                    borderRadius: '8px',
+                    marginTop: '10px',
+                    color: '#0c5460'
+                  }}
+                >
+                  🔄 Generating chart for {summary.steps.toLocaleString()} data points...
                 </div>
-              )}
-              {forcePreviewSeries ? (
-                <HistoryChart
-                  title="Force preview"
-                  className={appCss.chartContainer}
-                  time={forcePreviewSeries.time}
-                  values={forcePreviewSeries.values}
-                  color="#0ea5e9"
-                  selectedIndex={forcePreviewSeries.time.length - 1}
-                  logoUrl={integralLogo}
-                  xUnits={unitLabels.time}
-                  yUnits={unitLabels.force}
-                />
+              ) : dispImage || rotationImage ? (
+                <div className={appCss.chartContainer}>
+                  {dispImage && (
+                    <div className={appCss.chartDisplay}>
+                      <img src={dispImage} alt="Displacement vs Time" />
+                    </div>
+                  )}
+                  {rotationImage && (
+                    <div className={appCss.chartDisplay}>
+                      <img src={rotationImage} alt="Rotation vs Time" />
+                    </div>
+                  )}
+                  {!rotationImage && dispImage && (
+                    <div
+                      style={{
+                        padding: '10px',
+                        backgroundColor: '#fff3cd',
+                        borderRadius: '4px',
+                        color: '#856404',
+                        marginTop: '10px'
+                      }}
+                    >
+                      ℹ️ Rotation chart not available - check length parameter ({length})
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className={appCss.previewPlaceholder}>
-                  Provide at least two time-force samples to preview the force
-                  history.
+                <div
+                  style={{
+                    padding: '20px',
+                    backgroundColor: '#fff3cd',
+                    borderRadius: '8px',
+                    marginTop: '10px',
+                    color: '#856404'
+                  }}
+                >
+                  ⚠️ Chart not available - dataset too large for visualization ({summary.steps.toLocaleString()} points)
                 </div>
               )}
             </div>
+          ) : (
+            <div className={appCss.previewPlaceholder}>Configure parameters and run solver to generate results.</div>
           )}
         </div>
       </main>
@@ -1244,4 +564,23 @@ export function App() {
       </div> */}
     </div>
   );
+}
+
+function parseCSVtoNumberArray(csv: string): number[] {
+  const result: number[] = [];
+  try {
+    const entries = csv.split(',').map((entry) => entry.trim());
+
+    for (const entry of entries) {
+      const parsed = parseStrictNumber(entry);
+      if (parsed === null) {
+        throw new Error(`Invalid number in CSV: "${entry}"`);
+      }
+      result.push(parsed);
+    }
+  } catch (error) {
+    console.error('Error parsing CSV:', error);
+    return []; // Return empty array on error
+  }
+  return result;
 }

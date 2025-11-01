@@ -5,8 +5,9 @@ import type { NewmarkResponseV2 } from './types';
 import { averageAcceleration } from '../newmark/solver';
 
 const TWO_PI = Math.PI * 2;
-const MAX_ITERATIONS = 20;
+const MAX_ITERATIONS = 22;
 const CONVERGNCE_TOLERANCE = 0.0001;
+const MAX_SOLVER_STEPS = 1e6;
 
 export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneCurveV2, dampingRatio: number, force: ForceCurveV2, initialConditions: InitialConditions, settings: SolverSettings, gravity_effect: boolean = false, added_weight: number = 0, gravity_constant: number = 386, params: NewmarkParameters = averageAcceleration): NewmarkResponseV2 {
   const beta = params.beta,
@@ -22,6 +23,13 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
   const naturalPeriod = TWO_PI * Math.sqrt(mass / resistance.inboundStiffness);
   const dt = auto ? naturalPeriod / 50 : (settings.dt as number);
   const steps = Math.floor(totalTime / dt) + 1;
+
+  if (steps > MAX_SOLVER_STEPS) {
+    throw new Error(`Estimated ${steps.toLocaleString()} steps exceeds maximum limit of ${MAX_SOLVER_STEPS.toLocaleString()}. ` +
+      `Reduce total time or increase time step to prevent memory issues. ` +
+      `Suggested: Total time ≤ ${(MAX_SOLVER_STEPS * dt).toFixed(1)} s`);
+  }
+
 
   const inv_beta = 1 / beta;
   const inv_beta_dt = inv_beta / dt;
@@ -77,8 +85,14 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
   const a2 = m_eff * inv_beta_dt - c * one_minus_gamma_over_beta;
   const a3 = m_eff * inv_2beta_minus_one - c * dt_one_minus_gamma_over_2beta;
 
-  console.log(['ti', 'pi', 'R̂i', '(kT)i', '(k̂T)i', 'Δu', 'ui', '(fS)i', 'u̇i', 'üi'].map((s) => s.padStart(10)).join(' '));
-  console.log([t[0].toFixed(4).padStart(10), p[0].toFixed(4).padStart(10), ''.padStart(10), kT[0].toFixed(0).padStart(10), ''.padStart(10), ''.padStart(10), u[0].toFixed(4).padStart(10), ''.padStart(10), v[0].toFixed(4).padStart(10), a[0].toFixed(4).padStart(10)].join(' '));
+  // console.log(['ti', 'pi', 'R̂i', '(kT)i', '(k̂T)i', 'Δu', 'ui', '(fS)i', 'u̇i', 'üi'].map((s) => s.padStart(10)).join(' '));
+  // console.log([t[0].toFixed(4).padStart(10), p[0].toFixed(4).padStart(10), ''.padStart(10), kT[0].toFixed(0).padStart(10), ''.padStart(10), ''.padStart(10), u[0].toFixed(4).padStart(10), ''.padStart(10), v[0].toFixed(4).padStart(10), a[0].toFixed(4).padStart(10)].join(' '));
+
+  // Min - Max outputs
+  let uMin = u[0];
+  let uMax = u[0];
+  let fsMin = fs[0];
+  let fsMax = fs[0];
 
   for (let i = 0; i < steps - 1; i++) {
     u[i + 1] = u[i];
@@ -114,12 +128,17 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
         if (i > 0 && v[i] * v[i + 1] < 0) {
           resistance.shiftBackbone(u[i + 1]);
         }
+        // Update min/max
+        if (u[i + 1] < uMin) uMin = u[i + 1];
+        if (u[i + 1] > uMax) uMax = u[i + 1];
+        if (fs[i + 1] < fsMin) fsMin = fs[i + 1];
+        if (fs[i + 1] > fsMax) fsMax = fs[i + 1];
 
-        if (j === 1) {
-          console.log([t[i + 1].toFixed(4).padStart(10), p[i + 1].toFixed(4).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), kT[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
-        } else {
-          console.log([''.padStart(20), rHat[i + 1].toFixed(4).padStart(10), kT[i + 1].toFixed(0).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
-        }
+        // if (j === 1) {
+        //   console.log([t[i + 1].toFixed(4).padStart(10), p[i + 1].toFixed(4).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), kT[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
+        // } else {
+        //   console.log([''.padStart(20), rHat[i + 1].toFixed(4).padStart(10), kT[i + 1].toFixed(0).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
+        // }
 
         break;
       }
@@ -129,14 +148,20 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
       u_num = u_num + du;
       [fs_num, kT_num] = resistance.getAt(u_num);
 
-      if (j === 1) {
-        console.log([t[i + 1].toFixed(4).padStart(10), p[i + 1].toFixed(4).padStart(10), rHat[i + 1].toFixed(4).padStart(10), kT[i + 1].toFixed(0).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
-      }
-      else {
-        console.log([''.padStart(21), rHat[i + 1].toFixed(4).padStart(10), kT[i + 1].toFixed(0).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
-      }
+      // if (j === 1) {
+      //   console.log([t[i + 1].toFixed(4).padStart(10), p[i + 1].toFixed(4).padStart(10), rHat[i + 1].toFixed(4).padStart(10), kT[i + 1].toFixed(0).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
+      // }
+      // else {
+      //   console.log([''.padStart(21), rHat[i + 1].toFixed(4).padStart(10), kT[i + 1].toFixed(0).padStart(10), kTHat[i + 1].toFixed(0).padStart(10), du.toFixed(4).padStart(10), u[i + 1].toFixed(4).padStart(10), fs[i + 1].toFixed(4).padStart(10), v[i + 1].toFixed(4).padStart(10), a[i + 1].toFixed(4).padStart(10)].join(' '));
+      // }
       j += 1;
       if (j > MAX_ITERATIONS) {
+
+        const msg = `Newton-Raphson did not converge \n Computed rHat: ${rHat_num.toFixed(6)}, Limit: ${CONVERGNCE_TOLERANCE}\n`;
+        msg.concat(`phat: ${pHat[i + 1].toFixed(6)}, fs: ${fs_num.toFixed(6)}, a1*u: ${(a1 * u_num).toFixed(6)}\n`);
+        msg.concat(`-----------------------------------------------------`)
+        msg.concat(`Time Step = ${dt}`)
+        msg.concat(`Try increaseing time step to make pHat smaller to meet the convergence limit of ${CONVERGNCE_TOLERANCE}`)
         throw new Error(`Newton-Raphson did not converge in ${MAX_ITERATIONS} iterations at time ${t[i + 1].toFixed(4)}s.`);
       }
     }
@@ -149,6 +174,7 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
     a: a,
     k: kT,
     fs: fs,
-    p: p
+    p: p,
+    summary: {u: {min: uMin, max: uMax}, fs: {min: fsMin, max: fsMax}}
   };
 }

@@ -22,4 +22,8 @@ export interface NewmarkResponseV2 {
   k: Float32Array;
   fs: Float32Array;
   p: Float32Array;
+  summary:{
+    u: { min: number; max: number},
+    fs: { min: number; max: number}
+  }
 }

@@ -13,15 +13,14 @@
     "sync": "wsl rsync -avz --delete dist /home/projects/www/ibest_root/iGSDOF/static/iGSDOF"
   },
   "dependencies": {
-    "@integralrsg/igraph": "0.1.0",
     "@integralrsg/imath": "0.1.0",
     "@integralrsg/iuicomponents": "0.1.0",
     "chart.js": "^4.4.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "react": "^19.1.1",
-    "react-chartjs-2": "^5.2.0",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "webgl-plot": "^0.7.2"
   },
   "devDependencies": {
     "@types/react": "^19.1.10",

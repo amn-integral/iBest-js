@@ -1,11 +1,12 @@
 # Environment Configuration
 
-This workspace uses environment variables for API configuration.
+This workspace uses named config files that are committed to git.
 
 ## Files
 
-- `.env.development` - Development environment (local API server)
-- `.env.production` - Production environment (production API server)
+- `config.development.env` - Development environment (committed to git)
+- `config.production.env` - Production environment (committed to git)
+- `.env.local` - Local overrides (NOT committed, optional)
 
 ## Variables
 
@@ -14,24 +15,39 @@ VITE_GRF_API_BASE_URL=http://127.0.0.1:8000
 VITE_GRF_API_ENDPOINT=/api/grf/data/
 ```
 
-## How It Works
+## How to Use
 
-1. **Development** (`npm run dev`): Uses `.env.development` automatically
-2. **Production** (`npm run build`): Uses `.env.production` automatically
-3. **Local overrides** (optional): Create `.env.local` to override any setting
-4. **Priority**: `.env.local` > `.env.[mode]`
-5. **Access in code**: `import.meta.env.VITE_GRF_API_BASE_URL`
+### Development
 
-## Creating Local Overrides
-
-If you need different settings locally (different port, custom API):
-
+Copy the dev config before running:
 ```bash
-# Create .env.local at workspace root
+cp config.development.env .env.development
+npm run dev
+```
+
+### Production
+
+Copy the production config before building:
+```bash
+cp config.production.env .env.production
+npm run build
+```
+
+### Local Overrides (Optional)
+
+Create `.env.local` for personal settings:
+```bash
 echo "VITE_GRF_API_BASE_URL=http://localhost:8080" > .env.local
 ```
 
-Note: `.env.local` is gitignored and won't be committed.
+The `.env.local` file is gitignored and won't be committed.
+
+## Why This Approach?
+
+- ✅ `config.*.env` files are committed (safe defaults for everyone)
+- ✅ `.env.*` files are gitignored (no risk of committing secrets)
+- ✅ Copy command is explicit and visible in scripts
+- ✅ Clear separation between templates and active configs
 
 ## Type Safety
 

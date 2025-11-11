@@ -18,10 +18,11 @@ export interface GRFApiConfig {
 
 /**
  * Default API configuration
+ * Uses Vite environment variables with fallbacks
  */
 const DEFAULT_CONFIG: Required<GRFApiConfig> = {
-  baseUrl: "http://127.0.0.1:8000",
-  endpoint: "/api/grf/data/",
+  baseUrl: import.meta.env.VITE_GRF_API_BASE_URL || "http://127.0.0.1:8000",
+  endpoint: import.meta.env.VITE_GRF_API_ENDPOINT || "/api/grf/data/",
 };
 
 /**

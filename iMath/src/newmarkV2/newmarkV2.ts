@@ -30,7 +30,6 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
       `Suggested: Total time ≤ ${(MAX_SOLVER_STEPS * dt).toFixed(1)} s`);
   }
 
-
   const inv_beta = 1 / beta;
   const inv_beta_dt = inv_beta / dt;
   const inv_beta_dt2 = inv_beta_dt / dt;
@@ -175,6 +174,7 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
     k: kT,
     fs: fs,
     p: p,
+    steps: steps,
     summary: {u: {min: uMin, max: uMax}, fs: {min: fsMin, max: fsMax}}
   };
 }

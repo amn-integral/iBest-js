@@ -8,6 +8,7 @@ const distRoot = pathToFileURL(resolve(__dirname, "../dist/index.js")).href;
 
 import {
   BackboneCurveV2,
+  findMinMax,
   ForceCurveV2,
   newmarkSolverV2,
 } from "../dist/index.js";
@@ -32,9 +33,14 @@ import { averageAcceleration } from "../dist/index.js";
     0.05,
     force,
     { u0: 0.0, v0: 0.0 },
-    { t: 1, dt: 0.1, auto: false },
+    { t: 100000000, dt: 0.1, auto: false },
   );
   const end = process.hrtime.bigint();
   const durationMs = Number(end - start) / 1e6;
+  const maxDisplacement = findMinMax(response.u).max;
+  console.log('=============== Chopra Validation Case =============');
+  console.log(`Max displacement: ${maxDisplacement.toFixed(6)} inches`);
+  console.log(`Number of steps: ${response.u.length/1e6}`);
+  console.log(`Solver time per step: ${(durationMs / response.u.length).toFixed(6)} ms`);
   console.log(`Solver run time: ${durationMs.toFixed(3)} ms`);
 })();

@@ -1,41 +1,38 @@
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
-import renderChartJS from './utils/renderChartJSImage';
+import { useCallback, useEffect, useMemo, useState} from 'react';
+import renderWebGLChart from './utils/renderWebGLChart';
 
-import { parseStrictNumber } from '@integralrsg/igraph';
+import { parseStrictNumber } from '@integralrsg/imath'
 
 import { UnitsTable, UserInput, UNIT_SYSTEMS, evaluateExpression } from '@integralrsg/iuicomponents';
 import '@integralrsg/iuicomponents/styles';
 import appCss from './App.module.css';
-import type { SolverSummary, SolverWorkerInputV2 } from './types';
+import type { SolverSummary, SolverWorkerInputV2, SolverWorkerOutputV2 } from './types';
 import { validateSolverInput } from './utils/validateSolverInput';
 import { useSolverWorkerV2 } from './hooks/useSolverWorkerV2';
 
-const MAX_SOLVER_STEPS = 1000000;
 const CHART_DIMENSIONS = { width: 600, height: 300 };
-// const IMAGE_DIMENSIONS = { width: 800, height: 400 };
 
 export function App() {
   const [massInput, setMassInput] = useState('0.2553');
   const [rotationLengthInput, setRotationLengthInput] = useState('10.0');
-  const [dampingRatioInput, setDampingRatioInput] = useState('0.05');
-  const [totalTime, setTotalTime] = useState(1);
-  const [autoAnalysis, setAutoAnalysis] = useState(true);
-  const [timeStep, setTimeStep] = useState(0.1);
   const [orientation, setOrientation] = useState<'Vertical' | 'Horizontal'>('Vertical');
-  const [dispImage, setDispImage] = useState<string | null>(null);
-  const [rotationImage, setRotationImage] = useState<string | null>(null);
-  const [isGeneratingChart, setIsGeneratingChart] = useState(false);
-  const [resistance, setResistance] = useState('-7.5,0,7.5');
+  const [resistance, setResistance] = useState('-7.5, 0, 7.5');
   const [displacement, setDisplacement] = useState('-0.75,0,0.75');
-  const [klm, setKlm] = useState(1.0);
-  const [u0, setU0] = useState(0.0);
-  const [v0, setV0] = useState(0.0);
+  const [klmInput, setKlmInput] = useState("1.0");
+  const [u0Input, setU0Input] = useState<string>('0.0');
+  const [v0Input, setV0Input] = useState<string>('0.0');
   const [force, setForce] = useState('0.0, 5.0, 8.66, 10.0, 8.66, 5.0, 0, 0, 0, 0, 0');
   const [time, setTime] = useState('0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0');
 
+  // Image Stuff
+  const [dispImage, setDispImage] = useState<string | null>(null);
+  const [rotationImage, setRotationImage] = useState<string | null>(null);
+  const [hysterisisImage, setHysterisisImage] = useState<string | null>(null);
+  const [isGeneratingChart, setIsGeneratingChart] = useState(false);
+
   const massValue = useMemo(() => evaluateExpression(massInput), [massInput]);
   const rotationLengthValue = useMemo(() => evaluateExpression(rotationLengthInput), [rotationLengthInput]);
-  const dampingRatioValue = useMemo(() => evaluateExpression(dampingRatioInput), [dampingRatioInput]);
+  const klmValue = useMemo(() => evaluateExpression(klmInput), [klmInput]);
 
   // Unit system state - default to imperial
   const [selectedUnitSystemId, setSelectedUnitSystemId] = useState<string>('lbf-s^2/in-in-secs');
@@ -69,9 +66,6 @@ export function App() {
     setSelectedUnitSystemId(unitSystemId);
   }, []);
 
-  const handleAutoAnalysisChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setAutoAnalysis(event.target.checked);
-  }, []);
 
   const [errors, setErrors] = useState<string[]>([]);
   const [summary, setSummary] = useState<SolverSummary | null>(null);
@@ -89,42 +83,45 @@ export function App() {
 
   const runSolver = async () => {
     const validationErrors: string[] = [];
+    let solverInput: SolverWorkerInputV2 | null = null;
+    let workerResult: SolverWorkerOutputV2 | null = null;
+    let rotationData: Float32Array | null = null;
 
-    if (massValue === null) {
-      validationErrors.push('Mass must be a valid expression');
+    let forceList = parseCSVtoNumberArray(force);
+    let timeList = parseCSVtoNumberArray(time);
+    let displacementList = parseCSVtoNumberArray(displacement);
+    let resistanceList = parseCSVtoNumberArray(resistance);
+    const parsedU0 = parseStrictNumber(u0Input);
+    const parsedV0 = parseStrictNumber(v0Input);
+
+    if (parsedU0 === null) {
+      validationErrors.push('Initial displacement (u0) must be a valid number.');
     }
 
-    if (rotationLengthValue === null) {
-      validationErrors.push('Rotation length must be a valid expression');
+    if (parsedV0 === null) {
+      validationErrors.push('Initial velocity (v0) must be a valid number.');
     }
 
-    if (dampingRatioValue === null) {
-      validationErrors.push('Damping ratio must be a valid expression');
-    }
-
-    const forceList: number[] = parseCSVtoNumberArray(force);
-    const timeList: number[] = parseCSVtoNumberArray(time);
-    const displacementList: number[] = parseCSVtoNumberArray(displacement);
-    const resistanceList: number[] = parseCSVtoNumberArray(resistance);
-    const initialConditions = { u0: u0, v0: v0 };
+    const initialConditions = { u0: parsedU0 ?? 0, v0: parsedV0 ?? 0 };
     const solverSettings = {
-      t: autoAnalysis ? timeList[timeList.length - 1] * 1: totalTime,
-      dt: timeStep,
-      auto: autoAnalysis
+      t: timeList[timeList.length - 1] * 5,
+      dt: 0.1,
+      auto: true
     };
 
     const mass = massValue ?? 0;
     const rotationLength = rotationLengthValue ?? 0;
-    const dampingRatio = dampingRatioValue ?? 0;
+    const klm = klmValue ?? 0;
+    const dampingRatio = 0.02;
 
-    const solverInput: SolverWorkerInputV2 = {
+    const builtSolverInput: SolverWorkerInputV2 = {
       mass: mass,
       klm: klm,
-      resistance: resistanceList,
-      displacement: displacementList,
+      resistance: resistanceList ?? [],
+      displacement: displacementList ?? [],
       dampingRatio: dampingRatio,
-      force: forceList,
-      time: timeList,
+      force: forceList ?? [],
+      time: timeList ?? [],
       initialConditions: initialConditions,
       solverSettings: solverSettings,
       gravity_effect: orientation === 'Horizontal',
@@ -132,16 +129,7 @@ export function App() {
       gravity_constant: currentSystem!.gravity
     };
 
-    validationErrors.push(...validateSolverInput(solverInput));
-
-    // Add step limit validation to prevent Web Worker memory issues
-    const estimatedSteps = autoAnalysis
-      ? Math.ceil(totalTime / 0.001) // Conservative estimate for auto step
-      : Math.ceil(totalTime / timeStep);
-
-    if (estimatedSteps > MAX_SOLVER_STEPS) {
-      validationErrors.push(`Estimated ${estimatedSteps.toLocaleString()} steps exceeds maximum limit of ${MAX_SOLVER_STEPS.toLocaleString()}. ` + `Reduce total time or increase time step to prevent memory issues. ` + `Suggested: Total time ≤ ${(MAX_SOLVER_STEPS * (autoAnalysis ? 0.001 : timeStep)).toFixed(1)} ${unitLabels.time}`);
-    }
+    validationErrors.push(...validateSolverInput(builtSolverInput));
 
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
@@ -153,72 +141,82 @@ export function App() {
     }
 
     setIsSolverRunning(true);
+    solverInput = builtSolverInput;
 
     try {
       // Run solver in Web Worker
-      const result = await runSolverWorker(solverInput);
-
-      // Add validation for the Web Worker result
-      if (!result || !result.response) {
-        throw new Error('Web Worker returned invalid response');
-      }
-
-      if (!result.response.t || !result.response.u) {
-        throw new Error('Web Worker returned invalid response data - missing time or displacement arrays');
-      }
-
-      // Use full resolution data - no sampling
-      const timeData = result.response.t;
-      const displacementData = result.response.u;
-
-      // Add validation that arrays have data
-      if (!timeData.length || !displacementData.length) {
-        throw new Error('Solver returned empty data arrays');
-      }
-
-      if (timeData.length !== displacementData.length) {
-        throw new Error('Time and displacement data arrays have mismatched lengths');
-      }
-
-      console.log(`Solver completed: ${timeData.length} data points - using full resolution for charts`);
+      workerResult = await runSolverWorker(builtSolverInput);
+      const result = workerResult;
 
       setIsGeneratingChart(true);
 
       try {
-        // Create copies of data to prevent mutation by Chart.js
-        const timeDataCopy = [...timeData];
-        const displacementDataCopy = [...displacementData];
-
-        console.log(`Before chart generation: timeData=${timeData.length}, displacementData=${displacementData.length}`);
-
-        const imageUrl = await renderChartJS('png', timeDataCopy, displacementDataCopy, {
-          title: 'Displacement vs Time',
-          color: '#3b82f6',
-          width: CHART_DIMENSIONS.width,
-          height: CHART_DIMENSIONS.height,
-          xUnits: unitLabels.time,
-          yUnits: unitLabels.displacement
+        
+        const imageUrl = await renderWebGLChart({
+          imageType: 'png',
+          xValues: [...result.response.t],
+          yValues: [...result.response.u],
+          yMinMax: { min: result.response.summary.u.min, max: result.response.summary.u.max },
+          options: {
+            title: 'Displacement vs Time',
+            color: '#3b82f6',
+            width: CHART_DIMENSIONS.width,
+            height: CHART_DIMENSIONS.height,
+            xUnits: unitLabels.time,
+            yUnits: unitLabels.displacement
+          }
         });
 
         const rotationLengthForChart = rotationLength === 0 ? Number.EPSILON : rotationLength;
-        const rotationData = displacementData.map((disp) => {
+        let rotationMin = 0; let rotationMax = 0;
+        const displacementData = result.response.u;
+        rotationData = displacementData.map((disp) => {
           const angleRad = Math.atan(disp / rotationLengthForChart);
-          return angleRad * (180 / Math.PI);
+          const angleDeg = angleRad * (180 / Math.PI);
+          if (angleDeg < rotationMin) rotationMin = angleDeg;
+          if (angleDeg > rotationMax) rotationMax = angleDeg;
+          return angleDeg;
         });
 
-        const timeDataRotationCopy = [...timeData];
-        const rotationDataCopy = [...rotationData];
+        if (!rotationData) {
+          throw new Error('Failed to compute rotation data');
+        }
 
-        const rotationUrl = await renderChartJS('png', timeDataRotationCopy, rotationDataCopy, {
+        const rotationUrl = await renderWebGLChart({
+          imageType: 'png',
+          xValues: [...result.response.t],
+          yValues: [...rotationData],
+          yMinMax: { min: rotationMin, max: rotationMax },
+          options: {
           title: 'Rotation vs Time',
           color: '#10b981',
           width: CHART_DIMENSIONS.width,
           height: CHART_DIMENSIONS.height,
           xUnits: unitLabels.time,
           yUnits: 'Degrees'
+        }});
+
+        const hysterisisUrl = await renderWebGLChart({
+          imageType: 'png',
+          xValues: [...result.response.u],
+          yValues: [...result.response.fs],
+          yMinMax: { min: result.response.summary.fs.min, max: result.response.summary.fs.max },
+          xMinMax: { min: result.response.summary.u.min, max: result.response.summary.u.max },
+          options: {
+            title: 'Hysterisis',
+            color: '#050505ff',
+            width: CHART_DIMENSIONS.width,
+            height: CHART_DIMENSIONS.height,
+            xUnits: unitLabels.displacement,
+            yUnits: unitLabels.force
+          }
         });
+
+
         setRotationImage(rotationUrl);
         setDispImage(imageUrl);
+        setHysterisisImage(hysterisisUrl);
+
       } catch (chartError) {
         console.warn('Chart generation failed:', chartError);
         setDispImage(null);
@@ -227,16 +225,11 @@ export function App() {
         setIsGeneratingChart(false);
       }
 
-      const totalPoints = result.response.t.length; // Use validated data length
-      const finalDisplacement = result.response.u[totalPoints - 1]?.toFixed(2) ?? 'NA';
-      const maxDisp = result.bounds?.displacement?.max?.toFixed(2) ?? '0';
-
       // Set minimal summary data only
       setSummary({
-        maxDisplacement: maxDisp,
-        finalDisplacement: finalDisplacement,
+        maxDisplacement: result.response.summary.u.max,
         runtimeMs: result.runtimeMs,
-        steps: totalPoints
+        steps: result.response.steps
       });
 
       setErrors([]);
@@ -256,6 +249,35 @@ export function App() {
       setRotationImage(null);
       setIsGeneratingChart(false);
     } finally {
+      if (solverInput) {
+        solverInput.force = [];
+        solverInput.time = [];
+        solverInput.displacement = [];
+        solverInput.resistance = [];
+        solverInput = null;
+      }
+      forceList = [];
+      timeList = [];
+      displacementList = [];
+      resistanceList = [];
+      if (rotationData) {
+        rotationData = null;
+      }
+      if (workerResult) {
+        workerResult.response.t = new Float32Array();
+        workerResult.response.u = new Float32Array();
+        workerResult.response.v = new Float32Array();
+        workerResult.response.a = new Float32Array();
+        workerResult.response.k = new Float32Array();
+        workerResult.response.fs = new Float32Array();
+        workerResult.response.p = new Float32Array();
+        workerResult.response.summary = {
+          u: { min: 0, max: 0 },
+          fs: { min: 0, max: 0 }
+        };
+        workerResult = null;
+      }
+
       setIsSolverRunning(false);
     }
   };
@@ -294,10 +316,11 @@ export function App() {
 
               <UserInput 
                 label="KLM Factor"
-                type="number"
-                onChange={(value) => setKlm(parseFloat(value))}
-                value={klm}
+                type="expression"
+                onChange={(value) => setKlmInput(value)}
+                value={klmInput}
                 helpText="KLM factor for mass"
+                validation={{min:0.1, max:1.0}}
                 unit={currentSystem?.length + "/" + currentSystem?.time} />    
 
               <UserInput
@@ -308,12 +331,12 @@ export function App() {
                 unit={currentSystem?.length}
                 validation={{
                   required: true,
-                  min: 0
+                  min: 0.001
                 }}
                 helpText="Rotation length of the system to calculate rotation vs time"
               />
 
-              <div className={appCss.solverInputsRow}>
+              {/* <div className={appCss.solverInputsRow}>
                 <span>Automatic Analysis</span>
                 <div />
                 <div />
@@ -321,50 +344,7 @@ export function App() {
                   <input aria-label="" title="Automatic time step" type="checkbox" checked={autoAnalysis} onChange={handleAutoAnalysisChange} />
                   <span className={appCss.solverInputsToggleSlider} />
                 </label>
-              </div>
-
-              {!autoAnalysis && (
-                <>
-                  <UserInput
-                    label="Damping ratio"
-                    value={dampingRatioInput}
-                    onChange={(value) => setDampingRatioInput(value)}
-                    type="expression"
-                    validation={{
-                      required: true,
-                      min: 0,
-                      max: 1
-                    }}
-                    helpText="Damping ratio, 0.02, 0.05 typically for steel and concrete systems respectively"
-                  />
-
-                  <UserInput
-                    label="Total time"
-                    value={totalTime}
-                    onChange={(value) => setTotalTime(parseFloat(value) || 0)}
-                    type="number"
-                    unit={currentSystem?.time}
-                    validation={{
-                      required: true,
-                      min: 0
-                    }}
-                    helpText="Analysis duration (typically set 2 times the force duration or until response stabilizes)"
-                  />
-
-                  <UserInput
-                    label="Fixed time step"
-                    value={timeStep}
-                    onChange={(value) => setTimeStep(parseFloat(value) || 0)}
-                    type="number"
-                    unit={currentSystem?.time}
-                    disabled={autoAnalysis}
-                    validation={{
-                      min: 0
-                    }}
-                    helpText="Fixed time step value (only used when automatic time step is off). Automatic time step is period/1000."
-                  />
-                </>
-              )}
+              </div> */}
 
               <div className={appCss.solverInputsRow}>
                 <span>Orientation</span>
@@ -377,18 +357,6 @@ export function App() {
                   </select>
                 </div>
               </div>
-
-              <UserInput
-                label="Gravity Constant"
-                type="number"
-                onChange={() => {
-                  // Do nothing as this is read-only
-                }}
-                value={currentSystem!.gravity}
-                unit={currentSystem!.acceleration}
-                disabled={true}
-                helpText="Gravity constant used if the gravity is enabled"
-              />
 
               <UserInput 
                 label="Resistance" 
@@ -423,21 +391,19 @@ export function App() {
                 unit={currentSystem?.time} />
             
               <UserInput 
-                label="uo"
+                label="u0"
                 type="number"
-                onChange={(value) => {
-                  setU0(parseFloat(value));
-                }}
-                value={u0}
+                onChange={(value) => setU0Input(value === undefined || value === null ? '' : String(value))}
+                value={u0Input}
                 helpText="Initial displacement"
                 validation={{ min: -100, max: 100 }}
                 unit={currentSystem?.length} />
               
               <UserInput 
-                label="vo"
+                label="v0"
                 type="number"
-                onChange={(value) => setV0(parseFloat(value))}
-                value={v0}
+                onChange={(value) => setV0Input(value === undefined || value === null ? '' : String(value))}
+                value={v0Input}
                 helpText="Initial velocity"
                 unit={currentSystem?.length + "/" + currentSystem?.time} />
             
@@ -449,7 +415,7 @@ export function App() {
           </button>
 
           {errors.length > 0 ? (
-            <ul className="error-list">
+            <ul className={appCss.errorList}>
               {errors.map((message) => (
                 <li key={message}>{message}</li>
               ))}
@@ -463,16 +429,14 @@ export function App() {
             <div>
               <div
                 style={{
-                  padding: '1px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
                   display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  textAlign: 'center'
+                  gridTemplateColumns: '2fr 1fr 1fr',
+                  textAlign: 'center',
+                  width: `${CHART_DIMENSIONS.width}px`
                 }}
               >
                 <p>
-                  <strong>Max Displacement:</strong> {summary.maxDisplacement} {unitLabels.displacement}
+                  <strong>Max Displacement:</strong> {summary.maxDisplacement.toFixed(3)} {unitLabels.displacement}
                 </p>
                 <p>
                   <strong>Runtime:</strong> {summary.runtimeMs.toFixed(1)} ms
@@ -501,11 +465,6 @@ export function App() {
                         alt="Displacement vs Time"
                         width={CHART_DIMENSIONS.width}
                         height={CHART_DIMENSIONS.height}
-                        style={{
-                          width: `${CHART_DIMENSIONS.width}px`,
-                          height: `${CHART_DIMENSIONS.height}px`,
-                          boxSizing: 'content-box'
-                        }}
                       />
                   )}
                   {rotationImage && (
@@ -514,25 +473,15 @@ export function App() {
                         alt="Rotation vs Time"
                         width={CHART_DIMENSIONS.width}
                         height={CHART_DIMENSIONS.height}
-                        style={{
-                          width: `${CHART_DIMENSIONS.width}px`,
-                          height: `${CHART_DIMENSIONS.height}px`,
-                          boxSizing: 'content-box'
-                        }}
                       />
                   )}
-                  {!rotationImage && dispImage && (
-                    <div
-                      style={{
-                        padding: '10px',
-                        backgroundColor: '#fff3cd',
-                        borderRadius: '4px',
-                        color: '#856404',
-                        marginTop: '10px'
-                      }}
-                    >
-                      ℹ️ Rotation chart not available - check length parameter ({length})
-                    </div>
+                  {hysterisisImage && (
+                      <img
+                        src={hysterisisImage}
+                        alt="Hysterisis"
+                        width={CHART_DIMENSIONS.width}
+                        height={CHART_DIMENSIONS.height}
+                      />
                   )}
                 </div>
               ) : (

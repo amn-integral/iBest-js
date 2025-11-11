@@ -3,9 +3,8 @@
   "compilerOptions": {
     "paths": {
       "@integralrsg/imath": ["../iMath/src"],
-      "@integralrsg/igraph": ["../iGraph/src"]
     },
   },
-  "references": [{ "path": "../iMath" }, { "path": "../iGraph" }],
+  "references": [{ "path": "../iMath" }],
   "include": ["src/**/*"]
 }

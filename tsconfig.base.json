@@ -5,12 +5,14 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@integralrsg/imath": ["iMath/src"],
       "@integralrsg/iuicomponents": ["iUIComponents/src"],
-      "@integralrsg/igraph": ["iGraph/src"]
     }
   }
 }

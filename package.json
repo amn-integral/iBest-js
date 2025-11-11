@@ -4,15 +4,13 @@
   "workspaces": [
     "iVentedBlast-js",
     "iMath",
-    "iGraph",
     "iGSDOF",
     "iUIComponents"
   ],
   "scripts": {
     "build_iMath": "npm run build -w iMath && npm run sync-builds",
-    "build_iGraph": "npm run build -w iGraph && npm run sync-builds",
     "build_iUIComponents": "npm run build -w iUIComponents && npm run sync-builds",
-    "build_iGSDOF": "npm run build -w iMath && npm run build -w iGraph && npm run build -w iUIComponents && npm run build -w iGSDOF && npm run sync-builds",
+    "build_iGSDOF": "npm run build -w iMath &&  npm run build -w iUIComponents && npm run build -w iGSDOF && npm run sync-builds",
     "sync-builds": "node scripts/sync-workspace-builds.cjs",
     "setup-links": "node scripts/setup-workspace-links.cjs",
     "unlink": "node scripts/unlink-workspace.cjs",
@@ -23,5 +21,9 @@
   "devDependencies": {
     "gzip-size": "^7.0.0",
     "pretty-bytes": "^7.1.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "webgl-plot": "^0.7.2"
   }
 }

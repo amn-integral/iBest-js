@@ -13,7 +13,6 @@ const NODE_MODULES = path.join(ROOT, "node_modules", "@integralrsg");
 
 const PACKAGES = [
   { name: "imath", source: "iMath" },
-  { name: "igraph", source: "iGraph" },
   { name: "igsdof", source: "iGSDOF" },
   { name: "iuicomponents", source: "iUIComponents" },
 ];

@@ -17,15 +17,6 @@ export interface GRFApiConfig {
 }
 
 /**
- * Default API configuration
- * Uses Vite environment variables with fallbacks
- */
-const DEFAULT_CONFIG: Required<GRFApiConfig> = {
-  baseUrl: import.meta.env.VITE_GRF_API_BASE_URL || "http://127.0.0.1:8000",
-  endpoint: import.meta.env.VITE_GRF_API_ENDPOINT || "/api/grf/data/",
-};
-
-/**
  * Response structure from the GRF API
  */
 interface GRFApiResponse {
@@ -57,8 +48,9 @@ export async function getGRFApi(
   filename: string = "02_154.GRF",
   config?: GRFApiConfig
 ): Promise<GRFCurve> {
-  const cfg = { ...DEFAULT_CONFIG, ...config };
-  const url = `${cfg.baseUrl}${cfg.endpoint}`;
+  const baseUrl = config?.baseUrl ?? "http://127.0.0.1:8000";
+  const endpoint = config?.endpoint ?? "/api/grf/data/";
+  const url = `${baseUrl}${endpoint}`;
 
   try {
     const response = await fetch(url, {
@@ -102,15 +94,11 @@ export async function getGRFApi(
 }
 
 /**
- * Configure the default API settings
+ * Configure the default API settings (not needed - just pass config to getGRFApi)
  * 
- * @param config - New default configuration
+ * @deprecated Use config parameter in getGRFApi instead
+ * @param _config - New default configuration (ignored)
  */
-export function configureGRFApi(config: GRFApiConfig): void {
-  if (config.baseUrl !== undefined) {
-    DEFAULT_CONFIG.baseUrl = config.baseUrl;
-  }
-  if (config.endpoint !== undefined) {
-    DEFAULT_CONFIG.endpoint = config.endpoint;
-  }
+export function configureGRFApi(_config: GRFApiConfig): void {
+  console.warn('configureGRFApi is deprecated. Pass config directly to getGRFApi()');
 }

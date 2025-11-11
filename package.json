@@ -16,9 +16,7 @@
     "unlink": "node scripts/unlink-workspace.cjs",
     "postinstall": "node scripts/setup-workspace-links.cjs",
     "report-sizes": "node scripts/report-all-sizes.js",
-    "clean": "rm -rf **/dist/*",
-    "env:dev": "cp config.development.env .env.development",
-    "env:prod": "cp config.production.env .env.production"
+    "clean": "rm -rf **/dist/*"
   },
   "devDependencies": {
     "gzip-size": "^7.0.0",

@@ -5,7 +5,8 @@
     "iVentedBlast-js",
     "iMath",
     "iGSDOF",
-    "iUIComponents"
+    "iUIComponents",
+    "iCubicle"
   ],
   "scripts": {
     "build_iMath": "npm run build -w iMath && npm run sync-builds",

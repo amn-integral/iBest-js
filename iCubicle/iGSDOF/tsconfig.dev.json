@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "paths": {
+      "@integralrsg/imath": ["../iMath/src"],
+    },
+  },
+  "references": [{ "path": "../iMath" }],
+  "include": ["src/**/*"]
+}

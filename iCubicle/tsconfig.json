@@ -24,8 +24,6 @@
     /* Path mappings for workspace packages */
     "baseUrl": ".",
     "paths": {
-      "@integralrsg/i3dcore": ["../i3DCore/src"],
-      "@integralrsg/i3dcore/*": ["../i3DCore/src/*"]
     }
   },
   "include": ["src"]

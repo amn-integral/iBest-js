@@ -30,8 +30,8 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening }: BoxProps) {
     { name: 'roof', pos: [0, 0, height / 2], rot: [0, 0, 0], width: length, height: width, label: 'Roof' },
     { name: 'front', pos: [0, width / 2, 0], rot: [-Math.PI / 2, 0, 0], width: length, height: height, label: 'Front' },
     { name: 'back', pos: [0, -width / 2, 0], rot: [Math.PI / 2, 0, 0], width: length, height: height, label: 'Back' },
-    { name: 'left', pos: [-length / 2, 0, 0], rot: [0, Math.PI / 2, 0], width: height, height: width, label: 'Left' },
-    { name: 'right', pos: [length / 2, 0, 0], rot: [0, -Math.PI / 2, 0], width: height, height: width, label: 'Right' },
+    { name: 'left', pos: [-length / 2, 0, 0], rot: [0, -Math.PI / 2, 0], width: height, height: width, label: 'Left' },
+    { name: 'right', pos: [length / 2, 0, 0], rot: [0, Math.PI / 2, 0], width: height, height: width, label: 'Right' },
   ], [length, width, height])
 
   return (

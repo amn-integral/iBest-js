@@ -2,8 +2,10 @@
 import { useState, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
+import styles from './App.module.css';
+import { UserInput } from '@integralrsg/iuicomponents';
 
-type CubicleType = 'cantilever' | 'two-wall' | 'three-wall' | 'default';
+type CubicleType = 'cantilever' | 'two-wall' | 'three-wall';
 
 type Opening = {
   face: 'front' | 'back' | 'left' | 'right' | 'floor' | 'roof';
@@ -116,124 +118,167 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
 }
 
 export default function App() {
-  const [length, setLength] = useState(2);
-  const [width, setWidth] = useState(2);
-  const [height, setHeight] = useState(2);
-  const [openingWidth, setOpeningWidth] = useState(0.8);
-  const [openingHeight, setOpeningHeight] = useState(1.2);
+  const [length, setLength] = useState('2');
+  const [width, setWidth] = useState('2');
+  const [height, setHeight] = useState('2');
+  const [openingWidth, setOpeningWidth] = useState('0.8');
+  const [openingHeight, setOpeningHeight] = useState('1.2');
   const [openingFace, setOpeningFace] = useState<Opening['face']>('front');
   const [cubicleType, setCubicleType] = useState<CubicleType>('three-wall');
+  const [threatXLocation, setThreatXLocation] = useState('1.0');
+  const [threatYLocation, setThreatYLocation] = useState('1.0');
+  const [threatZLocation, setThreatZLocation] = useState('1.0');
+  const [threatWeight, setThreatWeight] = useState('10.0');
 
-  const axisSize = useMemo(() => Math.max(length, width, height) * 1.5, [length, width, height]);
-  const textSize = useMemo(() => Math.min(length, width, height) * 0.1, [length, width, height]);
+  const axisSize = useMemo(() => Math.max(Number(length), Number(width), Number(height)) * 1.5, [length, width, height]);
+  const textSize = useMemo(() => Math.min(Number(length), Number(width), Number(height)) * 0.1, [length, width, height]);
+  const opening = { face: openingFace, width: Number(openingWidth), height: Number(openingHeight) };
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#f6f7f9', position: 'relative' }}>
-      <div
-        style={{
-          position: 'absolute',
-          top: 20,
-          left: 20,
-          padding: '16px 20px',
-          background: 'white',
-          borderRadius: 12,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-          fontFamily: 'system-ui',
-          zIndex: 10,
-          pointerEvents: 'none',
-          maxWidth: 220
-        }}
-      >
-        <h3 style={{ margin: '0 0 12px 0', fontWeight: 600, fontSize: 16, color: '#333' }}>Cubicle Configuration</h3>
+    <div className={styles.appContainer}>
+      {/* Navigation Panel */}
+      <nav className={styles.navPanel}>
+        <h1 className={styles.navHeader}>Cubicle Designer</h1>
 
-        <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, color: '#555' }}>
-          Type
+        {/* Cubicle Type Selection */}
+        <h2 className={styles.sectionTitle}>Configuration</h2>
+        <div className={styles.formGroup}>
+          <span className={styles.formLabel}>Type</span>
           <select
             value={cubicleType}
             onChange={e => setCubicleType(e.target.value as CubicleType)}
-            style={{ width: 90, border: '1px solid #dcdcdc', borderRadius: 6, padding: '4px 6px', pointerEvents: 'auto' }}
+            className={styles.formSelect}
+            aria-label="Select cubicle type"
           >
             <option value="cantilever">Cantilever</option>
             <option value="two-wall">Two Wall</option>
             <option value="three-wall">Three Wall</option>
-            <option value="default">Default</option>
           </select>
-        </label>
+        </div>
 
-        <h4 style={{ margin: '12px 0 8px 0', fontWeight: 600, fontSize: 14, color: '#333' }}>Dimensions</h4>
-        {[
-          { label: 'Length', value: length, setter: setLength },
-          { label: 'Width', value: width, setter: setWidth },
-          { label: 'Height', value: height, setter: setHeight }
-        ].map(({ label, value, setter }) => (
-          <label key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, color: '#555' }}>
-            {label}
-            <input
-              type="number"
-              step="0.1"
-              value={value}
-              onChange={e => setter(Math.max(0.1, Number(e.target.value) || 0.1))}
-              style={{ width: 72, border: '1px solid #dcdcdc', borderRadius: 6, padding: '4px 6px', pointerEvents: 'auto' }}
-            />
-          </label>
-        ))}
+        {/* Dimensions */}
+        <h3 className={styles.sectionTitle}>Dimensions</h3>
+        <UserInput label="Length (X)" type="number" unit="ft" value={length} onChange={setLength} validation={{ min: 0.1 }} />
+        <UserInput label="Width (Y)" type="number" unit="ft" value={width} onChange={setWidth} validation={{ min: 0.1 }} />
+        <UserInput label="Height (Z)" type="number" unit="ft" value={height} onChange={setHeight} validation={{ min: 0.1 }} />
 
-        <h3 style={{ margin: '16px 0 8px 0', fontWeight: 600, fontSize: 16, color: '#333' }}>Opening</h3>
-        <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, color: '#555' }}>
-          Face
+        {/* Opening Configuration */}
+        <h2 className={styles.sectionTitle}>Opening</h2>
+        <div className={styles.formGroup}>
+          <span className={styles.formLabel}>Face</span>
           <select
             value={openingFace}
             onChange={e => setOpeningFace(e.target.value as Opening['face'])}
-            style={{ width: 72, border: '1px solid #dcdcdc', borderRadius: 6, padding: '4px 6px', pointerEvents: 'auto' }}
+            className={styles.formSelect}
+            aria-label="Select opening face"
           >
             {['front', 'back', 'left', 'right', 'floor', 'roof'].map(f => (
               <option key={f} value={f}>
-                {f}
+                {f.charAt(0).toUpperCase() + f.slice(1)}
               </option>
             ))}
           </select>
-        </label>
-        {[
-          { label: 'Width', value: openingWidth, setter: setOpeningWidth },
-          { label: 'Height', value: openingHeight, setter: setOpeningHeight }
-        ].map(({ label, value, setter }) => (
-          <label key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, color: '#555' }}>
-            {label}
-            <input
-              type="number"
-              step="0.1"
-              value={value}
-              onChange={e => setter(Math.max(0.1, Number(e.target.value) || 0.1))}
-              style={{ width: 72, border: '1px solid #dcdcdc', borderRadius: 6, padding: '4px 6px', pointerEvents: 'auto' }}
-            />
-          </label>
-        ))}
-      </div>
+        </div>
 
-      <Canvas camera={{ position: [5, -4, 6], fov: 50, up: [0, 0, 1] }} dpr={[1, 2]} onCreated={({ gl }) => gl.setClearColor('#f6f7f9')}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 6, 8]} intensity={0.9} />
-        <directionalLight position={[-6, 3, -4]} intensity={0.3} />
+        <UserInput label="Width" type="number" unit="ft" value={openingWidth} onChange={setOpeningWidth} validation={{ min: 0.1 }} />
+        <UserInput label="Height" type="number" unit="ft" value={openingHeight} onChange={setOpeningHeight} validation={{ min: 0.1 }} />
 
-        <axesHelper args={[axisSize]} />
-        <Text position={[axisSize, 0, 0]} fontSize={textSize} color="red">
-          X
-        </Text>
-        <Text position={[0, axisSize, 0]} fontSize={textSize} color="green">
-          Y
-        </Text>
-        <Text position={[0, 0, axisSize]} fontSize={textSize} color="blue">
-          Z
-        </Text>
-
-        <Box
-          size={[length, width, height]}
-          position={[0, 0, 0]}
-          opening={{ face: openingFace, width: openingWidth, height: openingHeight }}
-          cubicleType={cubicleType}
+        <h3 className={styles.sectionTitle}>Threat Location</h3>
+        <UserInput
+          label="X Location"
+          type="number"
+          unit="ft"
+          value={threatXLocation}
+          onChange={setThreatXLocation}
+          validation={{ min: 0.0, max: Number(length) }}
         />
+        <UserInput
+          label="Y Location"
+          type="number"
+          unit="ft"
+          value={threatYLocation}
+          onChange={setThreatYLocation}
+          validation={{ min: 0.0, max: Number(width) }}
+        />
+        <UserInput
+          label="Z Location"
+          type="number"
+          unit="ft"
+          value={threatZLocation}
+          onChange={setThreatZLocation}
+          validation={{ min: 0.0, max: Number(height) }}
+        />
+        <UserInput label="Weight" type="number" unit="lbs" value={threatWeight} onChange={setThreatWeight} validation={{ min: 0.1 }} />
+      </nav>
 
-        <OrbitControls enableDamping dampingFactor={0.08} target={[0, 0, 0]} />
-      </Canvas>
+      {/* Main Content Area */}
+      <main className={styles.contentArea}>
+        {/* 3D Render Section */}
+        <section className={styles.renderSection}>
+          <Canvas
+            className={styles.renderCanvas}
+            camera={{ position: [5, -4, 6], fov: 50, up: [0, 0, 1] }}
+            dpr={[1, 2]}
+            onCreated={({ gl }) => gl.setClearColor('#f9fafb')}
+          >
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[5, 6, 8]} intensity={0.9} />
+            <directionalLight position={[-6, 3, -4]} intensity={0.3} />
+
+            <axesHelper args={[axisSize]} />
+            <Text position={[axisSize, 0, 0]} fontSize={textSize} color="red">
+              X
+            </Text>
+            <Text position={[0, axisSize, 0]} fontSize={textSize} color="green">
+              Y
+            </Text>
+            <Text position={[0, 0, axisSize]} fontSize={textSize} color="blue">
+              Z
+            </Text>
+
+            <Box
+              size={[Number(length), Number(width), Number(height)]}
+              position={[0, 0, 0]}
+              opening={{ face: openingFace, width: Number(openingWidth), height: Number(openingHeight) }}
+              cubicleType={cubicleType}
+            />
+
+            <OrbitControls enableDamping dampingFactor={0.08} target={[0, 0, 0]} />
+          </Canvas>
+        </section>
+
+        {/* Output Section */}
+        <section className={styles.outputSection}>
+          <h2 className={styles.outputHeader}>Analysis & Output</h2>
+          <div className={styles.outputContent}>
+            <p>
+              <strong>Cubicle Type:</strong> {cubicleType.charAt(0).toUpperCase() + cubicleType.slice(1).replace('-', ' ')}
+            </p>
+            <p>
+              <strong>Dimensions:</strong> {length}m × {width}m × {height}m
+            </p>
+            <p>
+              <strong>Volume:</strong> {(Number(length) * Number(width) * Number(height)).toFixed(2)} m³
+            </p>
+            <p>
+              <strong>Floor Area:</strong> {(Number(length) * Number(width)).toFixed(2)} m²
+            </p>
+            {opening && (
+              <>
+                <p>
+                  <strong>Opening:</strong> {openingWidth}m × {openingHeight}m on {openingFace} face
+                </p>
+                <p>
+                  <strong>Opening Area:</strong> {(Number(openingWidth) * Number(openingHeight)).toFixed(2)} m²
+                </p>
+              </>
+            )}
+            <p>
+              <strong>Wall Count:</strong>{' '}
+              {cubicleType === 'cantilever' ? '1 wall' : cubicleType === 'two-wall' ? '2 walls' : cubicleType === 'three-wall' ? '3 walls' : 'Full enclosure'}
+            </p>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

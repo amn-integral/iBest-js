@@ -17,15 +17,24 @@
     "unlink": "node scripts/unlink-workspace.cjs",
     "postinstall": "node scripts/setup-workspace-links.cjs",
     "report-sizes": "node scripts/report-all-sizes.js",
-    "clean": "rm -rf **/dist/*"
-  },
-  "devDependencies": {
-    "gzip-size": "^7.0.0",
-    "pretty-bytes": "^7.1.0",
-    "tsx": "^4.20.6"
+    "clean": "rm -rf **/dist/*",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.6",
     "chart.js": "^4.5.1",
+    "three": "^0.181.1",
     "webgl-plot": "^0.7.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.181.0",
+    "eslint-config-prettier": "^10.1.8",
+    "gzip-size": "^7.0.0",
+    "prettier": "^3.6.2",
+    "pretty-bytes": "^7.1.0",
+    "tsx": "^4.20.6"
   }
 }

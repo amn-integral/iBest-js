@@ -9,8 +9,33 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   // ignore build artifacts
-  globalIgnores(['**/dist/**', '**/node_modules/**']),
+  globalIgnores([
+    '**/dist/**',
+    '**/node_modules/**',
+    'eslint.config.{js,cjs,mjs,ts}',
+    '**/*.config.{js,cjs,mjs,ts}',
+    'vite.config.{js,ts}',
+    'vitest.config.{js,ts}'
+  ]),
 
+  // Config files: lint without TS type-checking
+  {
+    files: [
+      'eslint.config.{js,cjs,mjs,ts}',
+      '**/*.config.{js,cjs,mjs,ts}',
+      'vite.config.{js,ts}',
+      'vitest.config.{js,ts}'
+    ],
+    extends: [js.configs.recommended, prettierConfig],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.node,
+      parserOptions: {
+        projectService: null
+      }
+    },
+    rules: {}
+  },
   // TS/JS source files
   {
     files: ['**/*.{ts,tsx,js,jsx}'],

@@ -1,5 +1,9 @@
 {
   "extends": "../tsconfig.base.json",
+  "references": [
+    { "path": "../iMath" },
+    { "path": "../iUIComponents" }
+  ],
   "files": [],
   "compilerOptions": {
     "rootDir": "src",
@@ -33,6 +37,7 @@
     "baseUrl": ".",
     "paths": {
     }
+
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist" ]

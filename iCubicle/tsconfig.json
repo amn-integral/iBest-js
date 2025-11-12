@@ -18,7 +18,15 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    /* Path mappings for workspace packages */
+    "baseUrl": ".",
+    "paths": {
+      "@integralrsg/i3dcore": ["../i3DCore/src"],
+      "@integralrsg/i3dcore/*": ["../i3DCore/src/*"]
+    }
   },
   "include": ["src"]
 }

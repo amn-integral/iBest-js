@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, type ChangeEvent } from "react";
-import styles from "./UserInput.module.css";
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import styles from './UserInput.module.css';
 
 /**
  * Safely evaluates a mathematical expression.
  * Returns the evaluated result or null if invalid.
  * Export this so parent components can use it when needed.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function evaluateExpression(expr: string): number | null {
   try {
     // Remove whitespace
@@ -23,18 +24,16 @@ export function evaluateExpression(expr: string): number | null {
     }
 
     // Prevent dangerous patterns
-    if (
-      cleaned.includes("..") ||
-      /[+\-*/]{2,}/.test(cleaned.replace(/\*\*/g, ""))
-    ) {
+    if (cleaned.includes('..') || /[+\-*/]{2,}/.test(cleaned.replace(/\*\*/g, ''))) {
       return null;
     }
 
     // Evaluate using Function constructor (safer than eval)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-implied-eval
     const result = new Function(`'use strict'; return (${cleaned})`)();
 
     // Verify result is a valid number
-    if (typeof result === "number" && !isNaN(result) && isFinite(result)) {
+    if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
       return result;
     }
 
@@ -56,18 +55,18 @@ function validateCsvFormat(csvString: string): string | null {
     if (!trimmed) return null;
 
     // Check for common mistakes - using wrong separators
-    if (trimmed.includes(":") && !trimmed.includes(",")) {
-      return "CSV format uses commas (,) as separators, not colons (:)";
+    if (trimmed.includes(':') && !trimmed.includes(',')) {
+      return 'CSV format uses commas (,) as separators, not colons (:)';
     }
-    if (trimmed.includes(";") && !trimmed.includes(",")) {
-      return "CSV format uses commas (,) as separators, not semicolons (;)";
+    if (trimmed.includes(';') && !trimmed.includes(',')) {
+      return 'CSV format uses commas (,) as separators, not semicolons (;)';
     }
-    if (trimmed.includes("|") && !trimmed.includes(",")) {
-      return "CSV format uses commas (,) as separators, not pipes (|)";
+    if (trimmed.includes('|') && !trimmed.includes(',')) {
+      return 'CSV format uses commas (,) as separators, not pipes (|)';
     }
 
     // For single-line CSV, split by lines (in case user pastes multiline) or treat as single line
-    const lines = trimmed.split(/\r?\n/).filter((line) => line.trim());
+    const lines = trimmed.split(/\r?\n/).filter(line => line.trim());
 
     if (lines.length === 0) return null;
 
@@ -80,14 +79,12 @@ function validateCsvFormat(csvString: string): string | null {
       const values = parseCsvLine(line);
 
       if (!values) {
-        return lines.length > 1
-          ? `Invalid CSV format on line ${i + 1}`
-          : "Invalid CSV format";
+        return lines.length > 1 ? `Invalid CSV format on line ${i + 1}` : 'Invalid CSV format';
       }
 
       // Check that we have at least one value
       if (values.length === 0) {
-        return "CSV must contain at least one value";
+        return 'CSV must contain at least one value';
       }
 
       // Check consistent column count for multiline
@@ -110,10 +107,7 @@ function validateCsvFormat(csvString: string): string | null {
           const numValue = parseFloat(value);
           // Check if it's a numeric string that should parse
           if (/^[0-9+\-.,\s]+$/.test(value) && isNaN(numValue)) {
-            const position =
-              lines.length > 1
-                ? `line ${i + 1}, column ${j + 1}`
-                : `position ${j + 1}`;
+            const position = lines.length > 1 ? `line ${i + 1}, column ${j + 1}` : `position ${j + 1}`;
             return `Invalid numeric value "${value}" at ${position}`;
           }
         }
@@ -122,7 +116,7 @@ function validateCsvFormat(csvString: string): string | null {
 
     return null;
   } catch (error) {
-    return "Invalid CSV format";
+    return `Invalid CSV format {${(error as Error).message}}`;
   }
 } /**
  * Simple CSV line parser that handles quoted values.
@@ -131,7 +125,7 @@ function validateCsvFormat(csvString: string): string | null {
 function parseCsvLine(line: string): string[] | null {
   try {
     const values: string[] = [];
-    let current = "";
+    let current = '';
     let inQuotes = false;
     let i = 0;
 
@@ -148,10 +142,10 @@ function parseCsvLine(line: string): string[] | null {
           inQuotes = !inQuotes;
           i++;
         }
-      } else if (char === "," && !inQuotes) {
+      } else if (char === ',' && !inQuotes) {
         // Field separator
         values.push(current.trim());
-        current = "";
+        current = '';
         i++;
       } else {
         current += char;
@@ -189,10 +183,11 @@ export interface UserInputProps {
   onChange: (value: string) => void;
   unit?: string;
   helpText?: string;
-  type?: "text" | "number" | "expression" | "csv"; // "expression" allows math like "1*2"
+  type?: 'text' | 'number' | 'expression' | 'csv'; // "expression" allows math like "1*2"
   placeholder?: string;
   disabled?: boolean;
   validation?: ValidationRule;
+  fontSize?: string; // e.g. "small", "medium", "large", "12px", "14px", etc.
 }
 
 export function UserInput({
@@ -201,10 +196,11 @@ export function UserInput({
   onChange,
   unit,
   helpText,
-  type = "text",
+  type = 'text',
   placeholder,
   disabled = false,
   validation,
+  fontSize = 'medium'
 }: UserInputProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -214,22 +210,21 @@ export function UserInput({
   // Validate the input value
   const validateInput = (inputValue: string): string | null => {
     const stringValue = String(inputValue);
-    const numericValue =
-      type === "number" || type === "expression" ? parseFloat(inputValue) : NaN;
+    const numericValue = type === 'number' || type === 'expression' ? parseFloat(inputValue) : NaN;
 
     // Required check
     if (validation?.required && !stringValue.trim()) {
-      return "This field is required";
+      return 'This field is required';
     }
 
     // Skip other validations if empty and not required
     if (!stringValue.trim()) return null;
 
     // For expression type, validate that it's a valid expression
-    if (type === "expression") {
+    if (type === 'expression') {
       const evaluated = evaluateExpression(stringValue);
       if (evaluated === null) {
-        return "Invalid mathematical expression";
+        return 'Invalid mathematical expression';
       }
       // Use evaluated value for min/max checks
       if (validation?.min !== undefined && evaluated < validation.min) {
@@ -240,14 +235,14 @@ export function UserInput({
       }
     }
     // For CSV type, validate that it's a valid CSV format (always validate for CSV type)
-    else if (type === "csv") {
+    else if (type === 'csv') {
       const csvError = validateCsvFormat(stringValue);
       if (csvError) {
         return csvError;
       }
     }
     // Min/Max for numbers
-    else if (type === "number" && !isNaN(numericValue)) {
+    else if (type === 'number' && !isNaN(numericValue)) {
       if (validation?.min !== undefined && numericValue < validation.min) {
         return `Value must be at least ${validation.min}`;
       }
@@ -257,22 +252,16 @@ export function UserInput({
     }
 
     // Min/Max length for text
-    if (
-      validation?.minLength !== undefined &&
-      stringValue.length < validation.minLength
-    ) {
+    if (validation?.minLength !== undefined && stringValue.length < validation.minLength) {
       return `Must be at least ${validation.minLength} characters`;
     }
-    if (
-      validation?.maxLength !== undefined &&
-      stringValue.length > validation.maxLength
-    ) {
+    if (validation?.maxLength !== undefined && stringValue.length > validation.maxLength) {
       return `Must be at most ${validation.maxLength} characters`;
     }
 
     // Pattern validation
     if (validation?.pattern && !validation.pattern.test(stringValue)) {
-      return "Invalid format";
+      return 'Invalid format';
     }
 
     // Custom validation
@@ -298,23 +287,20 @@ export function UserInput({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showHelp]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     onChange(inputValue);
-    if (
-      type === "number" &&
-      /^-?$|^-?\d*\.?$/.test(inputValue)
-    ) {
+    if (type === 'number' && /^-?$|^-?\d*\.?$/.test(inputValue)) {
       setErrorMessage(null);
       return;
     }
 
-  if (
-      type === "expression" &&
+    if (
+      type === 'expression' &&
       // Allow partial math inputs like "-", "-1*", "1+", "3/(", etc.
       /^[-+*/().\d\s]*$/.test(inputValue)
     ) {
@@ -327,7 +313,7 @@ export function UserInput({
       }
       return;
     }
-    };
+  };
 
   const handleBlur = (e: ChangeEvent<HTMLInputElement>) => {
     // For expression type, validate but don't auto-evaluate
@@ -335,7 +321,7 @@ export function UserInput({
 
     const error = validateInput(String(value));
     setErrorMessage(error);
-    if (type === "expression") {
+    if (type === 'expression') {
       const inputValue = e.target.value.trim();
       if (inputValue) {
         const evaluated = evaluateExpression(inputValue);
@@ -348,7 +334,7 @@ export function UserInput({
       }
     }
     // For number type, still auto-evaluate
-    else if (type === "number") {
+    else if (type === 'number') {
       const inputValue = e.target.value.trim();
       if (inputValue) {
         const evaluated = evaluateExpression(inputValue);
@@ -363,25 +349,23 @@ export function UserInput({
 
   return (
     <div className={styles.userInput}>
-      <label className={styles.uiLabel}>{label}</label>
+      <label className={styles.uiLabel} style={{ fontSize }}>
+        {label}
+      </label>
 
       {/* Always render unit space for consistent alignment */}
-      <span className={styles.uiUnit}>{unit ? "(" + unit + ")" : ""}</span>
+      <span className={styles.uiUnit} style={{ fontSize }}>
+        {unit ? '(' + unit + ')' : ''}
+      </span>
 
       {/* Always render help button space for consistent alignment */}
       {helpText ? (
         <div className={styles.uiHelpContainer}>
-          <button
-            ref={helpButtonRef}
-            type="button"
-            className={styles.uiHelpButton}
-            onClick={() => setShowHelp(!showHelp)}
-            aria-label="Help"
-          >
+          <button ref={helpButtonRef} type="button" className={styles.uiHelpButton} onClick={() => setShowHelp(!showHelp)} aria-label="Help">
             ?
           </button>
           {showHelp && (
-            <div ref={popupRef} className={styles.uiHelpPopup}>
+            <div ref={popupRef} className={styles.uiHelpPopup} style={{ fontSize }}>
               {helpText}
             </div>
           )}
@@ -392,21 +376,18 @@ export function UserInput({
 
       <div className={styles.uiInputWrapper}>
         <input
-          type={"text"}
+          type={'text'}
           value={value}
           onChange={handleInputChange}
           onBlur={handleBlur}
-          placeholder={
-            placeholder || (type === "csv" ? "value1,value2,value3" : undefined)
-          }
+          placeholder={placeholder || (type === 'csv' ? 'value1,value2,value3' : undefined)}
           disabled={disabled}
-          className={`${styles.uiInput} ${hasError ? styles.uiInputError : ""}`}
+          className={`${styles.uiInput} ${hasError ? styles.uiInputError : ''}`}
+          style={{ fontSize }}
           title={errorMessage || undefined}
-          inputMode={type === "number" || type === "expression" ? "decimal" : undefined}
+          inputMode={type === 'number' || type === 'expression' ? 'decimal' : undefined}
         />
-        {hasError && (
-          <div className={styles.uiErrorTooltip}>{errorMessage}</div>
-        )}
+        {hasError && <div className={styles.uiErrorTooltip}>{errorMessage}</div>}
       </div>
     </div>
   );

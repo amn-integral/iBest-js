@@ -1,12 +1,12 @@
-.user-input {
+.user-dropdown {
   display: grid;
-  grid-template-columns: 30% 25% 5% 40%; /* Label, Unit, Help, Input */
+  grid-template-columns: 30% 25% 5% 40%; /* Label, Unit, Help, Select */
   width: 100%;
   font-family: Arial, sans-serif;
   padding: 0.0rem;
 }
 
-.ui-label {
+.ud-label {
   font-weight: normal;
   font-size: medium;
   color: #000000;
@@ -18,7 +18,7 @@
   margin: 0px;
 }
 
-.ui-unit {
+.ud-unit {
   font-weight: normal;
   font-size: small;
   color: #000000;
@@ -30,7 +30,7 @@
 }
 
 /* Placeholder for unit space even when unit is not present */
-.ui-unit-placeholder {
+.ud-unit-placeholder {
   color: #000;
   white-space: nowrap;
   text-align: center;
@@ -39,7 +39,7 @@
   grid-template-columns: 1fr;
 }
 
-.ui-help-container {
+.ud-help-container {
   position: relative;
   display: flex;
   align-items: center;
@@ -48,11 +48,11 @@
 }
 
 /* Placeholder for help button space even when help is not present */
-.ui-help-placeholder {
+.ud-help-placeholder {
   padding: 0px;
 }
 
-.ui-help-button {
+.ud-help-button {
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -64,18 +64,19 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   transition: background-color 0.2s;
 }
 
-.ui-help-button:hover {
-  background-color: #57ee64;
+.ud-help-button:hover {
+ background-color: #57ee64;
 }
 
-.ui-help-button:active {
+.ud-help-button:active {
   background-color: #90f34e;
 }
 
-.ui-help-popup {
+.ud-help-popup {
   position: absolute;
   top: 100%;
   left: 0;
@@ -93,92 +94,88 @@
   color: #333;
 }
 
-.ui-input {
+.ud-select {
   width: 100%;
-  padding: 4px 8px;
+  padding: 4px 5px;
   border: 1px solid #000;
   border-radius: 4px;
   background-color: #fff;
   color: #000;
   font-size: medium;
   font-family: Arial, sans-serif;
+  font-weight: normal;
   outline: none;
+  align-items: left;
+  cursor: pointer;
 }
 
-/* Remove number input arrows/spinners */
-.ui-input[type="number"]::-webkit-inner-spin-button,
-.ui-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.ui-input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.ui-input::placeholder {
+.ud-select::placeholder {
   color: #999;
 }
 
-.ui-input:focus {
+.ud-select:focus {
   border-color: #000;
   background-color: #fff;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
-.ui-input:disabled {
-  background-color: #f0f0f0;
+.ud-select:disabled {
+  background-color: #f5f5f5;
   color: #999;
   cursor: not-allowed;
 }
 
-.ui-input-wrapper {
+.ud-select-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   padding: 2px;
 }
 
-.ui-input-error {
+.ud-select-error {
   border-color: #c82333 !important;
   background-color: #fff !important;
   box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
 }
 
-.ui-error-tooltip {
+.ud-error-tooltip {
   position: absolute;
   top: 100%;
   left: 0;
-  margin-top: 4px;
-  padding: 6px 10px;
-  background-color: #dc3545;
+  background-color: #c82333;
   color: #fff;
+  padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   white-space: nowrap;
   z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  pointer-events: none;
-  animation: fadeIn 0.2s ease-in;
+  margin-top: 0px;
 }
 
-.ui-error-tooltip::before {
-  content: "";
+.ud-error-tooltip::before {
+  content: '';
   position: absolute;
   bottom: 100%;
-  left: 10px;
-  border: 5px solid transparent;
-  border-bottom-color: #dc3545;
+  left: 8px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid #c82333;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Style for dropdown options on hover */
+.ud-select option {
+  padding: 0px;
+  background-color: #fff;
+  color: #000;
+}
+
+.ud-select option:hover {
+  background-color: #f0f0f0;
+}
+
+.ud-select option:disabled {
+  color: #999;
+  background-color: #f5f5f5;
 }

@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import type { PlaneOptions, PlaneResult, HoleOpening } from '../types';
+import * as THREE from "three";
+import type { PlaneOptions, PlaneResult, HoleOpening } from "../types";
 
 function defaultMaterial(): THREE.Material {
   return new THREE.MeshStandardMaterial({
@@ -10,7 +10,12 @@ function defaultMaterial(): THREE.Material {
   });
 }
 
-function addOpening(shape: THREE.Shape, w: number, h: number, o: HoleOpening): { x0: number, y0: number, x1: number, y1: number } | null {
+function addOpening(
+  shape: THREE.Shape,
+  w: number,
+  h: number,
+  o: HoleOpening
+): { x0: number; y0: number; x1: number; y1: number } | null {
   // clamp size to panel
   const ow = Math.max(0, Math.min(o.w, w));
   const oh = Math.max(0, Math.min(o.h, h));
@@ -45,11 +50,7 @@ function addOpening(shape: THREE.Shape, w: number, h: number, o: HoleOpening): {
  * Returns both the mesh and calculated node positions.
  */
 export function makePlane(opts: PlaneOptions): PlaneResult {
-  const {
-    width, height, normal, pos,
-    material,
-    opening,
-  } = opts;
+  const { width, height, normal, pos, material, opening } = opts;
 
   // Outer shape in local XY
   const S = new THREE.Shape();
@@ -60,7 +61,8 @@ export function makePlane(opts: PlaneOptions): PlaneResult {
   S.lineTo(0, 0);
 
   // Opening(s) and collect opening info
-  const openings: Array<{ x0: number, y0: number, x1: number, y1: number }> = [];
+  const openings: Array<{ x0: number; y0: number; x1: number; y1: number }> =
+    [];
   if (opening) {
     const list = Array.isArray(opening) ? opening : [opening];
     for (const o of list) {
@@ -87,7 +89,7 @@ export function makePlane(opts: PlaneOptions): PlaneResult {
       if (u.lengthSq() < 1e-12) u.set(0, 1, 0);
     }
     const v = new THREE.Vector3().crossVectors(n, u).normalize(); // v = n × u
-    const basis = new THREE.Matrix4().makeBasis(u, v, n);          // X=u, Y=v, Z=n
+    const basis = new THREE.Matrix4().makeBasis(u, v, n); // X=u, Y=v, Z=n
     mesh.quaternion.setFromRotationMatrix(basis);
   } else {
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
@@ -126,7 +128,11 @@ export function makePlane(opts: PlaneOptions): PlaneResult {
   const label = opts.name;
   // —— Face label (optional): same plane orientation, offset along normal ——
   if (label) {
-    const labelMesh = makeLabelPlane(label, DEFAULT_TextOptions.size, DEFAULT_TextOptions.color);
+    const labelMesh = makeLabelPlane(
+      label,
+      DEFAULT_TextOptions.size,
+      DEFAULT_TextOptions.color
+    );
     // center in local (0..width, 0..height) frame, and lift along local +Z
     labelMesh.position.set(width / 2, height / 2, DEFAULT_TextOptions.offset);
     mesh.add(labelMesh);
@@ -146,10 +152,10 @@ const DEFAULT_TextOptions = {
 };
 
 /** Canvas → texture for numeric label */
-function makeTextTexture(text: string, color = '#000000', px = 180) {
+function makeTextTexture(text: string, color = "#000000", px = 180) {
   // measure
-  const mcan = document.createElement('canvas');
-  const mctx = mcan.getContext('2d')!;
+  const mcan = document.createElement("canvas");
+  const mctx = mcan.getContext("2d")!;
   mctx.font = `bold ${px}px sans-serif`;
   const w = mctx.measureText(text).width;
   const pad = px * 0.4;
@@ -157,37 +163,36 @@ function makeTextTexture(text: string, color = '#000000', px = 180) {
   const th = THREE.MathUtils.ceilPowerOfTwo(px + pad);
 
   // draw
-  const can = document.createElement('canvas');
-  can.width = tw; can.height = th;
-  const ctx = can.getContext('2d')!;
+  const can = document.createElement("canvas");
+  can.width = tw;
+  can.height = th;
+  const ctx = can.getContext("2d")!;
   ctx.clearRect(0, 0, tw, th);
   ctx.fillStyle = color;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.font = `bold ${px}px sans-serif`;
   ctx.fillText(text, tw / 2, th / 2);
 
   const tex = new THREE.CanvasTexture(can);
-  tex.flipY = true;      // important: not mirrored
+  tex.flipY = true; // important: not mirrored
   tex.anisotropy = 4;
   tex.needsUpdate = true;
 
   return { texture: tex, width: tw, height: th };
 }
 
-
-
 /** A plane mesh that shows the number; oriented like the face (local +Z) */
-function makeLabelPlane(text: string, worldHeight = 0.6, color = '#000000') {
+function makeLabelPlane(text: string, worldHeight = 0.6, color = "#000000") {
   const { texture, width, height } = makeTextTexture(text, color);
-  const aspect = width / height;           // wider words → wider plane
+  const aspect = width / height; // wider words → wider plane
   const geo = new THREE.PlaneGeometry(worldHeight * aspect, worldHeight);
   const mat = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
     depthTest: true,
     depthWrite: false,
-    side: THREE.FrontSide,                 // only front → no mirrored-from-behind
+    side: THREE.FrontSide, // only front → no mirrored-from-behind
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = `FaceLabel_${text}`;

@@ -1,32 +1,24 @@
 .user-dropdown {
   display: grid;
-  grid-template-columns: 30% 25% 5% 40%; /* Label, Unit, Help, Select */
+  grid-template-columns: 30% 20% 10% 40%; /* Label, Unit, Help, Input */
   width: 100%;
   font-family: Arial, sans-serif;
-  padding: 0.0rem;
 }
 
 .ud-label {
   font-weight: normal;
-  font-size: medium;
   color: #000000;
   white-space: nowrap;
   text-align: left;
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
   align-items: center;
-  margin: 0px;
 }
 
 .ud-unit {
   font-weight: normal;
-  font-size: small;
   color: #000000;
   white-space: nowrap;
   text-align: center;
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: center;
 }
 
 /* Placeholder for unit space even when unit is not present */
@@ -35,16 +27,11 @@
   white-space: nowrap;
   text-align: center;
   align-items: center;
-  display: grid;
-  grid-template-columns: 1fr;
 }
 
 .ud-help-container {
-  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 4px;
 }
 
 /* Placeholder for help button space even when help is not present */
@@ -56,15 +43,13 @@
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  border: none;
   background-color: #a9f0fa;
   color: #000;
   font-weight: bold;
   font-size: small;
-  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
+  text-align: center;
   transition: background-color 0.2s;
 }
 
@@ -89,24 +74,17 @@
   z-index: 1000;
   min-width: 200px;
   max-width: 300px;
-  font-size: 13px;
+  font-size: small;
   line-height: 1.5;
   color: #333;
 }
 
 .ud-select {
   width: 100%;
-  padding: 4px 5px;
+  padding: 4px 8px;
   border: 1px solid #000;
   border-radius: 4px;
   background-color: #fff;
-  color: #000;
-  font-size: medium;
-  font-family: Arial, sans-serif;
-  font-weight: normal;
-  outline: none;
-  align-items: left;
-  cursor: pointer;
 }
 
 .ud-select::placeholder {

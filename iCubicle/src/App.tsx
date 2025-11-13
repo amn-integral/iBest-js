@@ -1,7 +1,8 @@
 ﻿import * as THREE from 'three';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
+import { type OrbitControls as OrbitControlsType } from 'three-stdlib';
 import styles from './App.module.css';
 import { UserInput, UserDropdown, type DropdownOption } from '@integralrsg/iuicomponents';
 import { type CubicleType } from './types';
@@ -124,13 +125,14 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
 }
 
 export default function App() {
-  const [length, setLength] = useState('5');
-  const [width, setWidth] = useState('4');
-  const [height, setHeight] = useState('3');
+  const controlsRef = useRef<OrbitControlsType>(null);
+  const [length, setLength] = useState('2');
+  const [width, setWidth] = useState('2');
+  const [height, setHeight] = useState('2');
   const [openingWidth, setOpeningWidth] = useState('0.8');
   const [openingHeight, setOpeningHeight] = useState('1.2');
   const [openingFace, setOpeningFace] = useState<Opening['face']>('front');
-  const [cubicleType, setCubicleType] = useState<CubicleType>('three-walls');
+  const [cubicleType, setCubicleType] = useState<CubicleType>(CubicleTypes.ThreeWalls);
   const [threatXLocation, setThreatXLocation] = useState('1.0');
   const [threatYLocation, setThreatYLocation] = useState('1.0');
   const [threatZLocation, setThreatZLocation] = useState('1.0');
@@ -143,7 +145,6 @@ export default function App() {
 
   const [stripHeight, setStripHeight] = useState('1.0');
   const [stripWidth, setStripWidth] = useState('1.0');
-
 
   const targetOptions: DropdownOption[] = useMemo(() => {
     switch (cubicleType) {
@@ -298,6 +299,43 @@ export default function App() {
       <main className={styles.contentArea}>
         {/* 3D Render Section */}
         <section className={styles.renderSection}>
+          {/* Canvas Control Buttons */}
+          <div className={styles.canvasControls}>
+            <button
+              className={styles.canvasButton}
+              onClick={() => {
+                const controls = controlsRef.current;
+                if (controls) {
+                  // Reset to default view
+                  controls.reset();
+                }
+              }}
+              title="Reset View"
+            >
+              🔄 Reset
+            </button>
+            <button
+              className={styles.canvasButton}
+              onClick={() => {
+                const controls = controlsRef.current;
+                if (controls) {
+                  // Fit the cubicle in view
+                  const maxDim = Math.max(Number(length), Number(width), Number(height));
+                  const distance = maxDim * 2.5;
+                  const centerX = Number(length) / 2;
+                  const centerY = Number(width) / 2;
+                  const centerZ = Number(height) / 2;
+
+                  controls.object.position.set(centerX + distance * 0.7, centerY - distance * 0.7, centerZ + distance * 0.7);
+                  controls.target.set(centerX, centerY, centerZ);
+                  controls.update();
+                }
+              }}
+              title="Fit to View"
+            >
+              🔍 Fit
+            </button>
+          </div>
           <Canvas
             className={styles.renderCanvas}
             camera={{ position: [5, -4, 6], fov: 50, up: [0, 0, 1] }}
@@ -332,7 +370,7 @@ export default function App() {
               <meshStandardMaterial color="red" />
             </mesh>
 
-            <OrbitControls enableDamping dampingFactor={0.08} target={[0, 0, 0]} />
+            <OrbitControls ref={controlsRef} enableDamping dampingFactor={0.08} target={[0, 0, 0]} />
           </Canvas>
         </section>
 

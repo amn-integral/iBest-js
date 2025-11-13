@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => ({
     modules: {
       scopeBehaviour: 'local',
       localsConvention: 'camelCase',
-      generateScopedName: 'igdsof_app__[name]__[local]___[hash:base64:5]'
+      generateScopedName: 'iCubicle_app__[name]__[local]___[hash:base64:5]'
     },
     devSourcemap: true
   },

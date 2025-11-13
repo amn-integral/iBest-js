@@ -3,9 +3,9 @@ import { useState, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import styles from './App.module.css';
-import { UserInput } from '@integralrsg/iuicomponents';
-
-type CubicleType = 'cantilever' | 'two-wall' | 'three-wall';
+import { UserInput, UserDropdown, type DropdownOption } from '@integralrsg/iuicomponents';
+import { type CubicleType } from './types';
+import { CubicleTypes, CUBICLE_TYPES } from './constants';
 
 type Opening = {
   face: 'front' | 'back' | 'left' | 'right' | 'floor' | 'roof';
@@ -20,7 +20,7 @@ type BoxProps = {
   cubicleType?: CubicleType;
 };
 
-function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 'three-wall' }: BoxProps) {
+function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 'three-walls' }: BoxProps) {
   const [length, width, height] = size;
   // Cubicle starts at position and extends in +X, +Y, +Z directions
   const offsetPosition: [number, number, number] = [position[0], position[1], position[2]];
@@ -34,14 +34,20 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
   // Define which faces to show based on cubicle type
   const getVisibleFaces = (type: CubicleType): string[] => {
     switch (type) {
-      case 'cantilever':
-        return ['floor', 'back']; // Floor + one wall
-      case 'two-wall':
-        return ['floor', 'back', 'left']; // Floor + two walls
-      case 'three-wall':
-        return ['floor', 'back', 'left', 'right']; // Floor + three walls
-      default:
-        return ['floor', 'back', 'left', 'right', 'roof', 'front']; // Floor + three walls
+      case CubicleTypes.CantileverWall:
+        return ['floor', 'back'];
+      case CubicleTypes.TwoAdjacentWalls:
+        return ['floor', 'back', 'left'];
+      case CubicleTypes.TwoAdjacentWallsWithRoof:
+        return ['floor', 'back', 'left', 'roof'];
+      case CubicleTypes.ThreeWalls:
+        return ['floor', 'back', 'left', 'right'];
+      case CubicleTypes.ThreeWallsWithRoof:
+        return ['floor', 'back', 'left', 'right', 'roof'];
+      case CubicleTypes.FourWalls:
+        return ['floor', 'back', 'left', 'right', 'front'];
+      case CubicleTypes.FourWallsWithRoof:
+        return ['floor', 'back', 'left', 'right', 'front', 'roof'];
     }
   };
 
@@ -59,9 +65,9 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
       // Back face at y=0 - spans from (0,0,0) to (length,0,height)
       { name: 'back', pos: [length/2, 0, height/2], rot: [Math.PI/2, 0, 0], width: length, height: height, label: 'Back' },
       // Left face at x=0 - spans from (0,0,0) to (0,width,height)
-      { name: 'left', pos: [0, width/2, height/2], rot: [0, Math.PI/2, 0], width: height, height: width, label: 'Left' },
+      { name: 'left', pos: [0, width/2, height/2], rot: [0, -Math.PI/2, 0], width: height, height: width, label: 'Left' },
       // Right face at x=length - spans from (length,0,0) to (length,width,height)
-      { name: 'right', pos: [length, width/2, height/2], rot: [0, -Math.PI/2, 0], width: height, height: width, label: 'Right' }
+      { name: 'right', pos: [length, width/2, height/2], rot: [0, Math.PI/2, 0], width: height, height: width, label: 'Right' }
     ].filter(face => visibleFaces.includes(face.name)),
     [length, width, height, visibleFaces]
   );
@@ -118,21 +124,63 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
 }
 
 export default function App() {
-  const [length, setLength] = useState('2');
-  const [width, setWidth] = useState('2');
-  const [height, setHeight] = useState('2');
+  const [length, setLength] = useState('5');
+  const [width, setWidth] = useState('4');
+  const [height, setHeight] = useState('3');
   const [openingWidth, setOpeningWidth] = useState('0.8');
   const [openingHeight, setOpeningHeight] = useState('1.2');
   const [openingFace, setOpeningFace] = useState<Opening['face']>('front');
-  const [cubicleType, setCubicleType] = useState<CubicleType>('three-wall');
+  const [cubicleType, setCubicleType] = useState<CubicleType>('three-walls');
   const [threatXLocation, setThreatXLocation] = useState('1.0');
   const [threatYLocation, setThreatYLocation] = useState('1.0');
   const [threatZLocation, setThreatZLocation] = useState('1.0');
   const [threatWeight, setThreatWeight] = useState('10.0');
-
+  const [targetType, setTargetType] = useState('Full-Wall');
+  const [targetFace, setTargetFace] = useState('Back Wall');
   const axisSize = useMemo(() => Math.max(Number(length), Number(width), Number(height)) * 1.5, [length, width, height]);
   const textSize = useMemo(() => Math.min(Number(length), Number(width), Number(height)) * 0.1, [length, width, height]);
   const opening = { face: openingFace, width: Number(openingWidth), height: Number(openingHeight) };
+
+  const targetOptions: DropdownOption[] = useMemo(() => {
+    switch (cubicleType) {
+      case CubicleTypes.CantileverWall:
+        return ['Back Wall'].map(name => ({
+          value: name.toLowerCase().replace(/\s+/g, '-'),
+          label: name
+        }));
+      case CubicleTypes.TwoAdjacentWalls:
+        return ['Back Wall', 'Side Wall'].map(name => ({
+          value: name.toLowerCase().replace(/\s+/g, '-'),
+          label: name
+        }));
+      case CubicleTypes.TwoAdjacentWallsWithRoof:
+        return ['Back Wall', 'Side Wall', 'Ceiling'].map(name => ({
+          value: name.toLowerCase().replace(/\s+/g, '-'),
+          label: name
+        }));
+      case CubicleTypes.ThreeWalls:
+        return ['Back Wall', 'Side Wall'].map(name => ({
+          value: name.toLowerCase().replace(/\s+/g, '-'),
+          label: name
+        }));
+      case CubicleTypes.ThreeWallsWithRoof:
+        return ['Back Wall', 'Side Wall', 'Ceiling'].map(name => ({
+          value: name.toLowerCase().replace(/\s+/g, '-'),
+          label: name
+        }));
+      case CubicleTypes.FourWalls:
+        return ['Back Wall', 'Side Wall'].map(name => ({
+          value: name.toLowerCase().replace(/\s+/g, '-'),
+          label: name
+        }));
+      case CubicleTypes.FourWallsWithRoof:
+        return ['Back Wall', 'Side Wall', 'Ceiling'].map(name => ({
+          value: name.toLowerCase().replace(/\s+/g, '-'),
+          label: name
+        }));
+    }
+  }, [cubicleType]);
+
   return (
     <div className={styles.appContainer}>
       {/* Navigation Panel */}
@@ -141,49 +189,46 @@ export default function App() {
 
         {/* Cubicle Type Selection */}
         <h2 className={styles.sectionTitle}>Configuration</h2>
-        <div className={styles.formGroup}>
-          <span className={styles.formLabel}>Type</span>
-          <select
-            value={cubicleType}
-            onChange={e => setCubicleType(e.target.value as CubicleType)}
-            className={styles.formSelect}
-            aria-label="Select cubicle type"
-          >
-            <option value="cantilever">Cantilever</option>
-            <option value="two-wall">Two Wall</option>
-            <option value="three-wall">Three Wall</option>
-          </select>
-        </div>
+        <UserDropdown
+          label="Cubicle Type"
+          options={CUBICLE_TYPES}
+          value={cubicleType}
+          onChange={value => setCubicleType(value as CubicleType)}
+          fontSize="medium"
+        />
 
         {/* Dimensions */}
         <h3 className={styles.sectionTitle}>Dimensions</h3>
-        <UserInput label="Length (X)" type="number" unit="ft" value={length} onChange={setLength} validation={{ min: 0.1 }} />
-        <UserInput label="Width (Y)" type="number" unit="ft" value={width} onChange={setWidth} validation={{ min: 0.1 }} />
-        <UserInput label="Height (Z)" type="number" unit="ft" value={height} onChange={setHeight} validation={{ min: 0.1 }} />
+        <UserInput fontSize="medium" label="Length (X)" type="number" unit="ft" value={length} onChange={setLength} validation={{ min: 0.1 }} />
+        <UserInput fontSize="medium" label="Width (Y)" type="number" unit="ft" value={width} onChange={setWidth} validation={{ min: 0.1 }} />
+        <UserInput fontSize="medium" label="Height (Z)" type="number" unit="ft" value={height} onChange={setHeight} validation={{ min: 0.1 }} />
 
         {/* Opening Configuration */}
+
+        <hr />
         <h2 className={styles.sectionTitle}>Opening</h2>
-        <div className={styles.formGroup}>
-          <span className={styles.formLabel}>Face</span>
-          <select
-            value={openingFace}
-            onChange={e => setOpeningFace(e.target.value as Opening['face'])}
-            className={styles.formSelect}
-            aria-label="Select opening face"
-          >
-            {['front', 'back', 'left', 'right', 'floor', 'roof'].map(f => (
-              <option key={f} value={f}>
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+        <UserDropdown
+          label="Opening Face"
+          options={[
+            { value: 'front', label: 'Front' },
+            { value: 'back', label: 'Back' },
+            { value: 'left', label: 'Left' },
+            { value: 'right', label: 'Right' },
+            { value: 'floor', label: 'Floor' },
+            { value: 'roof', label: 'Roof' }
+          ]}
+          value={openingFace}
+          onChange={value => setOpeningFace(value as Opening['face'])}
+          fontSize="medium"
+        />
 
-        <UserInput label="Width" type="number" unit="ft" value={openingWidth} onChange={setOpeningWidth} validation={{ min: 0.1 }} />
-        <UserInput label="Height" type="number" unit="ft" value={openingHeight} onChange={setOpeningHeight} validation={{ min: 0.1 }} />
-
+        <UserInput fontSize="medium" label="Width" type="number" unit="ft" value={openingWidth} onChange={setOpeningWidth} validation={{ min: 0.1 }} />
+        <UserInput fontSize="medium" label="Height" type="number" unit="ft" value={openingHeight} onChange={setOpeningHeight} validation={{ min: 0.1 }} />
+        <hr />
         <h3 className={styles.sectionTitle}>Threat Location</h3>
+
         <UserInput
+          fontSize="medium"
           label="X Location"
           type="number"
           unit="ft"
@@ -192,6 +237,7 @@ export default function App() {
           validation={{ min: 0.0, max: Number(length) }}
         />
         <UserInput
+          fontSize="medium"
           label="Y Location"
           type="number"
           unit="ft"
@@ -200,6 +246,7 @@ export default function App() {
           validation={{ min: 0.0, max: Number(width) }}
         />
         <UserInput
+          fontSize="medium"
           label="Z Location"
           type="number"
           unit="ft"
@@ -207,7 +254,24 @@ export default function App() {
           onChange={setThreatZLocation}
           validation={{ min: 0.0, max: Number(height) }}
         />
-        <UserInput label="Weight" type="number" unit="lbs" value={threatWeight} onChange={setThreatWeight} validation={{ min: 0.1 }} />
+        <UserInput fontSize="medium" label="Weight" type="number" unit="lbs" value={threatWeight} onChange={setThreatWeight} validation={{ min: 0.1 }} />
+
+        <hr />
+        <h3 className={styles.sectionTitle}>Target Location</h3>
+
+        <UserDropdown label="Target Face" options={targetOptions} value={targetFace} onChange={setTargetFace} fontSize="medium" />
+
+        <UserDropdown
+          label="Target Type"
+          options={[
+            { value: 'Full-Wall', label: 'Full Wall' },
+            { value: 'Strip', label: 'Strip' },
+            { value: 'Object', label: 'Object' }
+          ]}
+          value={targetType}
+          onChange={setTargetType}
+          fontSize="medium"
+        />
       </nav>
 
       {/* Main Content Area */}
@@ -242,6 +306,12 @@ export default function App() {
               cubicleType={cubicleType}
             />
 
+            {/* Threat Location - Red Sphere */}
+            <mesh position={[Number(threatXLocation), Number(threatYLocation), Number(threatZLocation)]}>
+              <sphereGeometry args={[Math.min(Number(length), Number(width), Number(height)) * 0.05, 16, 16]} />
+              <meshStandardMaterial color="red" />
+            </mesh>
+
             <OrbitControls enableDamping dampingFactor={0.08} target={[0, 0, 0]} />
           </Canvas>
         </section>
@@ -273,8 +343,7 @@ export default function App() {
               </>
             )}
             <p>
-              <strong>Wall Count:</strong>{' '}
-              {cubicleType === 'cantilever' ? '1 wall' : cubicleType === 'two-wall' ? '2 walls' : cubicleType === 'three-wall' ? '3 walls' : 'Full enclosure'}
+              <strong>Cubicle Type:</strong> {CUBICLE_TYPES.find(type => type.value === cubicleType)?.label || 'Unknown'}
             </p>
           </div>
         </section>

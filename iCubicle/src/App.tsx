@@ -141,6 +141,10 @@ export default function App() {
   const textSize = useMemo(() => Math.min(Number(length), Number(width), Number(height)) * 0.1, [length, width, height]);
   const opening = { face: openingFace, width: Number(openingWidth), height: Number(openingHeight) };
 
+  const [stripHeight, setStripHeight] = useState('1.0');
+  const [stripWidth, setStripWidth] = useState('1.0');
+
+
   const targetOptions: DropdownOption[] = useMemo(() => {
     switch (cubicleType) {
       case CubicleTypes.CantileverWall:
@@ -197,8 +201,6 @@ export default function App() {
           fontSize="medium"
         />
 
-        {/* Dimensions */}
-        <h3 className={styles.sectionTitle}>Dimensions</h3>
         <UserInput fontSize="medium" label="Length (X)" type="number" unit="ft" value={length} onChange={setLength} validation={{ min: 0.1 }} />
         <UserInput fontSize="medium" label="Width (Y)" type="number" unit="ft" value={width} onChange={setWidth} validation={{ min: 0.1 }} />
         <UserInput fontSize="medium" label="Height (Z)" type="number" unit="ft" value={height} onChange={setHeight} validation={{ min: 0.1 }} />
@@ -220,9 +222,19 @@ export default function App() {
           value={openingFace}
           onChange={value => setOpeningFace(value as Opening['face'])}
           fontSize="medium"
+          helpText='"Test'
         />
 
-        <UserInput fontSize="medium" label="Width" type="number" unit="ft" value={openingWidth} onChange={setOpeningWidth} validation={{ min: 0.1 }} />
+        <UserInput
+          fontSize="medium"
+          helpText="test"
+          label="Width"
+          type="number"
+          unit="ft"
+          value={openingWidth}
+          onChange={setOpeningWidth}
+          validation={{ min: 0.1 }}
+        />
         <UserInput fontSize="medium" label="Height" type="number" unit="ft" value={openingHeight} onChange={setOpeningHeight} validation={{ min: 0.1 }} />
         <hr />
         <h3 className={styles.sectionTitle}>Threat Location</h3>
@@ -272,6 +284,14 @@ export default function App() {
           onChange={setTargetType}
           fontSize="medium"
         />
+        {targetType === 'Strip' ? (
+          <>
+            <UserInput fontSize="medium" label="Strip Height" type="number" unit="ft" value={stripHeight} onChange={setStripHeight} validation={{ min: 0.1 }} />
+            <UserInput fontSize="medium" label="Strip Width" type="number" unit="ft" value={stripWidth} onChange={setStripWidth} validation={{ min: 0.1 }} />
+          </>
+        ) : targetType === 'Object' ? (
+          <UserInput fontSize="medium" label="Object Diameter" type="number" unit="ft" value="0.5" onChange={() => {}} validation={{ min: 0.1 }} />
+        ) : null}
       </nav>
 
       {/* Main Content Area */}
@@ -341,6 +361,11 @@ export default function App() {
                   <strong>Opening Area:</strong> {(Number(openingWidth) * Number(openingHeight)).toFixed(2)} m²
                 </p>
               </>
+            )}
+            {targetType === 'Strip' && (
+              <p>
+                <strong>Target Strip Size:</strong> {stripWidth}m × {stripHeight}m
+              </p>
             )}
             <p>
               <strong>Cubicle Type:</strong> {CUBICLE_TYPES.find(type => type.value === cubicleType)?.label || 'Unknown'}

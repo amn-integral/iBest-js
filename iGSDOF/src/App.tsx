@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import renderWebGLChart from './utils/renderWebGLChart';
 
-import { parseStrictNumber } from '@integralrsg/imath'
+import { parseStrictNumber } from '@integralrsg/imath';
 
 import { UnitsTable, UserInput, UNIT_SYSTEMS, evaluateExpression } from '@integralrsg/iuicomponents';
 import '@integralrsg/iuicomponents/styles';
@@ -18,7 +18,7 @@ export function App() {
   const [orientation, setOrientation] = useState<'Vertical' | 'Horizontal'>('Vertical');
   const [resistance, setResistance] = useState('-7.5, 0, 7.5');
   const [displacement, setDisplacement] = useState('-0.75,0,0.75');
-  const [klmInput, setKlmInput] = useState("1.0");
+  const [klmInput, setKlmInput] = useState('1.0');
   const [u0Input, setU0Input] = useState<string>('0.0');
   const [v0Input, setV0Input] = useState<string>('0.0');
   const [force, setForce] = useState('0.0, 5.0, 8.66, 10.0, 8.66, 5.0, 0, 0, 0, 0, 0');
@@ -65,7 +65,6 @@ export function App() {
   const handleUnitSystemChange = useCallback((unitSystemId: string) => {
     setSelectedUnitSystemId(unitSystemId);
   }, []);
-
 
   const [errors, setErrors] = useState<string[]>([]);
   const [summary, setSummary] = useState<SolverSummary | null>(null);
@@ -151,7 +150,6 @@ export function App() {
       setIsGeneratingChart(true);
 
       try {
-        
         const imageUrl = await renderWebGLChart({
           imageType: 'png',
           xValues: [...result.response.t],
@@ -168,9 +166,10 @@ export function App() {
         });
 
         const rotationLengthForChart = rotationLength === 0 ? Number.EPSILON : rotationLength;
-        let rotationMin = 0; let rotationMax = 0;
+        let rotationMin = 0;
+        let rotationMax = 0;
         const displacementData = result.response.u;
-        rotationData = displacementData.map((disp) => {
+        rotationData = displacementData.map(disp => {
           const angleRad = Math.atan(disp / rotationLengthForChart);
           const angleDeg = angleRad * (180 / Math.PI);
           if (angleDeg < rotationMin) rotationMin = angleDeg;
@@ -188,13 +187,14 @@ export function App() {
           yValues: [...rotationData],
           yMinMax: { min: rotationMin, max: rotationMax },
           options: {
-          title: 'Rotation vs Time',
-          color: '#10b981',
-          width: CHART_DIMENSIONS.width,
-          height: CHART_DIMENSIONS.height,
-          xUnits: unitLabels.time,
-          yUnits: 'Degrees'
-        }});
+            title: 'Rotation vs Time',
+            color: '#10b981',
+            width: CHART_DIMENSIONS.width,
+            height: CHART_DIMENSIONS.height,
+            xUnits: unitLabels.time,
+            yUnits: 'Degrees'
+          }
+        });
 
         const hysterisisUrl = await renderWebGLChart({
           imageType: 'png',
@@ -212,11 +212,9 @@ export function App() {
           }
         });
 
-
         setRotationImage(rotationUrl);
         setDispImage(imageUrl);
         setHysterisisImage(hysterisisUrl);
-
       } catch (chartError) {
         console.warn('Chart generation failed:', chartError);
         setDispImage(null);
@@ -303,7 +301,7 @@ export function App() {
               <UserInput
                 label="Mass"
                 value={massInput}
-                onChange={(value) => setMassInput(value)}
+                onChange={value => setMassInput(value)}
                 type="expression"
                 unit={currentSystem?.mass}
                 validation={{
@@ -314,19 +312,20 @@ export function App() {
                 helpText="Mass of the system"
               />
 
-              <UserInput 
+              <UserInput
                 label="KLM Factor"
                 type="expression"
-                onChange={(value) => setKlmInput(value)}
+                onChange={value => setKlmInput(value)}
                 value={klmInput}
                 helpText="KLM factor for mass"
-                validation={{min:0.1, max:1.0}}
-                unit={currentSystem?.length + "/" + currentSystem?.time} />    
+                validation={{ min: 0.1, max: 1.0 }}
+                unit={currentSystem?.length + '/' + currentSystem?.time}
+              />
 
               <UserInput
                 label="Rotation Length"
                 value={rotationLengthInput}
-                onChange={(value) => setRotationLengthInput(value)}
+                onChange={value => setRotationLengthInput(value)}
                 type="expression"
                 unit={currentSystem?.length}
                 validation={{
@@ -351,62 +350,72 @@ export function App() {
                 <div />
                 <div />
                 <div className={appCss.orientationSelector}>
-                  <select name="te" title="Select orientation direction" value={orientation} onChange={(e) => setOrientation(e.target.value as 'Vertical' | 'Horizontal')}>
+                  <select
+                    name="te"
+                    title="Select orientation direction"
+                    value={orientation}
+                    onChange={e => setOrientation(e.target.value as 'Vertical' | 'Horizontal')}
+                  >
                     <option value="Vertical">Vertical</option>
                     <option value="Horizontal">Horizontal</option>
                   </select>
                 </div>
               </div>
 
-              <UserInput 
-                label="Resistance" 
+              <UserInput
+                label="Resistance"
                 type="csv"
-                onChange={(value) => setResistance(value)}
+                onChange={value => setResistance(value)}
                 value={resistance}
                 helpText="Enter resistance values as a comma-separated list"
-                unit={currentSystem?.force} />
-
-              <UserInput 
-                 label="Displacement"
-                 type="csv"
-                 onChange={(value) => setDisplacement(value)}
-                 value={displacement}
-                 helpText="Enter displacement values of resistance displacement curve as a comma-separated list"
-                 unit={currentSystem?.length} />
+                unit={currentSystem?.force}
+              />
 
               <UserInput
-               label="Force" 
-               type="csv"
-               onChange={(value) => setForce(value)}
-               value={force}
-               helpText="Enter force values as a comma-separated list"
-               unit={currentSystem?.force} />
+                label="Displacement"
+                type="csv"
+                onChange={value => setDisplacement(value)}
+                value={displacement}
+                helpText="Enter displacement values of resistance displacement curve as a comma-separated list"
+                unit={currentSystem?.length}
+              />
 
-              <UserInput 
+              <UserInput
+                label="Force"
+                type="csv"
+                onChange={value => setForce(value)}
+                value={force}
+                helpText="Enter force values as a comma-separated list"
+                unit={currentSystem?.force}
+              />
+
+              <UserInput
                 label="Time"
                 type="csv"
-                onChange={(value) => setTime(value)}
+                onChange={value => setTime(value)}
                 value={time}
                 helpText="Enter time values as a comma-separated list"
-                unit={currentSystem?.time} />
-            
-              <UserInput 
+                unit={currentSystem?.time}
+              />
+
+              <UserInput
                 label="u0"
                 type="number"
-                onChange={(value) => setU0Input(value === undefined || value === null ? '' : String(value))}
+                onChange={value => setU0Input(value === undefined || value === null ? '' : String(value))}
                 value={u0Input}
                 helpText="Initial displacement"
                 validation={{ min: -100, max: 100 }}
-                unit={currentSystem?.length} />
-              
-              <UserInput 
+                unit={currentSystem?.length}
+              />
+
+              <UserInput
                 label="v0"
                 type="number"
-                onChange={(value) => setV0Input(value === undefined || value === null ? '' : String(value))}
+                onChange={value => setV0Input(value === undefined || value === null ? '' : String(value))}
                 value={v0Input}
                 helpText="Initial velocity"
-                unit={currentSystem?.length + "/" + currentSystem?.time} />
-            
+                unit={currentSystem?.length + '/' + currentSystem?.time}
+              />
             </div>
           </section>
 
@@ -416,7 +425,7 @@ export function App() {
 
           {errors.length > 0 ? (
             <ul className={appCss.errorList}>
-              {errors.map((message) => (
+              {errors.map(message => (
                 <li key={message}>{message}</li>
               ))}
             </ul>
@@ -442,7 +451,7 @@ export function App() {
                   <strong>Runtime:</strong> {summary.runtimeMs.toFixed(1)} ms
                 </p>
                 <p>
-                  <strong>Steps:</strong> {summary.steps} 
+                  <strong>Steps:</strong> {summary.steps}
                 </p>
               </div>
               {isGeneratingChart ? (
@@ -459,30 +468,9 @@ export function App() {
                 </div>
               ) : dispImage || rotationImage ? (
                 <div className={appCss.chartContainer}>
-                  {dispImage && (
-                      <img
-                        src={dispImage}
-                        alt="Displacement vs Time"
-                        width={CHART_DIMENSIONS.width}
-                        height={CHART_DIMENSIONS.height}
-                      />
-                  )}
-                  {rotationImage && (
-                      <img
-                        src={rotationImage}
-                        alt="Rotation vs Time"
-                        width={CHART_DIMENSIONS.width}
-                        height={CHART_DIMENSIONS.height}
-                      />
-                  )}
-                  {hysterisisImage && (
-                      <img
-                        src={hysterisisImage}
-                        alt="Hysterisis"
-                        width={CHART_DIMENSIONS.width}
-                        height={CHART_DIMENSIONS.height}
-                      />
-                  )}
+                  {dispImage && <img src={dispImage} alt="Displacement vs Time" width={CHART_DIMENSIONS.width} height={CHART_DIMENSIONS.height} />}
+                  {rotationImage && <img src={rotationImage} alt="Rotation vs Time" width={CHART_DIMENSIONS.width} height={CHART_DIMENSIONS.height} />}
+                  {hysterisisImage && <img src={hysterisisImage} alt="Hysterisis" width={CHART_DIMENSIONS.width} height={CHART_DIMENSIONS.height} />}
                 </div>
               ) : (
                 <div
@@ -531,7 +519,7 @@ export function App() {
 function parseCSVtoNumberArray(csv: string): number[] {
   const result: number[] = [];
   try {
-    const entries = csv.split(',').map((entry) => entry.trim());
+    const entries = csv.split(',').map(entry => entry.trim());
 
     for (const entry of entries) {
       const parsed = parseStrictNumber(entry);

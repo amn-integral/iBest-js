@@ -9,7 +9,6 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
-    "type-check": "tsc -b --noEmit",
     "sync": "wsl rsync -avz --delete dist /home/projects/www/ibest_root/iGSDOF/static/iGSDOF"
   },
   "dependencies": {

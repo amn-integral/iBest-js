@@ -4,7 +4,7 @@
   height: 100vh;
   background: #f6f7f9;
   display: grid;
-  grid-template-columns: minmax(200px, 1.5fr) 2.5fr;
+  grid-template-columns: minmax(200px, 1fr) 3fr;
 }
 
 /* Left Navigation Panel */
@@ -47,7 +47,6 @@
 .form-input {
   width: 80px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
   padding: 8px 10px;
   font-size: 14px;
   background: white;
@@ -63,7 +62,6 @@
 .form-select {
   width: 100px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
   font-size: 14px;
   background: white;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -89,9 +87,6 @@
   flex: 1;
   position: relative;
   background: white;
-  margin: 8px 16px 4px 8px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
   min-height: 300px;
   overflow: hidden;
 }
@@ -101,15 +96,13 @@
   height: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 12px;
-  padding: 16px;
   box-sizing: border-box;
+  border-radius: 0px;
 }
 
 .view-panel {
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
   display: flex;
   flex-direction: column;
   min-height: 260px;
@@ -145,7 +138,7 @@
 .canvas-button {
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 500;
@@ -178,11 +171,29 @@
   pointer-events: none;
 }
 
+.height-annotations {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  color: #111827;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+
+.height-min{
+  font-size: small;
+  opacity: 0.8;
+  font-weight: normal;
+  text-align: left;
+}
+
 /* Bottom: Output/Analysis Section */
 .output-section {
   flex: 0 0 300px; /* Fixed height */
   background: white;
-  border-radius: 8px;
   border: 1px solid #e5e7eb;
   padding: 20px;
   overflow-y: auto;
@@ -221,9 +232,4 @@
 
 .user-input {
   font-size: x-small;
-}
-
-
-.Test{
-  height : 50px;
 }

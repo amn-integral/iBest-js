@@ -200,9 +200,12 @@ export default function App() {
   const stripHeightValue = Number(stripHeight);
   const openingWidthValue = Number(openingWidth);
   const openingHeightValue = Number(openingHeight);
+  const threatXValue = Number(threatXLocation);
+  const threatYValue = Number(threatYLocation);
+  const threatZValue = Number(threatZLocation);
   const threatPosition = useMemo(
-    () => [Number(threatXLocation), Number(threatYLocation), Number(threatZLocation)] as [number, number, number],
-    [threatXLocation, threatYLocation, threatZLocation]
+    () => [threatXValue, threatYValue, threatZValue] as [number, number, number],
+    [threatXValue, threatYValue, threatZValue]
   );
 
   const axisSize = useMemo(() => Math.max(lengthValue, widthValue, heightValue) * 1.5, [lengthValue, widthValue, heightValue]);
@@ -221,8 +224,10 @@ export default function App() {
   );
 
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+  const formatMeasurement = (value: number) => (Number.isFinite(value) ? value.toFixed(2) : '0.00');
   const planZoom = useMemo(() => clamp(200 / Math.max(lengthValue, widthValue, 1), 20, 200), [lengthValue, widthValue]);
   const elevationZoom = useMemo(() => clamp(200 / Math.max(lengthValue, heightValue, 1), 20, 200), [lengthValue, heightValue]);
+  const heightRatio = clamp(heightValue > 0 ? threatZValue / heightValue : 0, 0, 10);
 
   const renderScene = () => (
     <>
@@ -512,6 +517,11 @@ export default function App() {
                 >
                   {renderScene()}
                 </Canvas>
+                <div className={styles.heightAnnotations}>
+                  <span className={styles.heightMin}>Room Height (H = {formatMeasurement(heightValue)} ft)</span>
+                  <span className={styles.heightMin}>Threat Elevation (h = {formatMeasurement(threatZValue)} ft)</span>
+                  <span className={styles.heightMin}>h/H = {formatMeasurement(heightRatio)}</span>
+                </div>
               </div>
             </div>
           </div>

@@ -203,10 +203,7 @@ export default function App() {
   const threatXValue = Number(threatXLocation);
   const threatYValue = Number(threatYLocation);
   const threatZValue = Number(threatZLocation);
-  const threatPosition = useMemo(
-    () => [threatXValue, threatYValue, threatZValue] as [number, number, number],
-    [threatXValue, threatYValue, threatZValue]
-  );
+  const threatPosition = useMemo(() => [threatXValue, threatYValue, threatZValue] as [number, number, number], [threatXValue, threatYValue, threatZValue]);
 
   const axisSize = useMemo(() => Math.max(lengthValue, widthValue, heightValue) * 1.5, [lengthValue, widthValue, heightValue]);
   const textSize = useMemo(() => Math.min(lengthValue, widthValue, heightValue) * 0.1, [lengthValue, widthValue, heightValue]);
@@ -218,10 +215,7 @@ export default function App() {
     }),
     [openingFace, openingWidthValue, openingHeightValue]
   );
-  const sceneCenter = useMemo(
-    () => [lengthValue / 2, widthValue / 2, heightValue / 2] as [number, number, number],
-    [lengthValue, widthValue, heightValue]
-  );
+  const sceneCenter = useMemo(() => [lengthValue / 2, widthValue / 2, heightValue / 2] as [number, number, number], [lengthValue, widthValue, heightValue]);
 
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
   const formatMeasurement = (value: number) => (Number.isFinite(value) ? value.toFixed(2) : '0.00');
@@ -347,19 +341,9 @@ export default function App() {
           value={openingFace}
           onChange={value => setOpeningFace(value as Opening['face'])}
           fontSize="medium"
-          helpText='"Test'
         />
 
-        <UserInput
-          fontSize="medium"
-          helpText="test"
-          label="Width"
-          type="number"
-          unit="ft"
-          value={openingWidth}
-          onChange={setOpeningWidth}
-          validation={{ min: 0.1 }}
-        />
+        <UserInput fontSize="medium" label="Width" type="number" unit="ft" value={openingWidth} onChange={setOpeningWidth} validation={{ min: 0.1 }} />
         <UserInput fontSize="medium" label="Height" type="number" unit="ft" value={openingHeight} onChange={setOpeningHeight} validation={{ min: 0.1 }} />
         <hr />
         <h3 className={styles.sectionTitle}>Threat Location</h3>
@@ -448,11 +432,7 @@ export default function App() {
                       if (controls) {
                         const maxDim = Math.max(lengthValue, widthValue, heightValue);
                         const distance = maxDim * 2.5;
-                        controls.object.position.set(
-                          sceneCenter[0] + distance * 0.7,
-                          sceneCenter[1] - distance * 0.7,
-                          sceneCenter[2] + distance * 0.7
-                        );
+                        controls.object.position.set(sceneCenter[0] + distance * 0.7, sceneCenter[1] - distance * 0.7, sceneCenter[2] + distance * 0.7);
                         controls.target.set(...sceneCenter);
                         controls.update();
                       }

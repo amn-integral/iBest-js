@@ -19,14 +19,27 @@ type BoxProps = {
   position?: [number, number, number];
   opening?: Opening;
   cubicleType?: CubicleType;
+  targetFace?: string;
+  targetType?: string;
+  stripWidth?: number;
+  stripHeight?: number;
 };
 
-function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 'three-walls' }: BoxProps) {
+function Box({
+  size = [1, 1, 1],
+  position = [0, 0, 0],
+  opening,
+  cubicleType = 'three-walls',
+  targetFace,
+  targetType,
+  stripWidth = 1,
+  stripHeight = 1
+}: BoxProps) {
   const [length, width, height] = size;
   // Cubicle starts at position and extends in +X, +Y, +Z directions
   const offsetPosition: [number, number, number] = [position[0], position[1], position[2]];
 
-  const material = <meshStandardMaterial color="#90a4c0" transparent opacity={0.5} roughness={0.2} side={THREE.DoubleSide} />;
+  const material = <meshBasicMaterial color="#90a4c0" transparent opacity={0.5} side={THREE.DoubleSide} />;
 
   // Dynamic text size based on smallest dimension for legibility
   const minDim = Math.min(length, width, height);
@@ -77,11 +90,19 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
     <group position={offsetPosition}>
       {faces.map(({ name, pos, rot, width: faceWidth, height: faceHeight, label }) => {
         const hasOpening = opening?.face === name;
+        const hasTarget =
+          targetFace &&
+          ((targetFace === 'back-wall' && name === 'back') ||
+            (targetFace === 'front-wall' && name === 'front') ||
+            (targetFace === 'left-wall' && name === 'left') ||
+            (targetFace === 'right-wall' && name === 'right') ||
+            (targetFace === 'ceiling' && name === 'roof') ||
+            (targetFace === 'floor' && name === 'floor'));
 
         return (
           <group key={name}>
             <mesh position={pos as [number, number, number]} rotation={rot as [number, number, number]}>
-              {hasOpening && opening ? (
+              {(hasOpening && opening) || hasTarget ? (
                 <shapeGeometry
                   args={[
                     (() => {
@@ -91,13 +112,31 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
                       shape.lineTo(faceWidth / 2, faceHeight / 2);
                       shape.lineTo(-faceWidth / 2, faceHeight / 2);
                       shape.lineTo(-faceWidth / 2, -faceHeight / 2);
-                      const hole = new THREE.Path();
-                      hole.moveTo(-opening.width / 2, -opening.height / 2);
-                      hole.lineTo(opening.width / 2, -opening.height / 2);
-                      hole.lineTo(opening.width / 2, opening.height / 2);
-                      hole.lineTo(-opening.width / 2, opening.height / 2);
-                      hole.lineTo(-opening.width / 2, -opening.height / 2);
-                      shape.holes.push(hole);
+
+                      // Add opening hole if exists
+                      if (hasOpening && opening) {
+                        const openingHole = new THREE.Path();
+                        openingHole.moveTo(-opening.width / 2, -opening.height / 2);
+                        openingHole.lineTo(opening.width / 2, -opening.height / 2);
+                        openingHole.lineTo(opening.width / 2, opening.height / 2);
+                        openingHole.lineTo(-opening.width / 2, opening.height / 2);
+                        openingHole.lineTo(-opening.width / 2, -opening.height / 2);
+                        shape.holes.push(openingHole);
+                      }
+
+                      // Add target hole if exists
+                      if (hasTarget) {
+                        const targetHole = new THREE.Path();
+                        const targetW = targetType === 'Full-Wall' ? faceWidth * 1.0 : stripWidth;
+                        const targetH = targetType === 'Full-Wall' ? faceHeight * 1.0 : stripHeight;
+                        targetHole.moveTo(-targetW / 2, -targetH / 2);
+                        targetHole.lineTo(targetW / 2, -targetH / 2);
+                        targetHole.lineTo(targetW / 2, targetH / 2);
+                        targetHole.lineTo(-targetW / 2, targetH / 2);
+                        targetHole.lineTo(-targetW / 2, -targetH / 2);
+                        shape.holes.push(targetHole);
+                      }
+
                       return shape;
                     })()
                   ]}
@@ -107,6 +146,16 @@ function Box({ size = [1, 1, 1], position = [0, 0, 0], opening, cubicleType = 't
               )}
               {material}
             </mesh>
+
+            {/* Fill target hole with red material */}
+            {hasTarget && (
+              <mesh position={pos as [number, number, number]} rotation={rot as [number, number, number]}>
+                <planeGeometry
+                  args={[targetType === 'Full-Wall' ? faceWidth * 1.0 : stripWidth, targetType === 'Full-Wall' ? faceHeight * 1.0 : stripHeight]}
+                />
+                <meshBasicMaterial color="#ff0000" side={THREE.DoubleSide} />
+              </mesh>
+            )}
             <Text
               position={[pos[0], pos[1], pos[2] + (name === 'floor' ? -textSize : name === 'roof' ? textSize : 0)]}
               rotation={rot as [number, number, number]}
@@ -138,7 +187,7 @@ export default function App() {
   const [threatZLocation, setThreatZLocation] = useState('1.0');
   const [threatWeight, setThreatWeight] = useState('10.0');
   const [targetType, setTargetType] = useState('Full-Wall');
-  const [targetFace, setTargetFace] = useState('Back Wall');
+  const [targetFace, setTargetFace] = useState('back-wall');
   const axisSize = useMemo(() => Math.max(Number(length), Number(width), Number(height)) * 1.5, [length, width, height]);
   const textSize = useMemo(() => Math.min(Number(length), Number(width), Number(height)) * 0.1, [length, width, height]);
   const opening = { face: openingFace, width: Number(openingWidth), height: Number(openingHeight) };
@@ -149,40 +198,46 @@ export default function App() {
   const targetOptions: DropdownOption[] = useMemo(() => {
     switch (cubicleType) {
       case CubicleTypes.CantileverWall:
-        return ['Back Wall'].map(name => ({
-          value: name.toLowerCase().replace(/\s+/g, '-'),
-          label: name
-        }));
+        return [{ value: 'back-wall', label: 'Back Wall' }];
       case CubicleTypes.TwoAdjacentWalls:
-        return ['Back Wall', 'Side Wall'].map(name => ({
-          value: name.toLowerCase().replace(/\s+/g, '-'),
-          label: name
-        }));
+        return [
+          { value: 'back-wall', label: 'Back Wall' },
+          { value: 'left-wall', label: 'Left Wall' }
+        ];
       case CubicleTypes.TwoAdjacentWallsWithRoof:
-        return ['Back Wall', 'Side Wall', 'Ceiling'].map(name => ({
-          value: name.toLowerCase().replace(/\s+/g, '-'),
-          label: name
-        }));
+        return [
+          { value: 'back-wall', label: 'Back Wall' },
+          { value: 'left-wall', label: 'Left Wall' },
+          { value: 'ceiling', label: 'Ceiling' }
+        ];
       case CubicleTypes.ThreeWalls:
-        return ['Back Wall', 'Side Wall'].map(name => ({
-          value: name.toLowerCase().replace(/\s+/g, '-'),
-          label: name
-        }));
+        return [
+          { value: 'back-wall', label: 'Back Wall' },
+          { value: 'left-wall', label: 'Left Wall' },
+          { value: 'right-wall', label: 'Right Wall' }
+        ];
       case CubicleTypes.ThreeWallsWithRoof:
-        return ['Back Wall', 'Side Wall', 'Ceiling'].map(name => ({
-          value: name.toLowerCase().replace(/\s+/g, '-'),
-          label: name
-        }));
+        return [
+          { value: 'back-wall', label: 'Back Wall' },
+          { value: 'left-wall', label: 'Left Wall' },
+          { value: 'right-wall', label: 'Right Wall' },
+          { value: 'ceiling', label: 'Ceiling' }
+        ];
       case CubicleTypes.FourWalls:
-        return ['Back Wall', 'Side Wall'].map(name => ({
-          value: name.toLowerCase().replace(/\s+/g, '-'),
-          label: name
-        }));
+        return [
+          { value: 'back-wall', label: 'Back Wall' },
+          { value: 'front-wall', label: 'Front Wall' },
+          { value: 'left-wall', label: 'Left Wall' },
+          { value: 'right-wall', label: 'Right Wall' }
+        ];
       case CubicleTypes.FourWallsWithRoof:
-        return ['Back Wall', 'Side Wall', 'Ceiling'].map(name => ({
-          value: name.toLowerCase().replace(/\s+/g, '-'),
-          label: name
-        }));
+        return [
+          { value: 'back-wall', label: 'Back Wall' },
+          { value: 'front-wall', label: 'Front Wall' },
+          { value: 'left-wall', label: 'Left Wall' },
+          { value: 'right-wall', label: 'Right Wall' },
+          { value: 'ceiling', label: 'Ceiling' }
+        ];
     }
   }, [cubicleType]);
 
@@ -362,6 +417,10 @@ export default function App() {
               position={[0, 0, 0]}
               opening={{ face: openingFace, width: Number(openingWidth), height: Number(openingHeight) }}
               cubicleType={cubicleType}
+              targetFace={targetFace}
+              targetType={targetType}
+              stripWidth={Number(stripWidth)}
+              stripHeight={Number(stripHeight)}
             />
 
             {/* Threat Location - Red Sphere */}

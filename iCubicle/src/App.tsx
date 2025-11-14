@@ -154,7 +154,7 @@ function Box({
                 <planeGeometry
                   args={[targetType === 'Full-Wall' ? faceWidth * 1.0 : stripWidth, targetType === 'Full-Wall' ? faceHeight * 1.0 : stripHeight]}
                 />
-                <meshBasicMaterial color="#ff0000" side={THREE.DoubleSide} />
+                <meshBasicMaterial color="#ff0000" transparent opacity={0.1} side={THREE.DoubleSide} />
               </mesh>
             )}
             <Text
@@ -189,12 +189,75 @@ export default function App() {
   const [threatWeight, setThreatWeight] = useState('10.0');
   const [targetType, setTargetType] = useState('Full-Wall');
   const [targetFace, setTargetFace] = useState('back-wall');
-  const axisSize = useMemo(() => Math.max(Number(length), Number(width), Number(height)) * 1.5, [length, width, height]);
-  const textSize = useMemo(() => Math.min(Number(length), Number(width), Number(height)) * 0.1, [length, width, height]);
-  const opening = { face: openingFace, width: Number(openingWidth), height: Number(openingHeight) };
 
   const [stripHeight, setStripHeight] = useState('1.0');
   const [stripWidth, setStripWidth] = useState('1.0');
+
+  const lengthValue = Number(length);
+  const widthValue = Number(width);
+  const heightValue = Number(height);
+  const stripWidthValue = Number(stripWidth);
+  const stripHeightValue = Number(stripHeight);
+  const openingWidthValue = Number(openingWidth);
+  const openingHeightValue = Number(openingHeight);
+  const threatPosition = useMemo(
+    () => [Number(threatXLocation), Number(threatYLocation), Number(threatZLocation)] as [number, number, number],
+    [threatXLocation, threatYLocation, threatZLocation]
+  );
+
+  const axisSize = useMemo(() => Math.max(lengthValue, widthValue, heightValue) * 1.5, [lengthValue, widthValue, heightValue]);
+  const textSize = useMemo(() => Math.min(lengthValue, widthValue, heightValue) * 0.1, [lengthValue, widthValue, heightValue]);
+  const opening = useMemo(
+    () => ({
+      face: openingFace,
+      width: openingWidthValue,
+      height: openingHeightValue
+    }),
+    [openingFace, openingWidthValue, openingHeightValue]
+  );
+  const sceneCenter = useMemo(
+    () => [lengthValue / 2, widthValue / 2, heightValue / 2] as [number, number, number],
+    [lengthValue, widthValue, heightValue]
+  );
+
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+  const planZoom = useMemo(() => clamp(200 / Math.max(lengthValue, widthValue, 1), 20, 200), [lengthValue, widthValue]);
+  const elevationZoom = useMemo(() => clamp(200 / Math.max(lengthValue, heightValue, 1), 20, 200), [lengthValue, heightValue]);
+
+  const renderScene = () => (
+    <>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 6, 8]} intensity={0.9} />
+      <directionalLight position={[-6, 3, -4]} intensity={0.3} />
+
+      <axesHelper args={[axisSize]} />
+      <Text position={[axisSize, 0, 0]} fontSize={textSize} color="red">
+        X
+      </Text>
+      <Text position={[0, axisSize, 0]} fontSize={textSize} color="green">
+        Y
+      </Text>
+      <Text position={[0, 0, axisSize]} fontSize={textSize} color="blue">
+        Z
+      </Text>
+
+      <Box
+        size={[lengthValue, widthValue, heightValue]}
+        position={[0, 0, 0]}
+        opening={opening}
+        cubicleType={cubicleType}
+        targetFace={targetFace}
+        targetType={targetType}
+        stripWidth={stripWidthValue}
+        stripHeight={stripHeightValue}
+      />
+
+      <mesh position={threatPosition}>
+        <sphereGeometry args={[Math.min(lengthValue, widthValue, heightValue) * 0.05, 16, 16]} />
+        <meshStandardMaterial color="red" />
+      </mesh>
+    </>
+  );
 
   const targetOptions: DropdownOption[] = useMemo(() => {
     switch (cubicleType) {
@@ -353,87 +416,106 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className={styles.contentArea}>
-        {/* 3D Render Section */}
+        {/* Multi-view Render Section */}
         <section className={styles.renderSection}>
-          {/* Canvas Control Buttons */}
-          <div className={styles.canvasControls}>
-            <button
-              className={styles.canvasButton}
-              onClick={() => {
-                const controls = controlsRef.current;
-                if (controls) {
-                  // Reset to default view
-                  controls.reset();
-                }
-              }}
-              title="Reset View"
-            >
-              🔄 Reset
-            </button>
-            <button
-              className={styles.canvasButton}
-              onClick={() => {
-                const controls = controlsRef.current;
-                if (controls) {
-                  // Fit the cubicle in view
-                  const maxDim = Math.max(Number(length), Number(width), Number(height));
-                  const distance = maxDim * 2.5;
-                  const centerX = Number(length) / 2;
-                  const centerY = Number(width) / 2;
-                  const centerZ = Number(height) / 2;
+          <div className={styles.viewGrid}>
+            <div className={styles.viewPanel}>
+              <div className={styles.viewHeader}>
+                <h3 className={styles.viewTitle}>3D View</h3>
+                <div className={styles.viewActions}>
+                  <button
+                    className={styles.canvasButton}
+                    onClick={() => {
+                      const controls = controlsRef.current;
+                      if (controls) {
+                        controls.reset();
+                        controls.target.set(...sceneCenter);
+                        controls.update();
+                      }
+                    }}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    className={styles.canvasButton}
+                    onClick={() => {
+                      const controls = controlsRef.current;
+                      if (controls) {
+                        const maxDim = Math.max(lengthValue, widthValue, heightValue);
+                        const distance = maxDim * 2.5;
+                        controls.object.position.set(
+                          sceneCenter[0] + distance * 0.7,
+                          sceneCenter[1] - distance * 0.7,
+                          sceneCenter[2] + distance * 0.7
+                        );
+                        controls.target.set(...sceneCenter);
+                        controls.update();
+                      }
+                    }}
+                  >
+                    Fit
+                  </button>
+                </div>
+              </div>
+              <div className={styles.canvasWrapper}>
+                <Canvas
+                  className={styles.renderCanvas}
+                  camera={{ position: [sceneCenter[0] + axisSize, sceneCenter[1] - axisSize, sceneCenter[2] + axisSize], fov: 50, up: [0, 0, 1] }}
+                  dpr={[1, 2]}
+                  onCreated={({ gl, camera }) => {
+                    gl.setClearColor('#f9fafb');
+                    camera.lookAt(...sceneCenter);
+                  }}
+                >
+                  {renderScene()}
+                  <OrbitControls ref={controlsRef} enableDamping dampingFactor={0.08} target={sceneCenter} />
+                </Canvas>
+              </div>
+            </div>
 
-                  controls.object.position.set(centerX + distance * 0.7, centerY - distance * 0.7, centerZ + distance * 0.7);
-                  controls.target.set(centerX, centerY, centerZ);
-                  controls.update();
-                }
-              }}
-              title="Fit to View"
-            >
-              🔍 Fit
-            </button>
+            <div className={styles.viewPanel}>
+              <div className={styles.viewHeader}>
+                <h3 className={styles.viewTitle}>Plan View</h3>
+              </div>
+              <div className={styles.canvasWrapper}>
+                <Canvas
+                  key={`plan-${length}-${width}-${height}`}
+                  orthographic
+                  className={`${styles.renderCanvas} ${styles.staticCanvas}`}
+                  camera={{ position: [sceneCenter[0], sceneCenter[1], axisSize * 2], zoom: planZoom, up: [0, 1, 0] }}
+                  dpr={[1, 2]}
+                  onCreated={({ gl, camera }) => {
+                    gl.setClearColor('#f9fafb');
+                    camera.lookAt(...sceneCenter);
+                  }}
+                >
+                  {renderScene()}
+                </Canvas>
+              </div>
+            </div>
+
+            <div className={styles.viewPanel}>
+              <div className={styles.viewHeader}>
+                <h3 className={styles.viewTitle}>Elevation View</h3>
+              </div>
+              <div className={styles.canvasWrapper}>
+                <Canvas
+                  key={`elevation-${length}-${width}-${height}`}
+                  orthographic
+                  className={`${styles.renderCanvas} ${styles.staticCanvas}`}
+                  camera={{ position: [sceneCenter[0], sceneCenter[1] + axisSize * 2, sceneCenter[2]], zoom: elevationZoom, up: [0, 0, 1] }}
+                  dpr={[1, 2]}
+                  onCreated={({ gl, camera }) => {
+                    gl.setClearColor('#f9fafb');
+                    camera.lookAt(...sceneCenter);
+                  }}
+                >
+                  {renderScene()}
+                </Canvas>
+              </div>
+            </div>
           </div>
-          <Canvas
-            className={styles.renderCanvas}
-            camera={{ position: [5, -4, 6], fov: 50, up: [0, 0, 1] }}
-            dpr={[1, 2]}
-            onCreated={({ gl }) => gl.setClearColor('#f9fafb')}
-          >
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[5, 6, 8]} intensity={0.9} />
-            <directionalLight position={[-6, 3, -4]} intensity={0.3} />
-
-            <axesHelper args={[axisSize]} />
-            <Text position={[axisSize, 0, 0]} fontSize={textSize} color="red">
-              X
-            </Text>
-            <Text position={[0, axisSize, 0]} fontSize={textSize} color="green">
-              Y
-            </Text>
-            <Text position={[0, 0, axisSize]} fontSize={textSize} color="blue">
-              Z
-            </Text>
-
-            <Box
-              size={[Number(length), Number(width), Number(height)]}
-              position={[0, 0, 0]}
-              opening={{ face: openingFace, width: Number(openingWidth), height: Number(openingHeight) }}
-              cubicleType={cubicleType}
-              targetFace={targetFace}
-              targetType={targetType}
-              stripWidth={Number(stripWidth)}
-              stripHeight={Number(stripHeight)}
-            />
-
-            {/* Threat Location - Red Sphere */}
-            <mesh position={[Number(threatXLocation), Number(threatYLocation), Number(threatZLocation)]}>
-              <sphereGeometry args={[Math.min(Number(length), Number(width), Number(height)) * 0.05, 16, 16]} />
-              <meshStandardMaterial color="red" />
-            </mesh>
-
-            <OrbitControls ref={controlsRef} enableDamping dampingFactor={0.08} target={[0, 0, 0]} />
-          </Canvas>
         </section>
-
         {/* Output Section */}
         <section className={styles.outputSection}>
           <h2 className={styles.outputHeader}>Analysis & Output</h2>

@@ -39,7 +39,8 @@ function Box({
   // Cubicle starts at position and extends in +X, +Y, +Z directions
   const offsetPosition: [number, number, number] = [position[0], position[1], position[2]];
 
-  const material = <meshBasicMaterial color="#90a4c0" transparent opacity={0.5} side={THREE.DoubleSide} />;
+  const wallMaterial = <meshBasicMaterial color="rgba(144, 164, 192, 1)" transparent opacity={0.5} side={THREE.DoubleSide} />;
+  const floorMaterial = <meshStandardMaterial color="#343435e8" transparent opacity={0.8} side={THREE.DoubleSide} />;
 
   // Dynamic text size based on smallest dimension for legibility
   const minDim = Math.min(length, width, height);
@@ -144,7 +145,7 @@ function Box({
               ) : (
                 <planeGeometry args={[faceWidth, faceHeight]} />
               )}
-              {material}
+              {name === 'floor' ? floorMaterial : wallMaterial}
             </mesh>
 
             {/* Fill target hole with red material */}

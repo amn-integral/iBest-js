@@ -1,3 +1,4 @@
+// vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -5,87 +6,131 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig(({ mode }) => ({
-  logLevel: 'warn',
-  base: mode === 'production' ? '/static/iGSDOF/dist/' : '/',
-  plugins: [react()],
-  resolve: {
-    alias: [
-      {
-        find: '@integralrsg/imath',
-        replacement: path.resolve(__dirname, mode === 'development' ? '../iMath/src' : '../iMath/dist')
-      },
-      {
-        find: '@integralrsg/iuicomponents/styles',
-        replacement: path.resolve(__dirname, mode === 'development' ? '../iUIComponents/src/styles.ts' : '../iUIComponents/dist/iuicomponents.css')
-      },
-      {
-        find: '@integralrsg/iuicomponents',
-        replacement: path.resolve(__dirname, mode === 'development' ? '../iUIComponents/src/index.ts' : '../iUIComponents/dist')
-      }
-    ]
-  },
-  server: {
-    port: 5173,
-    open: false, // Don't auto-open browser - let debug config handle it
-    sourcemapIgnoreList: false
-  },
+export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
 
-  optimizeDeps: {
-    include: ['react'] // prebundle common deps
-  },
+  return {
+    logLevel: 'warn',
 
-  esbuild: {
-    sourcemap: mode === 'development' ? 'inline' : false,
-    keepNames: true, // Keep function names for better debugging
-    target: 'esnext'
-  },
+    // In dev we serve from /, in prod Django serves from /static/iCubicle/dist/
+    base: isDev ? '/' : '/static/iCubicle/dist/',
 
-  worker: {
-    format: 'es',
-    plugins: () => [react()],
-    rollupOptions: {
-      output: {
-        sourcemap: mode === 'development' ? 'inline' : false
-      }
-    }
-  },
+    plugins: [react()],
 
-  css: {
-    modules: {
-      scopeBehaviour: 'local',
-      localsConvention: 'camelCase',
-      generateScopedName: 'iCubicle_app__[name]__[local]___[hash:base64:5]'
+    resolve: {
+      alias: [
+        {
+          find: '@integralrsg/imath',
+          replacement: path.resolve(
+            __dirname,
+            isDev ? '../iMath/src' : '../iMath/dist'
+          ),
+        },
+        {
+          find: '@integralrsg/iuicomponents/styles',
+          replacement: path.resolve(
+            __dirname,
+            isDev
+              ? '../iUIComponents/src/styles.ts'
+              : '../iUIComponents/dist/iuicomponents.css'
+          ),
+        },
+        {
+          find: '@integralrsg/iuicomponents',
+          replacement: path.resolve(
+            __dirname,
+            isDev ? '../iUIComponents/src/index.ts' : '../iUIComponents/dist'
+          ),
+        },
+      ],
     },
-    devSourcemap: true
-  },
-  assetsInclude: ['**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif'],
-  publicDir: 'public',
 
-  build: {
-    outDir: 'dist',
-    sourcemap: mode === 'development' ? 'inline' : true,
-    emptyOutDir: true,
-    target: 'esnext',
-    minify: mode === 'development' ? false : 'esbuild',
-    manifest: 'manifest.json',
-    cssCodeSplit: false, // Keep CSS together for better isolation control
-    assetsInlineLimit: 4096,
-    // CSS isolation configuration
-    cssMinify: true,
-    rollupOptions: {
-      output: {
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash][extname]',
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'react-vendor';
-            const pkg = id.toString().split('node_modules/')[1].split('/')[0];
-            return `vendor-${pkg}`;
-          }
-        }
-      }
-    }
-  }
-}));
+    server: {
+      port: 5173,
+      open: false,
+    },
+
+    optimizeDeps: {
+      // Prebundle the heavy stuff used in dev
+      include: [
+        'react',
+        'react-dom',
+        'three',
+        '@react-three/fiber',
+        '@react-three/drei',
+      ],
+    },
+
+    esbuild: {
+      // Better stack traces & preserved function names
+      keepNames: true,
+      target: 'esnext',
+    },
+
+    css: {
+      modules: {
+        scopeBehaviour: 'local',
+        localsConvention: 'camelCase',
+        generateScopedName: 'iCubicle_app__[name]__[local]___[hash:base64:5]',
+      },
+      devSourcemap: true,
+    },
+
+    assetsInclude: [
+      '**/*.svg',
+      '**/*.png',
+      '**/*.jpg',
+      '**/*.jpeg',
+      '**/*.gif',
+    ],
+
+    publicDir: 'public',
+
+    build: {
+      outDir: 'dist',
+      // Sourcemaps only really needed in prod for debugging; keep them on
+      sourcemap: true,
+      emptyOutDir: true,
+      target: 'esnext',
+      minify: false, // Disable minification to see actual errors
+      cssCodeSplit: false, // Keep CSS together
+      assetsInlineLimit: 4096,
+      cssMinify: !isDev,
+      manifest: 'manifest.json',
+
+      // Bigger apps (React + Three) often exceed 500KB; bump the limit
+      chunkSizeWarningLimit: 1500, // in KB
+
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash][extname]',
+
+          // Simplified chunking: group tightly coupled dependencies
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+
+            // Everything React + Three + R3F together to avoid circular deps
+            if (
+              id.includes('react') ||
+              id.includes('scheduler') ||
+              id.includes('use-sync-external-store') ||
+              id.includes('zustand') ||
+              id.includes('its-fine') ||
+              id.includes('react-reconciler') ||
+              id.includes('three') ||
+              id.includes('@react-three/fiber') ||
+              id.includes('@react-three/drei') ||
+              id.includes('troika') ||
+              id.includes('bidi-js') ||
+              id.includes('webgl-sdf-generator')
+            ) {
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
+  };
+});

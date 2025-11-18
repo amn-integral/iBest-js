@@ -1,14 +1,15 @@
 {
   "name": "@integralrsg/icubicle",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --mode development",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build": "vite build && npm run sync",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "sync": "wsl rsync -avz --delete dist /home/projects/www/ibest_root/iCubicle/static/iCubicle"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.6",

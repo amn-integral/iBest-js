@@ -1,8 +1,8 @@
-import React from "react";
-import { ReportChart } from "./ReportChart";
-import styles from "./Report.module.css";
+import React from 'react';
+import { ReportChart } from './ReportChart';
+import styles from './Report.module.css';
 
-const integralLogo = "/integralLogo.svg";
+const integralLogo = '/integralLogo.svg';
 
 type BackboneRow = {
   id: number;
@@ -36,7 +36,7 @@ type ColumnConfig<K extends string> = {
   label: string;
   placeholder?: string;
   parser?: (value: string) => number | null;
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   width?: number | string;
 };
 
@@ -51,8 +51,8 @@ interface ReportProps {
   forceRows: ForceRow[];
   series: SolverSeries;
   backboneCurves: BackboneCurves;
-  backboneColumns: ColumnConfig<"displacement" | "resistance" | "klm">[];
-  forceColumns: ColumnConfig<"time" | "force">[];
+  backboneColumns: ColumnConfig<'displacement' | 'resistance' | 'klm'>[];
+  forceColumns: ColumnConfig<'time' | 'force'>[];
   unitLabels?: {
     displacement: string;
     velocity: string;
@@ -76,12 +76,12 @@ export const Report: React.FC<ReportProps> = ({
   backboneColumns,
   forceColumns,
   unitLabels = {
-    displacement: "",
-    velocity: "",
-    acceleration: "",
-    time: "",
-    force: "",
-  },
+    displacement: '',
+    velocity: '',
+    acceleration: '',
+    time: '',
+    force: ''
+  }
 }) => {
   return (
     <div className={styles.report}>
@@ -103,7 +103,7 @@ export const Report: React.FC<ReportProps> = ({
             </div>
             <div className={styles.solverInputsRow}>
               <span className={styles.solverInputsLabel}>Time step</span>
-              <span>{autoStep ? "Auto" : timeStep}</span>
+              <span>{autoStep ? 'Auto' : timeStep}</span>
             </div>
           </div>
         </div>
@@ -113,15 +113,15 @@ export const Report: React.FC<ReportProps> = ({
           <table className={styles.dataTable}>
             <thead>
               <tr>
-                {backboneColumns.map((col) => (
+                {backboneColumns.map(col => (
                   <th key={col.key}>{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {inboundRows.slice(0, 8).map((row) => (
+              {inboundRows.slice(0, 8).map(row => (
                 <tr key={row.id}>
-                  {backboneColumns.map((col) => (
+                  {backboneColumns.map(col => (
                     <td key={col.key}>{row[col.key]}</td>
                   ))}
                 </tr>
@@ -135,15 +135,15 @@ export const Report: React.FC<ReportProps> = ({
           <table className={styles.dataTable}>
             <thead>
               <tr>
-                {backboneColumns.map((col) => (
+                {backboneColumns.map(col => (
                   <th key={col.key}>{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {reboundRows.slice(0, 8).map((row) => (
+              {reboundRows.slice(0, 8).map(row => (
                 <tr key={row.id}>
-                  {backboneColumns.map((col) => (
+                  {backboneColumns.map(col => (
                     <td key={col.key}>{row[col.key]}</td>
                   ))}
                 </tr>
@@ -157,15 +157,15 @@ export const Report: React.FC<ReportProps> = ({
           <table className={styles.dataTable}>
             <thead>
               <tr>
-                {forceColumns.map((col) => (
+                {forceColumns.map(col => (
                   <th key={col.key}>{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {forceRows.slice(0, 10).map((row) => (
+              {forceRows.slice(0, 10).map(row => (
                 <tr key={row.id}>
-                  {forceColumns.map((col) => (
+                  {forceColumns.map(col => (
                     <td key={col.key}>{row[col.key]}</td>
                   ))}
                 </tr>
@@ -185,14 +185,14 @@ export const Report: React.FC<ReportProps> = ({
                 title="Displacement"
                 data={[
                   {
-                    legend: "Displacement",
+                    legend: 'Displacement',
                     xValues: series.time,
-                    yValues: series.displacement,
-                  },
+                    yValues: series.displacement
+                  }
                 ]}
                 logoUrl={integralLogo}
-                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ""}`}
-                yLabel={`Displacement${unitLabels.displacement ? ` (${unitLabels.displacement})` : ""}`}
+                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ''}`}
+                yLabel={`Displacement${unitLabels.displacement ? ` (${unitLabels.displacement})` : ''}`}
               />
             </div>
             <div className={styles.chartItem}>
@@ -200,15 +200,15 @@ export const Report: React.FC<ReportProps> = ({
                 title="Velocity"
                 data={[
                   {
-                    legend: "Velocity",
+                    legend: 'Velocity',
                     xValues: series.time,
                     yValues: series.velocity,
-                    color: "#16a34a",
-                  },
+                    color: '#16a34a'
+                  }
                 ]}
                 logoUrl={integralLogo}
-                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ""}`}
-                yLabel={`Velocity${unitLabels.velocity ? ` (${unitLabels.velocity})` : ""}`}
+                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ''}`}
+                yLabel={`Velocity${unitLabels.velocity ? ` (${unitLabels.velocity})` : ''}`}
               />
             </div>
             <div className={styles.chartItem}>
@@ -216,15 +216,15 @@ export const Report: React.FC<ReportProps> = ({
                 title="Acceleration"
                 data={[
                   {
-                    legend: "Acceleration",
+                    legend: 'Acceleration',
                     xValues: series.time,
                     yValues: series.acceleration,
-                    color: "#f97316",
-                  },
+                    color: '#f97316'
+                  }
                 ]}
                 logoUrl={integralLogo}
-                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ""}`}
-                yLabel={`Acceleration${unitLabels.acceleration ? ` (${unitLabels.acceleration})` : ""}`}
+                xLabel={`Time${unitLabels.time ? ` (${unitLabels.time})` : ''}`}
+                yLabel={`Acceleration${unitLabels.acceleration ? ` (${unitLabels.acceleration})` : ''}`}
               />
             </div>
             <div className={styles.chartItem}>
@@ -232,22 +232,22 @@ export const Report: React.FC<ReportProps> = ({
                 title="Hysteresis"
                 data={[
                   {
-                    legend: "Backbone Curve",
+                    legend: 'Backbone Curve',
                     xValues: backboneCurves?.initial.x,
                     yValues: backboneCurves?.initial.y,
-                    color: "#89878bff",
-                    lineStyle: "dashed",
+                    color: '#89878bff',
+                    lineStyle: 'dashed'
                   },
                   {
-                    legend: "Force vs. Displacement",
+                    legend: 'Force vs. Displacement',
                     xValues: series.displacement,
                     yValues: series.restoringForce,
-                    color: "#080808ff",
-                  },
+                    color: '#080808ff'
+                  }
                 ]}
                 logoUrl={integralLogo}
-                xLabel={`Displacement${unitLabels.displacement ? ` (${unitLabels.displacement})` : ""}`}
-                yLabel={`Restoring Force${unitLabels.force ? ` (${unitLabels.force})` : ""}`}
+                xLabel={`Displacement${unitLabels.displacement ? ` (${unitLabels.displacement})` : ''}`}
+                yLabel={`Restoring Force${unitLabels.force ? ` (${unitLabels.force})` : ''}`}
               />
             </div>
           </div>

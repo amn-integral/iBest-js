@@ -1,12 +1,6 @@
-import {
-  BackboneCurveV2,
-  ForceCurveV2,
-  newmarkSolverV2,
-  type NewmarkResponseV2,
-} from "@integralrsg/imath";
+import { BackboneCurveV2, ForceCurveV2, newmarkSolverV2, type NewmarkResponseV2 } from '@integralrsg/imath';
 
-import type{ SolverWorkerInputV2, SolverWorkerErrorV2, SolverWorkerOutputV2 } from "../types";
-
+import type { SolverWorkerInputV2, SolverWorkerErrorV2, SolverWorkerOutputV2 } from '../types';
 
 // Enable debugging for development
 const DEBUG = false; // Set to false for production
@@ -20,9 +14,9 @@ function debugLog(message: string, data?: any) {
 // Worker message handler
 self.onmessage = function (e: MessageEvent<SolverWorkerInputV2>) {
   const input = e.data;
-  debugLog('Worker received input:', { 
-    mass: input.mass, 
-    klm: input.klm, 
+  debugLog('Worker received input:', {
+    mass: input.mass,
+    klm: input.klm,
     dampingRatio: input.dampingRatio,
     resistanceLength: input.resistance.length,
     displacementLength: input.displacement.length,
@@ -42,7 +36,7 @@ self.onmessage = function (e: MessageEvent<SolverWorkerInputV2>) {
     const response: NewmarkResponseV2 = newmarkSolverV2(
       input.mass,
       input.klm,
-      backbone, 
+      backbone,
       input.dampingRatio,
       force,
       input.initialConditions,
@@ -58,7 +52,7 @@ self.onmessage = function (e: MessageEvent<SolverWorkerInputV2>) {
     }
     const runtime = performance.now() - start;
     const tLength = response.t.length;
-    const uLength = response.u.length
+    const uLength = response.u.length;
     // Add validation that arrays have data
     if (!tLength || !uLength) {
       throw new Error('Solver returned empty data arrays');
@@ -71,11 +65,12 @@ self.onmessage = function (e: MessageEvent<SolverWorkerInputV2>) {
     const result: SolverWorkerOutputV2 = {
       success: true,
       response,
-      runtimeMs: runtime,
+      runtimeMs: runtime
     };
 
     self.postMessage(result);
   } catch (error) {
-    const errorResult: SolverWorkerErrorV2 = {success: false, error: error instanceof Error ? error.message : String(error)};
+    const errorResult: SolverWorkerErrorV2 = { success: false, error: error instanceof Error ? error.message : String(error) };
     self.postMessage(errorResult);
-  }};
+  }
+};

@@ -1,8 +1,4 @@
-import {
-  type InitialConditions,
-  type SolverSettings,
-  type NewmarkResponseV2,
-} from "@integralrsg/imath";
+import { type InitialConditions, type SolverSettings, type NewmarkResponseV2 } from '@integralrsg/imath';
 
 export type BackboneRow = {
   id: number;

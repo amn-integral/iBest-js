@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import reportChartCss from "./ReportChart.module.css";
+import React, { useMemo, useRef, useState, useEffect } from 'react';
+import reportChartCss from './ReportChart.module.css';
 
 export interface ReportChartProps {
   title: string;
@@ -16,18 +16,10 @@ export interface ChartData {
   xValues: number[];
   yValues: number[];
   color?: string;
-  lineStyle?: "solid" | "dashed";
+  lineStyle?: 'solid' | 'dashed';
 }
 
-export const ReportChart: React.FC<ReportChartProps> = ({
-  title,
-  data,
-  logoUrl,
-  xLabel,
-  yLabel,
-  xTicksCount = 10,
-  yTicksCount = 5,
-}) => {
+export const ReportChart: React.FC<ReportChartProps> = ({ title, data, logoUrl, xLabel, yLabel, xTicksCount = 10, yTicksCount = 5 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 300, height: 200 });
 
@@ -39,8 +31,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   const FONT_SIZE_LABEL = 11;
   const LEGEND_SIZE = 12;
   const TICK_LENGTH = 4;
-  const LINE_COLOR = "black";
-  const DATA_COLOR = "steelblue";
+  const LINE_COLOR = 'black';
+  const DATA_COLOR = 'steelblue';
 
   /** -------------------------------
    * 📏 RESPONSIVENESS
@@ -56,20 +48,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   }, []);
 
   // Normalize data to always be an array
-  const seriesArray = Array.isArray(data) ? data : [data];
+  const seriesArray = useMemo(() => (Array.isArray(data) ? data : [data]), [data]);
 
   // Combine all x and y values to find global min/max
-  const allXValues = seriesArray.flatMap((s) => s.xValues);
-  const allYValues = seriesArray.flatMap((s) => s.yValues);
+  const allXValues = seriesArray.flatMap(s => s.xValues);
+  const allYValues = seriesArray.flatMap(s => s.yValues);
 
-  if (!allXValues.length || !allYValues.length) {
-    return <div className={reportChartCss.wrapper}>No data available</div>;
-  }
-
-  const minX = Math.min(...allXValues);
-  const maxX = Math.max(...allXValues);
-  const minY = Math.min(...allYValues);
-  const maxY = Math.max(...allYValues);
+  const minX = allXValues.length ? Math.min(...allXValues) : 0;
+  const maxX = allXValues.length ? Math.max(...allXValues) : 1;
+  const minY = allYValues.length ? Math.min(...allYValues) : 0;
+  const maxY = allYValues.length ? Math.max(...allYValues) : 1;
 
   const chartWidth = size.width - PADDING.LEFT - PADDING.RIGHT;
   const chartHeight = size.height - PADDING.TOP - PADDING.BOTTOM;
@@ -78,25 +66,21 @@ export const ReportChart: React.FC<ReportChartProps> = ({
    * 📈 SCALE & POINTS
    * ------------------------------- */
   const seriesPoints = useMemo(() => {
-    return seriesArray.map((series) => {
+    return seriesArray.map(series => {
       const points = series.xValues
         .map((x: number, i: number) => {
-          const scaledX =
-            ((x - minX) / (maxX - minX)) * chartWidth + PADDING.LEFT;
-          const scaledY =
-            size.height -
-            PADDING.BOTTOM -
-            ((series.yValues[i] - minY) / (maxY - minY)) * chartHeight;
+          const scaledX = ((x - minX) / (maxX - minX)) * chartWidth + PADDING.LEFT;
+          const scaledY = size.height - PADDING.BOTTOM - ((series.yValues[i] - minY) / (maxY - minY)) * chartHeight;
           return `${scaledX},${scaledY}`;
         })
-        .join(" ");
+        .join(' ');
       return {
         points,
         color: series.color || DATA_COLOR,
-        legend: series.legend,
+        legend: series.legend
       };
     });
-  }, [seriesArray, chartWidth, chartHeight, minX, maxX, minY, maxY, size]);
+  }, [seriesArray, minX, maxX, chartWidth, PADDING.LEFT, PADDING.BOTTOM, size.height, minY, maxY, chartHeight]);
 
   /** -------------------------------
    * 🧮 TICKS
@@ -109,81 +93,40 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       ticks.push({ x, value });
     }
     return ticks;
-  }, [xTicksCount, chartWidth, minX, maxX]);
+  }, [xTicksCount, minX, maxX, chartWidth, PADDING.LEFT]);
 
   const yTicks = useMemo(() => {
     const ticks: { y: number; value: number }[] = [];
     const step = (maxY - minY) / yTicksCount;
     for (let i = 0; i <= yTicksCount; i++) {
       const value = minY + step * i;
-      const y =
-        size.height -
-        PADDING.BOTTOM -
-        ((value - minY) / (maxY - minY)) * chartHeight;
+      const y = size.height - PADDING.BOTTOM - ((value - minY) / (maxY - minY)) * chartHeight;
       ticks.push({ y, value });
     }
     return ticks;
-  }, [yTicksCount, chartHeight, minY, maxY, size]);
+  }, [maxY, minY, yTicksCount, size.height, PADDING.BOTTOM, chartHeight]);
 
-  /** -------------------------------
-   * 🧾 RENDER
-   * ------------------------------- */
+  if (!allXValues.length || !allYValues.length) {
+    return <div className={reportChartCss.wrapper}>No data available</div>;
+  }
+
   return (
     <div ref={containerRef} className={reportChartCss.wrapper}>
-      <h3 className={reportChartCss.title}>{title}</h3>
-      <svg
-        className={reportChartCss.chart}
-        width={size.width}
-        height={size.height}
-        role="img"
-        aria-label={`${title} chart`}
-      >
-        {/* 🔷 Background logo */}
-        {logoUrl && (
-          <image
-            href={logoUrl}
-            opacity={0.08}
-            preserveAspectRatio="xMidYMid meet"
-            x="0"
-            y="0"
-            width={size.width}
-            height={size.height}
-          />
-        )}
+      <div className={reportChartCss.header}>{title}</div>
+      <svg width={size.width} height={size.height}>
+        {logoUrl && <image href={logoUrl} opacity={0.08} preserveAspectRatio="xMidYMid meet" x="0" y="0" width={size.width} height={size.height} />}
 
         {/* ⚙️ Axes */}
-        <line
-          x1={PADDING.LEFT}
-          y1={size.height - PADDING.BOTTOM}
-          x2={size.width - PADDING.RIGHT}
-          y2={size.height - PADDING.BOTTOM}
-          stroke={LINE_COLOR}
-        />
-        <line
-          x1={PADDING.LEFT}
-          y1={size.height - PADDING.BOTTOM}
-          x2={PADDING.LEFT}
-          y2={PADDING.TOP}
-          stroke={LINE_COLOR}
-        />
+        <>
+          <line x1={PADDING.LEFT} y1={size.height - PADDING.BOTTOM} x2={size.width - PADDING.RIGHT} y2={size.height - PADDING.BOTTOM} stroke={LINE_COLOR} />
+          <line x1={PADDING.LEFT} y1={size.height - PADDING.BOTTOM} x2={PADDING.LEFT} y2={PADDING.TOP} stroke={LINE_COLOR} />
+        </>
 
         {/* 🕐 X Ticks */}
         {xTicks.map((tick, i) => (
           <g key={`x-${i}`}>
-            <line
-              x1={tick.x}
-              y1={size.height - PADDING.BOTTOM}
-              x2={tick.x}
-              y2={size.height - PADDING.BOTTOM + TICK_LENGTH}
-              stroke={LINE_COLOR}
-            />
-            <text
-              x={tick.x}
-              y={size.height - PADDING.BOTTOM + FONT_SIZE_TICK + 6}
-              textAnchor="middle"
-              fontSize={FONT_SIZE_TICK}
-              fill="#333"
-            >
+            <line x1={tick.x} y1={size.height - PADDING.BOTTOM} x2={tick.x} y2={size.height - PADDING.BOTTOM + TICK_LENGTH} stroke={LINE_COLOR} />
+            <text x={tick.x} y={size.height - PADDING.BOTTOM + FONT_SIZE_TICK + 6} textAnchor="middle" fontSize={FONT_SIZE_TICK} fill="#333">
               {tick.value.toFixed(1)}
             </text>
           </g>
@@ -192,20 +135,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         {/* 🧭 Y Ticks */}
         {yTicks.map((tick, i) => (
           <g key={`y-${i}`}>
-            <line
-              x1={PADDING.LEFT - TICK_LENGTH}
-              y1={tick.y}
-              x2={PADDING.LEFT}
-              y2={tick.y}
-              stroke={LINE_COLOR}
-            />
-            <text
-              x={PADDING.LEFT - TICK_LENGTH - 3}
-              y={tick.y + 3}
-              textAnchor="end"
-              fontSize={FONT_SIZE_TICK}
-              fill="#333"
-            >
+            <line x1={PADDING.LEFT - TICK_LENGTH} y1={tick.y} x2={PADDING.LEFT} y2={tick.y} stroke={LINE_COLOR} />
+            <text x={PADDING.LEFT - TICK_LENGTH - 3} y={tick.y + 3} textAnchor="end" fontSize={FONT_SIZE_TICK} fill="#333">
               {tick.value.toFixed(1)}
             </text>
           </g>
@@ -213,66 +144,38 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
         {/* 📊 Data Lines */}
         {seriesPoints.map((series, idx) => {
-        const current = seriesArray[idx];
-        const lineStyle = current.lineStyle || "solid";
-        const dashArray = lineStyle === "dashed" ? "4 3" : "none";
+          const current = seriesArray[idx];
+          const lineStyle = current.lineStyle || 'solid';
+          const dashArray = lineStyle === 'dashed' ? '4 3' : 'none';
 
-        return (
-            <polyline
-            key={idx}
-            fill="none"
-            stroke={series.color}
-            strokeWidth="2"
-            strokeDasharray={dashArray}
-            points={series.points}
-            />
-        );
+          return <polyline key={idx} fill="none" stroke={series.color} strokeWidth="2" strokeDasharray={dashArray} points={series.points} />;
         })}
 
         {/* 🧩 Axis Labels */}
-        <text
-          x={size.width / 2}
-          y={size.height - PADDING.BOTTOM / 2.5}
-          textAnchor="middle"
-          fontSize={FONT_SIZE_LABEL}
-          fontWeight="bold"
-          fill="#333"
-        >
-          {xLabel}
-        </text>
-
-        <text
-          transform={`rotate(-90, ${PADDING.LEFT / 4}, ${size.height / 2})`}
-          x={PADDING.LEFT / 4}
-          y={size.height / 2}
-          textAnchor="middle"
-          fontSize={FONT_SIZE_LABEL}
-          fontWeight="bold"
-          fill="#333"
-        >
-          {yLabel}
-        </text>
+        <>
+          <text x={size.width / 2} y={size.height - PADDING.BOTTOM / 2.5} textAnchor="middle" fontSize={FONT_SIZE_LABEL} fontWeight="bold" fill="#333">
+            {xLabel}
+          </text>
+          <text
+            transform={`rotate(-90, ${PADDING.LEFT / 4}, ${size.height / 2})`}
+            x={PADDING.LEFT / 4}
+            y={size.height / 2}
+            textAnchor="middle"
+            fontSize={FONT_SIZE_LABEL}
+            fontWeight="bold"
+            fill="#333"
+          >
+            {yLabel}
+          </text>
+        </>
 
         {/* 🏷 Legend */}
         {seriesPoints.map((series, idx) => (
-          <text
-            key={idx}
-            x={size.width - PADDING.RIGHT}
-            y={PADDING.TOP + 10 + idx * 14}
-            textAnchor="end"
-            fontSize={LEGEND_SIZE}
-            fill={series.color}
-          >
+          <text key={idx} x={size.width - PADDING.RIGHT} y={PADDING.TOP + 10 + idx * 14} textAnchor="end" fontSize={LEGEND_SIZE} fill={series.color}>
             {series.legend}
           </text>
         ))}
-        <text
-          x={size.width - PADDING.RIGHT}
-          y={PADDING.TOP + data.length * 24}
-          textAnchor="end"
-          fontSize={LEGEND_SIZE}
-          fill="#555"
-        >
+        <text x={size.width - PADDING.RIGHT} y={PADDING.TOP + data.length * 24} textAnchor="end" fontSize={LEGEND_SIZE} fill="#555">
           {`Max: ${maxY.toFixed(2)}, Min: ${minY.toFixed(2)}`}
         </text>
       </svg>

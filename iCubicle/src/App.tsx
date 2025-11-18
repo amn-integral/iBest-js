@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { useState, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
@@ -39,8 +39,8 @@ function Box({
   // Cubicle starts at position and extends in +X, +Y, +Z directions
   const offsetPosition: [number, number, number] = [position[0], position[1], position[2]];
 
-  const wallMaterial = <meshBasicMaterial color="rgba(144, 164, 192, 1)" transparent opacity={0.5} side={THREE.DoubleSide} />;
-  const floorMaterial = <meshStandardMaterial color="#343435e8" transparent opacity={0.8} side={THREE.DoubleSide} />;
+  const wallMaterial = <meshBasicMaterial color="rgba(173, 194, 223, 1)" transparent opacity={0.5} side={THREE.DoubleSide} />;
+  const floorMaterial = <meshStandardMaterial color="rgba(142, 142, 146, 1)" transparent opacity={0.8} side={THREE.DoubleSide} />;
 
   // Dynamic text size based on smallest dimension for legibility
   const minDim = Math.min(length, width, height);
@@ -52,9 +52,9 @@ function Box({
       case CubicleTypes.CantileverWall:
         return ['floor', 'back'];
       case CubicleTypes.TwoAdjacentWalls:
-        return ['floor', 'back', 'left'];
+        return ['floor', 'back', 'right'];
       case CubicleTypes.TwoAdjacentWallsWithRoof:
-        return ['floor', 'back', 'left', 'roof'];
+        return ['floor', 'back', 'right', 'roof'];
       case CubicleTypes.ThreeWalls:
         return ['floor', 'back', 'left', 'right'];
       case CubicleTypes.ThreeWallsWithRoof:
@@ -72,17 +72,17 @@ function Box({
   const faces = useMemo(
     () => [
       // Floor at z=0 (ground level) - spans from (0,0,0) to (length,width,0)
-      { name: 'floor', pos: [length/2, width/2, 0], rot: [0, 0, 0], width: length, height: width, label: 'Floor' },
+      { name: 'floor', pos: [length / 2, width / 2, 0], rot: [0, 0, 0], width: length, height: width, label: 'Floor' },
       // Roof at z=height - spans from (0,0,height) to (length,width,height)
-      { name: 'roof', pos: [length/2, width/2, height], rot: [0, 0, 0], width: length, height: width, label: 'Roof' },
+      { name: 'roof', pos: [length / 2, width / 2, height], rot: [0, 0, 0], width: length, height: width, label: 'Roof' },
       // Front face at y=width - spans from (0,width,0) to (length,width,height)
-      { name: 'front', pos: [length/2, width, height/2], rot: [-Math.PI/2, 0, 0], width: length, height: height, label: 'Front' },
+      { name: 'front', pos: [length / 2, width, height / 2], rot: [-Math.PI / 2, 0, 0], width: length, height: height, label: 'Front' },
       // Back face at y=0 - spans from (0,0,0) to (length,0,height)
-      { name: 'back', pos: [length/2, 0, height/2], rot: [Math.PI/2, 0, 0], width: length, height: height, label: 'Back' },
+      { name: 'back', pos: [length / 2, 0, height / 2], rot: [Math.PI / 2, 0, 0], width: length, height: height, label: 'Back' },
       // Left face at x=0 - spans from (0,0,0) to (0,width,height)
-      { name: 'left', pos: [0, width/2, height/2], rot: [0, -Math.PI/2, 0], width: height, height: width, label: 'Left' },
+      { name: 'left', pos: [0, width / 2, height / 2], rot: [0, -Math.PI / 2, 0], width: height, height: width, label: 'Left' },
       // Right face at x=length - spans from (length,0,0) to (length,width,height)
-      { name: 'right', pos: [length, width/2, height/2], rot: [0, Math.PI/2, 0], width: height, height: width, label: 'Right' }
+      { name: 'right', pos: [length, width / 2, height / 2], rot: [0, Math.PI / 2, 0], width: height, height: width, label: 'Right' }
     ].filter(face => visibleFaces.includes(face.name)),
     [length, width, height, visibleFaces]
   );
@@ -222,6 +222,26 @@ export default function App() {
   const planZoom = useMemo(() => clamp(200 / Math.max(lengthValue, widthValue, 1), 20, 200), [lengthValue, widthValue]);
   const elevationZoom = useMemo(() => clamp(200 / Math.max(lengthValue, heightValue, 1), 20, 200), [lengthValue, heightValue]);
   const heightRatio = clamp(heightValue > 0 ? threatZValue / heightValue : 0, 0, 10);
+  const nValue = useMemo(() => {
+    switch (cubicleType) {
+      case CubicleTypes.CantileverWall:
+        return 1;
+      case CubicleTypes.TwoAdjacentWalls:
+        return 2;
+      case CubicleTypes.ThreeWalls:
+        return targetFace === 'back-wall' ? 3 : 2;
+      case CubicleTypes.FourWalls:
+        return 3;
+      case CubicleTypes.TwoAdjacentWallsWithRoof:
+        return targetFace === 'ceiling' ? 2 : 3;
+      case CubicleTypes.ThreeWallsWithRoof:
+        return targetFace === 'back-wall' ? 4 : 3;
+      case CubicleTypes.FourWallsWithRoof:
+        return 4;
+      default:
+        return 1;
+    }
+  }, [cubicleType, targetFace]);
 
   const renderScene = () => (
     <>
@@ -399,8 +419,11 @@ export default function App() {
             <UserInput fontSize="medium" label="Strip Width" type="number" unit="ft" value={stripWidth} onChange={setStripWidth} validation={{ min: 0.1 }} />
           </>
         ) : targetType === 'Object' ? (
-          <UserInput fontSize="medium" label="Object Diameter" type="number" unit="ft" value="0.5" onChange={() => {}} validation={{ min: 0.1 }} />
+          <UserInput fontSize="medium" label="Object Diameter" type="number" unit="ft" value="0.5" onChange={() => { }} validation={{ min: 0.1 }} />
         ) : null}
+
+        /*If not error then display <button></button>*/
+        
       </nav>
 
       {/* Main Content Area */}
@@ -512,6 +535,9 @@ export default function App() {
           <div className={styles.outputContent}>
             <p>
               <strong>Cubicle Type:</strong> {cubicleType.charAt(0).toUpperCase() + cubicleType.slice(1).replace('-', ' ')}
+            </p>{' '}
+            <p>
+              <strong>N:</strong> {nValue}
             </p>
             <p>
               <strong>Dimensions:</strong> {length}m × {width}m × {height}m

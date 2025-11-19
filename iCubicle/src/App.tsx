@@ -163,47 +163,44 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className={styles.contentArea}>
-        <header className={styles.dashboardHeader}>
-          <div>
-            <h2>Model Summary</h2>
+        <section className={styles.summarySection}>
+          <div className={styles.outputHeader}>
+            <div>
+              <p className={styles.eyebrow}>Summary of Cubicle</p>
+            </div>
           </div>
-          <div className={styles.headerStatusGroup}>
-            <span className={`${styles.statusPill} ${statusClassName}`}>{analysisStatus}</span>
-            <span className={styles.statusHelper}>{analysisSummary}</span>
+          <div className={styles.metricGrid}>
+            <article className={styles.metricCard}>
+              <span className={styles.metricLabel}>Volume</span>
+              <h3 className={styles.metricValue}>{volumeValue} ft³</h3>
+              <p className={styles.metricMeta}>
+                {state.length} ft x {state.width} ft x {state.height} ft
+              </p>
+            </article>
+
+            <article className={styles.metricCard}>
+              <span className={styles.metricLabel}>Opening</span>
+              <h3 className={styles.metricValue}>{openingSummary}</h3>
+              <p className={styles.metricMeta}>Face - {openingFaceLabel}</p>
+            </article>
+
+            <article className={styles.metricCard}>
+              <span className={styles.metricLabel}>Target</span>
+              <h3 className={styles.metricValue}>{targetSummary}</h3>
+              <p className={styles.metricMeta}>Face - {targetFaceLabel}</p>
+            </article>
+
+            <article className={styles.metricCard}>
+              <span className={styles.metricLabel}>Threat</span>
+              <h3 className={styles.metricValue}>
+                {Number.isFinite(threatWeightValue) ? `${threatWeightValue.toFixed(1)} lbs` : state.threatWeight || 'Unknown'}
+              </h3>
+              <p className={styles.metricMeta}>
+                Location: X {state.threatXLocation} ft, Y {state.threatYLocation} ft, Z {state.threatZLocation} ft
+              </p>
+            </article>
           </div>
-        </header>
-
-        <div className={styles.metricGrid}>
-          <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Volume</span>
-            <h3 className={styles.metricValue}>{volumeValue} ft³</h3>
-            <p className={styles.metricMeta}>
-              {state.length} ft x {state.width} ft x {state.height} ft
-            </p>
-          </article>
-
-          <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Opening</span>
-            <h3 className={styles.metricValue}>{openingSummary}</h3>
-            <p className={styles.metricMeta}>Face - {openingFaceLabel}</p>
-          </article>
-
-          <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Target</span>
-            <h3 className={styles.metricValue}>{targetSummary}</h3>
-            <p className={styles.metricMeta}>Face - {targetFaceLabel}</p>
-          </article>
-
-          <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Threat</span>
-            <h3 className={styles.metricValue}>
-              {Number.isFinite(threatWeightValue) ? `${threatWeightValue.toFixed(1)} lbs` : state.threatWeight || 'Unknown'}
-            </h3>
-            <p className={styles.metricMeta}>
-              Location: X {state.threatXLocation} ft, Y {state.threatYLocation} ft, Z {state.threatZLocation} ft
-            </p>
-          </article>
-        </div>
+        </section>
 
         <section className={styles.visualSection}>
           <div className={styles.visualHeader}>

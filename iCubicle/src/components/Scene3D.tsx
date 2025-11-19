@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { type OrbitControls as OrbitControlsType } from 'three-stdlib';
 import { Cubicle } from './Cubicle';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
-import styles from '../App.module.css';
+import styles from './Scene3D.module.css';
 
 type Opening = {
   face: 'front' | 'back' | 'left' | 'right' | 'floor' | 'roof';

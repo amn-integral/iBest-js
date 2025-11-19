@@ -33,7 +33,6 @@ export function OpeningConfig({
   return (
     <>
       <hr />
-      <h3 className="section-title">Opening Configuration</h3>
 
       <UserDropdown
         label="Opening Location"

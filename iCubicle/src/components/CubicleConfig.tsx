@@ -18,7 +18,7 @@ type CubicleConfigProps = {
 export function CubicleConfig({ cubicleType, setCubicleType, length, setLength, width, setWidth, height, setHeight, onValidationChange }: CubicleConfigProps) {
   return (
     <>
-      <h2 className="section-title">Configuration</h2>
+      <hr />
 
       <UserDropdown
         label="Cubicle Type"

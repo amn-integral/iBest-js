@@ -32,7 +32,6 @@ export function ThreatConfig({
   return (
     <>
       <hr />
-      <h3 className="section-title">Threat Location</h3>
 
       <UserInput
         fontSize="medium"

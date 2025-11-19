@@ -28,7 +28,12 @@ export function useCubicleAnalysis() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const setFieldError = useCallback((fieldName: string, hasError: boolean) => {
-    setValidationErrors(prev => ({ ...prev, [fieldName]: hasError }));
+    setValidationErrors(prev => {
+      if (prev[fieldName] === hasError) {
+        return prev;
+      }
+      return { ...prev, [fieldName]: hasError };
+    });
   }, []);
 
   const hasAnyErrors = Object.values(validationErrors).some(hasError => hasError);

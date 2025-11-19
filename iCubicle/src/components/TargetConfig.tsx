@@ -28,7 +28,6 @@ export function TargetConfig({
   return (
     <>
       <hr />
-      <h3 className="section-title">Target Location</h3>
 
       <UserDropdown
         label="Target Face"

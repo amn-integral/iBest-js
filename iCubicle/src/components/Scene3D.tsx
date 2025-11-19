@@ -170,7 +170,7 @@ export function Scene3D({
             key={`elevation-${length}-${width}-${height}`}
             orthographic
             className={`${styles.renderCanvas} ${styles.staticCanvas}`}
-            camera={{ position: [sceneCenter[0], sceneCenter[1] + axisSize * 2, sceneCenter[2]], zoom: elevationZoom, up: [0, 0, 1] }}
+            camera={{ position: [sceneCenter[0], sceneCenter[1] + axisSize * 2, sceneCenter[2]], zoom: elevationZoom, up: [1, 0, 0] }}
             dpr={[1, 2]}
             onCreated={({ gl, camera }) => {
               gl.setClearColor('#f9fafb');

@@ -4,9 +4,11 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import { type OrbitControls as OrbitControlsType } from 'three-stdlib';
 import styles from './App.module.css';
-import { UserInput, UserDropdown, type DropdownOption } from '@integralrsg/iuicomponents';
-import { type CubicleType } from './types';
-import { CubicleTypes, CUBICLE_TYPES } from './constants';
+import { UserInput, UserDropdown } from '@integralrsg/iuicomponents';
+import '@integralrsg/iuicomponents/styles';
+import { type CubicleType, type TargetType, type TargetFaceType } from './types';
+import { CubicleTypes, CUBICLE_TYPES, TargetType as TargetTypeConst, TARGET_TYPES, TargetFaceType as TargetFaceTypeConst, TARGET_FACES } from './constants';
+import { fetchCubicleData, type CubicleRequest } from './api';
 
 type Opening = {
   face: 'front' | 'back' | 'left' | 'right' | 'floor' | 'roof';
@@ -29,7 +31,7 @@ function Box({
   size = [1, 1, 1],
   position = [0, 0, 0],
   opening,
-  cubicleType = 'three-walls',
+  cubicleType = 'Three-Walls',
   targetFace,
   targetType,
   stripWidth = 1,
@@ -93,12 +95,9 @@ function Box({
         const hasOpening = opening?.face === name;
         const hasTarget =
           targetFace &&
-          ((targetFace === 'back-wall' && name === 'back') ||
-            (targetFace === 'front-wall' && name === 'front') ||
-            (targetFace === 'left-wall' && name === 'left') ||
-            (targetFace === 'right-wall' && name === 'right') ||
-            (targetFace === 'ceiling' && name === 'roof') ||
-            (targetFace === 'floor' && name === 'floor'));
+          ((targetFace === TargetFaceTypeConst.BackWall && name === 'back') ||
+            (targetFace === TargetFaceTypeConst.SideWall && (name === 'left' || name === 'right')) ||
+            (targetFace === TargetFaceTypeConst.Roof && name === 'roof'));
 
         return (
           <group key={name}>
@@ -128,8 +127,8 @@ function Box({
                       // Add target hole if exists
                       if (hasTarget) {
                         const targetHole = new THREE.Path();
-                        const targetW = targetType === 'Full-Wall' ? faceWidth * 1.0 : stripWidth;
-                        const targetH = targetType === 'Full-Wall' ? faceHeight * 1.0 : stripHeight;
+                        const targetW = targetType === TargetTypeConst.FullWall ? faceWidth * 1.0 : stripWidth;
+                        const targetH = targetType === TargetTypeConst.FullWall ? faceHeight * 1.0 : stripHeight;
                         targetHole.moveTo(-targetW / 2, -targetH / 2);
                         targetHole.lineTo(targetW / 2, -targetH / 2);
                         targetHole.lineTo(targetW / 2, targetH / 2);
@@ -152,7 +151,10 @@ function Box({
             {hasTarget && (
               <mesh position={pos as [number, number, number]} rotation={rot as [number, number, number]}>
                 <planeGeometry
-                  args={[targetType === 'Full-Wall' ? faceWidth * 1.0 : stripWidth, targetType === 'Full-Wall' ? faceHeight * 1.0 : stripHeight]}
+                  args={[
+                    targetType === TargetTypeConst.FullWall ? faceWidth * 1.0 : stripWidth,
+                    targetType === TargetTypeConst.FullWall ? faceHeight * 1.0 : stripHeight
+                  ]}
                 />
                 <meshBasicMaterial color="#ff0000" transparent opacity={0.1} side={THREE.DoubleSide} />
               </mesh>
@@ -187,11 +189,85 @@ export default function App() {
   const [threatYLocation, setThreatYLocation] = useState('1.0');
   const [threatZLocation, setThreatZLocation] = useState('1.0');
   const [threatWeight, setThreatWeight] = useState('10.0');
-  const [targetType, setTargetType] = useState('Full-Wall');
-  const [targetFace, setTargetFace] = useState('back-wall');
+  const [targetType, setTargetType] = useState<TargetType>(TargetTypeConst.FullWall);
+  const [targetFace, setTargetFace] = useState<TargetFaceType>(TargetFaceTypeConst.BackWall);
 
   const [stripHeight, setStripHeight] = useState('1.0');
   const [stripWidth, setStripWidth] = useState('1.0');
+
+  // Track validation errors from UserInput components
+  const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  const setFieldError = (fieldName: string, hasError: boolean) => {
+    setValidationErrors(prev => ({ ...prev, [fieldName]: hasError }));
+  };
+
+  // Button is enabled only when no validation errors exist
+  const hasAnyErrors = Object.values(validationErrors).some(hasError => hasError);
+  const isValid = !hasAnyErrors;
+
+  const handleAnalyze = () => {
+    if (!isValid || isAnalyzing) return;
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysisResult(null);
+
+    const requestData: CubicleRequest = {
+      cubicle_type: cubicleType,
+      target_face: targetFace,
+      Lc: Number(length),
+      Wc: Number(width),
+      Hc: Number(height),
+      X: Number(threatXLocation),
+      Y: Number(threatYLocation),
+      Z: Number(threatZLocation),
+      Wo: Number(openingWidth),
+      Ho: Number(openingHeight),
+      W: Number(threatWeight)
+    };
+
+    fetchCubicleData(requestData)
+      .then(response => {
+        if (response.success && response.result) {
+          const { pressure, impulse, parameters } = response.result;
+
+          // Format result as HTML with bold labels
+          let resultHtml = `<p><strong>Pressure:</strong> ${pressure.toFixed(2)} psi</p>`;
+
+          // Format impulse if it exists
+          if (impulse && typeof impulse === 'object') {
+            resultHtml += '<p><strong>Impulse:</strong></p><ul>';
+            Object.entries(impulse).forEach(([key, value]) => {
+              resultHtml += `<li><strong>${key}:</strong> ${value}</li>`;
+            });
+            resultHtml += '</ul>';
+          }
+
+          // Format parameters if they exist
+          if (parameters && typeof parameters === 'object') {
+            resultHtml += '<p><strong>Parameters:</strong></p><ul>';
+            Object.entries(parameters).forEach(([key, value]) => {
+              resultHtml += `<li><strong>${key}:</strong> ${value}</li>`;
+            });
+            resultHtml += '</ul>';
+          }
+
+          setAnalysisResult(resultHtml);
+        } else {
+          setAnalysisError(response.message || 'Analysis failed');
+        }
+      })
+      .catch(error => {
+        setAnalysisError(error instanceof Error ? error.message : 'Unknown error occurred');
+      })
+      .finally(() => {
+        setIsAnalyzing(false);
+      });
+  };
 
   const lengthValue = Number(length);
   const widthValue = Number(width);
@@ -229,13 +305,13 @@ export default function App() {
       case CubicleTypes.TwoAdjacentWalls:
         return 2;
       case CubicleTypes.ThreeWalls:
-        return targetFace === 'back-wall' ? 3 : 2;
+        return targetFace === TargetFaceTypeConst.BackWall ? 3 : 2;
       case CubicleTypes.FourWalls:
         return 3;
       case CubicleTypes.TwoAdjacentWallsWithRoof:
-        return targetFace === 'ceiling' ? 2 : 3;
+        return targetFace === TargetFaceTypeConst.Roof ? 2 : 3;
       case CubicleTypes.ThreeWallsWithRoof:
-        return targetFace === 'back-wall' ? 4 : 3;
+        return targetFace === TargetFaceTypeConst.BackWall ? 4 : 3;
       case CubicleTypes.FourWallsWithRoof:
         return 4;
       default:
@@ -278,52 +354,6 @@ export default function App() {
     </>
   );
 
-  const targetOptions: DropdownOption[] = useMemo(() => {
-    switch (cubicleType) {
-      case CubicleTypes.CantileverWall:
-        return [{ value: 'back-wall', label: 'Back Wall' }];
-      case CubicleTypes.TwoAdjacentWalls:
-        return [
-          { value: 'back-wall', label: 'Back Wall' },
-          { value: 'left-wall', label: 'Left Wall' }
-        ];
-      case CubicleTypes.TwoAdjacentWallsWithRoof:
-        return [
-          { value: 'back-wall', label: 'Back Wall' },
-          { value: 'left-wall', label: 'Left Wall' },
-          { value: 'ceiling', label: 'Ceiling' }
-        ];
-      case CubicleTypes.ThreeWalls:
-        return [
-          { value: 'back-wall', label: 'Back Wall' },
-          { value: 'left-wall', label: 'Left Wall' },
-          { value: 'right-wall', label: 'Right Wall' }
-        ];
-      case CubicleTypes.ThreeWallsWithRoof:
-        return [
-          { value: 'back-wall', label: 'Back Wall' },
-          { value: 'left-wall', label: 'Left Wall' },
-          { value: 'right-wall', label: 'Right Wall' },
-          { value: 'ceiling', label: 'Ceiling' }
-        ];
-      case CubicleTypes.FourWalls:
-        return [
-          { value: 'back-wall', label: 'Back Wall' },
-          { value: 'front-wall', label: 'Front Wall' },
-          { value: 'left-wall', label: 'Left Wall' },
-          { value: 'right-wall', label: 'Right Wall' }
-        ];
-      case CubicleTypes.FourWallsWithRoof:
-        return [
-          { value: 'back-wall', label: 'Back Wall' },
-          { value: 'front-wall', label: 'Front Wall' },
-          { value: 'left-wall', label: 'Left Wall' },
-          { value: 'right-wall', label: 'Right Wall' },
-          { value: 'ceiling', label: 'Ceiling' }
-        ];
-    }
-  }, [cubicleType]);
-
   return (
     <div className={styles.appContainer}>
       {/* Navigation Panel */}
@@ -340,9 +370,36 @@ export default function App() {
           fontSize="medium"
         />
 
-        <UserInput fontSize="medium" label="Length (X)" type="number" unit="ft" value={length} onChange={setLength} validation={{ min: 0.1 }} />
-        <UserInput fontSize="medium" label="Width (Y)" type="number" unit="ft" value={width} onChange={setWidth} validation={{ min: 0.1 }} />
-        <UserInput fontSize="medium" label="Height (Z)" type="number" unit="ft" value={height} onChange={setHeight} validation={{ min: 0.1 }} />
+        <UserInput
+          fontSize="medium"
+          label="Length (X)"
+          type="number"
+          unit="ft"
+          value={length}
+          onChange={setLength}
+          validation={{ min: 0.1 }}
+          onValidationChange={(hasError: boolean) => setFieldError('length', hasError)}
+        />
+        <UserInput
+          fontSize="medium"
+          label="Width (Y)"
+          type="number"
+          unit="ft"
+          value={width}
+          onChange={setWidth}
+          validation={{ min: 0.1 }}
+          onValidationChange={(hasError: boolean) => setFieldError('width', hasError)}
+        />
+        <UserInput
+          fontSize="medium"
+          label="Height (Z)"
+          type="number"
+          unit="ft"
+          value={height}
+          onChange={setHeight}
+          validation={{ min: 0.1 }}
+          onValidationChange={(hasError: boolean) => setFieldError('height', hasError)}
+        />
 
         {/* Opening Configuration */}
 
@@ -363,8 +420,26 @@ export default function App() {
           fontSize="medium"
         />
 
-        <UserInput fontSize="medium" label="Width" type="number" unit="ft" value={openingWidth} onChange={setOpeningWidth} validation={{ min: 0.1 }} />
-        <UserInput fontSize="medium" label="Height" type="number" unit="ft" value={openingHeight} onChange={setOpeningHeight} validation={{ min: 0.1 }} />
+        <UserInput
+          fontSize="medium"
+          label="Opening Width"
+          type="number"
+          unit="in"
+          value={openingWidth}
+          onChange={setOpeningWidth}
+          validation={{ min: 0 }}
+          onValidationChange={(hasError: boolean) => setFieldError('openingWidth', hasError)}
+        />
+        <UserInput
+          fontSize="medium"
+          label="Opening Height"
+          type="number"
+          unit="in"
+          value={openingHeight}
+          onChange={setOpeningHeight}
+          validation={{ min: 0 }}
+          onValidationChange={(hasError: boolean) => setFieldError('openingHeight', hasError)}
+        />
         <hr />
         <h3 className={styles.sectionTitle}>Threat Location</h3>
 
@@ -376,6 +451,7 @@ export default function App() {
           value={threatXLocation}
           onChange={setThreatXLocation}
           validation={{ min: 0.0, max: Number(length) }}
+          onValidationChange={(err: boolean) => setFieldError('threatX', err)}
         />
         <UserInput
           fontSize="medium"
@@ -385,6 +461,7 @@ export default function App() {
           value={threatYLocation}
           onChange={setThreatYLocation}
           validation={{ min: 0.0, max: Number(width) }}
+          onValidationChange={(err: boolean) => setFieldError('threatY', err)}
         />
         <UserInput
           fontSize="medium"
@@ -394,36 +471,62 @@ export default function App() {
           value={threatZLocation}
           onChange={setThreatZLocation}
           validation={{ min: 0.0, max: Number(height) }}
+          onValidationChange={(err: boolean) => setFieldError('threatZ', err)}
         />
-        <UserInput fontSize="medium" label="Weight" type="number" unit="lbs" value={threatWeight} onChange={setThreatWeight} validation={{ min: 0.1 }} />
+        <UserInput
+          fontSize="medium"
+          label="Weight"
+          type="number"
+          unit="lbs"
+          value={threatWeight}
+          onChange={setThreatWeight}
+          validation={{ min: 0.1 }}
+          onValidationChange={(err: boolean) => setFieldError('threatWeight', err)}
+        />
 
         <hr />
         <h3 className={styles.sectionTitle}>Target Location</h3>
 
-        <UserDropdown label="Target Face" options={targetOptions} value={targetFace} onChange={setTargetFace} fontSize="medium" />
-
         <UserDropdown
-          label="Target Type"
-          options={[
-            { value: 'Full-Wall', label: 'Full Wall' },
-            { value: 'Strip', label: 'Strip' },
-            { value: 'Object', label: 'Object' }
-          ]}
-          value={targetType}
-          onChange={setTargetType}
+          label="Target Face"
+          options={TARGET_FACES}
+          value={targetFace}
+          onChange={value => setTargetFace(value as TargetFaceType)}
           fontSize="medium"
         />
-        {targetType === 'Strip' ? (
+
+        <UserDropdown label="Target Type" options={TARGET_TYPES} value={targetType} onChange={value => setTargetType(value as TargetType)} fontSize="medium" />
+        {targetType === TargetTypeConst.Strip ? (
           <>
-            <UserInput fontSize="medium" label="Strip Height" type="number" unit="ft" value={stripHeight} onChange={setStripHeight} validation={{ min: 0.1 }} />
-            <UserInput fontSize="medium" label="Strip Width" type="number" unit="ft" value={stripWidth} onChange={setStripWidth} validation={{ min: 0.1 }} />
+            <UserInput
+              fontSize="medium"
+              label="Strip Height"
+              type="number"
+              unit="ft"
+              value={stripHeight}
+              onChange={setStripHeight}
+              validation={{ min: 0.1 }}
+              onValidationChange={(err: boolean) => setFieldError('stripHeight', err)}
+            />
+            <UserInput
+              fontSize="medium"
+              label="Strip Width"
+              type="number"
+              unit="ft"
+              value={stripWidth}
+              onChange={setStripWidth}
+              validation={{ min: 0.1 }}
+              onValidationChange={(err: boolean) => setFieldError('stripWidth', err)}
+            />
           </>
-        ) : targetType === 'Object' ? (
-          <UserInput fontSize="medium" label="Object Diameter" type="number" unit="ft" value="0.5" onChange={() => { }} validation={{ min: 0.1 }} />
+        ) : targetType === TargetTypeConst.Object ? (
+          <UserInput fontSize="medium" label="Object Diameter" type="number" unit="ft" value="0.5" onChange={() => {}} validation={{ min: 0.1 }} />
         ) : null}
 
-        /*If not error then display <button></button>*/
-        
+        <hr />
+        <button className={styles.analyzeButton} onClick={handleAnalyze} disabled={!isValid || isAnalyzing}>
+          {isAnalyzing ? 'Analyzing...' : 'Analyze'}
+        </button>
       </nav>
 
       {/* Main Content Area */}
@@ -558,7 +661,7 @@ export default function App() {
                 </p>
               </>
             )}
-            {targetType === 'Strip' && (
+            {targetType === TargetTypeConst.Strip && (
               <p>
                 <strong>Target Strip Size:</strong> {stripWidth}m × {stripHeight}m
               </p>
@@ -566,6 +669,26 @@ export default function App() {
             <p>
               <strong>Cubicle Type:</strong> {CUBICLE_TYPES.find(type => type.value === cubicleType)?.label || 'Unknown'}
             </p>
+            <hr className={styles.outputDivider} />
+            {isAnalyzing && (
+              <div className={styles.analysisLoading}>
+                <p>
+                  <strong>Analyzing...</strong>
+                </p>
+              </div>
+            )}
+            {analysisResult && (
+              <div className={styles.analysisResultOutput}>
+                <h3>Analysis Results</h3>
+                <div className={styles.resultContent} dangerouslySetInnerHTML={{ __html: analysisResult }} />
+              </div>
+            )}
+            {analysisError && (
+              <div className={styles.analysisErrorOutput}>
+                <h3>Error</h3>
+                <p>{analysisError}</p>
+              </div>
+            )}
           </div>
         </section>
       </main>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type ChangeEvent } from 'react';
 import styles from './UserInput.module.css';
 
 /**
@@ -188,6 +188,7 @@ export interface UserInputProps {
   disabled?: boolean;
   validation?: ValidationRule;
   fontSize?: string; // e.g. "small", "medium", "large", "12px", "14px", etc.
+  onValidationChange?: (hasError: boolean) => void; // Callback when validation state changes
 }
 
 export function UserInput({
@@ -200,7 +201,8 @@ export function UserInput({
   placeholder,
   disabled = false,
   validation,
-  fontSize = 'medium'
+  fontSize = 'medium',
+  onValidationChange
 }: UserInputProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -208,7 +210,7 @@ export function UserInput({
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Validate the input value
-  const validateInput = (inputValue: string): string | null => {
+  const validateInput = useCallback((inputValue: string): string | null => {
     const stringValue = String(inputValue);
     const numericValue = type === 'number' || type === 'expression' ? parseFloat(inputValue) : NaN;
 
@@ -270,7 +272,14 @@ export function UserInput({
     }
 
     return null;
-  };
+  }, [type, validation]);
+
+  // Validate on mount and when value/validation changes
+  useEffect(() => {
+    const error = validateInput(String(value));
+    setErrorMessage(error);
+    onValidationChange?.(error !== null);
+  }, [value, validation, type, onValidationChange]);
 
   // Close help popup when clicking outside
   useEffect(() => {

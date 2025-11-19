@@ -210,76 +210,79 @@ export function UserInput({
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Validate the input value
-  const validateInput = useCallback((inputValue: string): string | null => {
-    const stringValue = String(inputValue);
-    const numericValue = type === 'number' || type === 'expression' ? parseFloat(inputValue) : NaN;
+  const validateInput = useCallback(
+    (inputValue: string): string | null => {
+      const stringValue = String(inputValue);
+      const numericValue = type === 'number' || type === 'expression' ? parseFloat(inputValue) : NaN;
 
-    // Required check
-    if (validation?.required && !stringValue.trim()) {
-      return 'This field is required';
-    }
-
-    // Skip other validations if empty and not required
-    if (!stringValue.trim()) return null;
-
-    // For expression type, validate that it's a valid expression
-    if (type === 'expression') {
-      const evaluated = evaluateExpression(stringValue);
-      if (evaluated === null) {
-        return 'Invalid mathematical expression';
+      // Required check
+      if (validation?.required && !stringValue.trim()) {
+        return 'This field is required';
       }
-      // Use evaluated value for min/max checks
-      if (validation?.min !== undefined && evaluated < validation.min) {
-        return `Value must be at least ${validation.min}`;
-      }
-      if (validation?.max !== undefined && evaluated > validation.max) {
-        return `Value must be at most ${validation.max}`;
-      }
-    }
-    // For CSV type, validate that it's a valid CSV format (always validate for CSV type)
-    else if (type === 'csv') {
-      const csvError = validateCsvFormat(stringValue);
-      if (csvError) {
-        return csvError;
-      }
-    }
-    // Min/Max for numbers
-    else if (type === 'number' && !isNaN(numericValue)) {
-      if (validation?.min !== undefined && numericValue < validation.min) {
-        return `Value must be at least ${validation.min}`;
-      }
-      if (validation?.max !== undefined && numericValue > validation.max) {
-        return `Value must be at most ${validation.max}`;
-      }
-    }
 
-    // Min/Max length for text
-    if (validation?.minLength !== undefined && stringValue.length < validation.minLength) {
-      return `Must be at least ${validation.minLength} characters`;
-    }
-    if (validation?.maxLength !== undefined && stringValue.length > validation.maxLength) {
-      return `Must be at most ${validation.maxLength} characters`;
-    }
+      // Skip other validations if empty and not required
+      if (!stringValue.trim()) return null;
 
-    // Pattern validation
-    if (validation?.pattern && !validation.pattern.test(stringValue)) {
-      return 'Invalid format';
-    }
+      // For expression type, validate that it's a valid expression
+      if (type === 'expression') {
+        const evaluated = evaluateExpression(stringValue);
+        if (evaluated === null) {
+          return 'Invalid mathematical expression';
+        }
+        // Use evaluated value for min/max checks
+        if (validation?.min !== undefined && evaluated < validation.min) {
+          return `Value must be at least ${validation.min}`;
+        }
+        if (validation?.max !== undefined && evaluated > validation.max) {
+          return `Value must be at most ${validation.max}`;
+        }
+      }
+      // For CSV type, validate that it's a valid CSV format (always validate for CSV type)
+      else if (type === 'csv') {
+        const csvError = validateCsvFormat(stringValue);
+        if (csvError) {
+          return csvError;
+        }
+      }
+      // Min/Max for numbers
+      else if (type === 'number' && !isNaN(numericValue)) {
+        if (validation?.min !== undefined && numericValue < validation.min) {
+          return `Value must be at least ${validation.min}`;
+        }
+        if (validation?.max !== undefined && numericValue > validation.max) {
+          return `Value must be at most ${validation.max}`;
+        }
+      }
 
-    // Custom validation
-    if (validation?.custom) {
-      return validation.custom(stringValue);
-    }
+      // Min/Max length for text
+      if (validation?.minLength !== undefined && stringValue.length < validation.minLength) {
+        return `Must be at least ${validation.minLength} characters`;
+      }
+      if (validation?.maxLength !== undefined && stringValue.length > validation.maxLength) {
+        return `Must be at most ${validation.maxLength} characters`;
+      }
 
-    return null;
-  }, [type, validation]);
+      // Pattern validation
+      if (validation?.pattern && !validation.pattern.test(stringValue)) {
+        return 'Invalid format';
+      }
+
+      // Custom validation
+      if (validation?.custom) {
+        return validation.custom(stringValue);
+      }
+
+      return null;
+    },
+    [type, validation]
+  );
 
   // Validate on mount and when value/validation changes
   useEffect(() => {
     const error = validateInput(String(value));
     setErrorMessage(error);
     onValidationChange?.(error !== null);
-  }, [value, validation, type, onValidationChange]);
+  }, [value, validation, type, onValidationChange, validateInput]);
 
   // Close help popup when clicking outside
   useEffect(() => {

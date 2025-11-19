@@ -1,5 +1,15 @@
 import { CubicleType, TargetFaceType } from './types';
 
+interface AppConfig {
+  API_BASE_URL?: string;
+}
+
+declare global {
+  interface Window {
+    APP_CONFIG?: AppConfig;
+  }
+}
+
 export interface CubicleRequest {
   cubicle_type: CubicleType;
   target_face: TargetFaceType;
@@ -26,7 +36,7 @@ interface CubicleResponse {
 
 export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleResponse> {
   // API URL can be configured via Django template (window.APP_CONFIG)
-  const apiUrl = (window as any).APP_CONFIG?.API_BASE_URL || '/api/iCubicle/';
+  const apiUrl: string = window.APP_CONFIG?.API_BASE_URL || '/api/iCubicle/';
   console.log('API URL:', apiUrl);
   console.log('Request Data:', data);
   try {
@@ -40,13 +50,18 @@ export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleRes
     });
 
     // Try to parse JSON response even if status is not ok
-    const result = await response.json();
+    const result: unknown = await response.json();
 
     if (!response.ok) {
       // If response has an error message, use it; otherwise use status text
+      let message = `HTTP ${response.status}: ${response.statusText}`;
+      if (typeof result === 'object' && result !== null) {
+        const errorResult = result as { message?: string; error?: string };
+        message = errorResult.message || errorResult.error || message;
+      }
       return {
         success: false,
-        message: result.message || result.error || `HTTP ${response.status}: ${response.statusText}`
+        message
       };
     }
 

@@ -76,6 +76,7 @@ export function Scene3D({
         targetType={targetType}
         stripWidth={stripWidth}
         stripHeight={stripHeight}
+        threatPosition={threatPosition}
       />
 
       <mesh position={threatPosition}>

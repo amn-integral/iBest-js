@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
-import { CubicleTypes, TargetType as TargetTypeConst, TargetFaceType as TargetFaceTypeConst } from '../constants';
+import { CubicleTypes, TargetType as TargetTypeConst, WallEnum } from '../constants';
 import { fetchCubicleData, type CubicleRequest } from '../api';
 
 export function useCubicleAnalysis() {
@@ -9,8 +9,9 @@ export function useCubicleAnalysis() {
   const [height, setHeight] = useState('2');
   const [openingWidth, setOpeningWidth] = useState('0.8');
   const [openingHeight, setOpeningHeight] = useState('1.2');
-  const [openingFace, setOpeningFace] = useState<'front' | 'back' | 'left' | 'right' | 'floor' | 'roof'>('front');
-  const [cubicleType, setCubicleType] = useState<CubicleType>(CubicleTypes.ThreeWalls);
+  const [openingFace, setOpeningFace] = useState<WallEnum>(WallEnum.WALL_1);
+  const [cubicleType, setCubicleType] = useState<CubicleType>(CubicleTypes.ThreeAdjacentWalls);
+  const [configOption, setConfigOption] = useState<string>('Options_A');
 
   const [threatXLocation, setThreatXLocation] = useState('1.0');
   const [threatYLocation, setThreatYLocation] = useState('1.0');
@@ -18,7 +19,7 @@ export function useCubicleAnalysis() {
   const [threatWeight, setThreatWeight] = useState('10.0');
 
   const [targetType, setTargetType] = useState<TargetType>(TargetTypeConst.FullWall);
-  const [targetFace, setTargetFace] = useState<TargetFaceType>(TargetFaceTypeConst.BackWall);
+  const [targetFace, setTargetFace] = useState<TargetFaceType>(WallEnum.WALL_1);
   const [stripHeight, setStripHeight] = useState('1.0');
   const [stripWidth, setStripWidth] = useState('1.0');
 
@@ -139,6 +140,10 @@ export function useCubicleAnalysis() {
     setThreatZLocation,
     threatWeight,
     setThreatWeight,
+
+    // Configuration
+    configOption,
+    setConfigOption,
 
     // Target
     targetType,

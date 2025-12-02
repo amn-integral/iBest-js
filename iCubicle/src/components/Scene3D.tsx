@@ -4,10 +4,11 @@ import { useMemo } from 'react';
 import { type OrbitControls as OrbitControlsType } from 'three-stdlib';
 import { Cubicle } from './Cubicle';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
+import { WallEnum } from '../constants';
 import styles from './Scene3D.module.css';
 
 type Opening = {
-  face: 'front' | 'back' | 'left' | 'right' | 'floor' | 'roof';
+  face: WallEnum;
   width: number;
   height: number;
 };
@@ -18,6 +19,7 @@ type Scene3DProps = {
   height: number;
   opening: Opening;
   cubicleType: CubicleType;
+  configOption: string;
   targetFace: TargetFaceType;
   targetType: TargetType;
   stripWidth: number;
@@ -35,6 +37,7 @@ export function Scene3D({
   height,
   opening,
   cubicleType,
+  configOption,
   targetFace,
   targetType,
   stripWidth,
@@ -72,6 +75,7 @@ export function Scene3D({
         position={[0, 0, 0]}
         opening={opening}
         cubicleType={cubicleType}
+        configOption={configOption}
         targetFace={targetFace}
         targetType={targetType}
         stripWidth={stripWidth}

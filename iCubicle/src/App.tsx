@@ -2,7 +2,7 @@ import { useRef, useMemo } from 'react';
 import { type OrbitControls as OrbitControlsType } from 'three-stdlib';
 import styles from './App.module.css';
 import '@integralrsg/iuicomponents/styles';
-import { CUBICLE_TYPES, TargetType as TargetTypeConst } from './constants';
+import { TargetType as TargetTypeConst, WallEnum } from './constants';
 import { useCubicleAnalysis } from './hooks/useCubicleAnalysis';
 import { Scene3D } from './components/Scene3D';
 import { CubicleConfig } from './components/CubicleConfig';
@@ -11,6 +11,25 @@ import { ThreatConfig } from './components/ThreatConfig';
 import { TargetConfig } from './components/TargetConfig';
 
 const formatLabel = (value: string) => value.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+
+const wallEnumToLabel = (wall: WallEnum): string => {
+  switch (wall) {
+    case WallEnum.FLOOR:
+      return '0';
+    case WallEnum.WALL_1:
+      return '1';
+    case WallEnum.WALL_2:
+      return '2';
+    case WallEnum.WALL_3:
+      return '3';
+    case WallEnum.WALL_4:
+      return '4';
+    case WallEnum.ROOF:
+      return '5';
+    default:
+      return '';
+  }
+};
 
 export default function App() {
   const controlsRef = useRef<OrbitControlsType>(null);
@@ -41,10 +60,9 @@ export default function App() {
   );
 
   const volumeValue = (lengthValue * widthValue * heightValue).toFixed(2);
-  const cubicleLabel = CUBICLE_TYPES.find(type => type.value === state.cubicleType)?.label ?? formatLabel(state.cubicleType);
-  const targetFaceLabel = formatLabel(state.targetFace);
+  const targetFaceLabel = wallEnumToLabel(state.targetFace);
   const targetTypeLabel = formatLabel(state.targetType);
-  const openingFaceLabel = formatLabel(state.openingFace);
+  const openingFaceLabel = wallEnumToLabel(state.openingFace);
   const openingSummary = `${state.openingWidth} x ${state.openingHeight} in`;
   const targetSummary = state.targetType === TargetTypeConst.Strip ? `${state.stripWidth} x ${state.stripHeight} ft strip` : targetTypeLabel;
   const analysisStatus = state.isAnalyzing
@@ -55,14 +73,6 @@ export default function App() {
         ? 'Result ready'
         : 'Awaiting analysis';
   const statusClassName = state.isAnalyzing ? styles.statusActive : state.analysisError ? styles.statusError : styles.statusIdle;
-  const analysisSummary = state.isAnalyzing
-    ? 'Running blast load calculations.'
-    : state.analysisError
-      ? 'Resolve the issue below and try again.'
-      : state.analysisResult
-        ? 'Latest results are shown in the feed.'
-        : 'Update inputs and re-run anytime.';
-  const showAnalysisPlaceholder = !state.isAnalyzing && !state.analysisResult && !state.analysisError;
 
   return (
     <div className={styles.appContainer}>
@@ -81,6 +91,8 @@ export default function App() {
             <CubicleConfig
               cubicleType={state.cubicleType}
               setCubicleType={state.setCubicleType}
+              configOption={state.configOption}
+              setConfigOption={state.setConfigOption}
               length={state.length}
               setLength={state.setLength}
               width={state.width}
@@ -96,6 +108,8 @@ export default function App() {
               <p className={styles.sectionTitle}>Opening Configuration</p>
             </header>
             <OpeningConfig
+              cubicleType={state.cubicleType}
+              configOption={state.configOption}
               openingFace={state.openingFace}
               setOpeningFace={state.setOpeningFace}
               openingWidth={state.openingWidth}
@@ -131,6 +145,8 @@ export default function App() {
               <p className={styles.sectionTitle}>Target Configuration</p>
             </header>
             <TargetConfig
+              cubicleType={state.cubicleType}
+              configOption={state.configOption}
               targetFace={state.targetFace}
               setTargetFace={state.setTargetFace}
               targetType={state.targetType}
@@ -214,6 +230,7 @@ export default function App() {
             height={heightValue}
             opening={opening}
             cubicleType={state.cubicleType}
+            configOption={state.configOption}
             targetFace={state.targetFace}
             targetType={state.targetType}
             stripWidth={stripWidthValue}
@@ -233,9 +250,22 @@ export default function App() {
           </div>
 
           <div className={styles.outputDisplay}>
-            <h1>1</h1>
-            <h1>2</h1>
-            <h1>3</h1>
+            <div className={styles.outputText}>
+              <h3 className={styles.outputTitle}>Analysis Results</h3>
+              {state.analysisError ? (
+                <div className={styles.errorMessage}>{state.analysisError}</div>
+              ) : state.analysisResult ? (
+                <div className={styles.resultContent} dangerouslySetInnerHTML={{ __html: state.analysisResult }} />
+              ) : (
+                <p className={styles.outputPlaceholder}>Analysis results will appear here...</p>
+              )}
+            </div>
+            <div className={styles.outputChart}>
+              <h3 className={styles.outputTitle}>Visualization</h3>
+              <div className={styles.chartPlaceholder}>
+                <p>Chart will be displayed here</p>
+              </div>
+            </div>
           </div>
         </section>
       </main>

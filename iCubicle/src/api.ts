@@ -36,9 +36,7 @@ interface CubicleResponse {
 
 export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleResponse> {
   // API URL can be configured via Django template (window.APP_CONFIG)
-  const apiUrl: string = window.APP_CONFIG?.API_BASE_URL || '/api/iCubicle/';
-  console.log('API URL:', apiUrl);
-  console.log('Request Data:', data);
+  const apiUrl: string = window.APP_CONFIG?.API_BASE_URL || 'http://127.0.0.1:8000/api/iCubicle/';
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -64,7 +62,7 @@ export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleRes
         message
       };
     }
-
+    console.log('Response Data:', result);
     return result as CubicleResponse;
   } catch (error) {
     return {

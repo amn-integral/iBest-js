@@ -1,10 +1,13 @@
 import { UserInput, UserDropdown } from '@integralrsg/iuicomponents';
-
-type OpeningFace = 'front' | 'back' | 'left' | 'right' | 'floor' | 'roof';
+import { type CubicleType } from '../types';
+import { CONFIG_OPTIONS, WallEnum } from '../constants';
+import { useMemo } from 'react';
 
 type OpeningConfigProps = {
-  openingFace: OpeningFace;
-  setOpeningFace: (value: OpeningFace) => void;
+  cubicleType: CubicleType;
+  configOption: string;
+  openingFace: WallEnum;
+  setOpeningFace: (value: WallEnum) => void;
   openingWidth: string;
   setOpeningWidth: (value: string) => void;
   openingHeight: string;
@@ -12,16 +15,28 @@ type OpeningConfigProps = {
   onValidationChange: (field: string, hasError: boolean) => void;
 };
 
-const openingFaceOptions = [
-  { value: 'front', label: 'Front' },
-  { value: 'back', label: 'Back' },
-  { value: 'left', label: 'Left' },
-  { value: 'right', label: 'Right' },
-  { value: 'floor', label: 'Floor' },
-  { value: 'roof', label: 'Roof' }
-];
+const wallEnumToLabel = (wall: WallEnum): string => {
+  switch (wall) {
+    case WallEnum.FLOOR:
+      return '0';
+    case WallEnum.WALL_1:
+      return '1';
+    case WallEnum.WALL_2:
+      return '2';
+    case WallEnum.WALL_3:
+      return '3';
+    case WallEnum.WALL_4:
+      return '4';
+    case WallEnum.ROOF:
+      return '5';
+    default:
+      return '';
+  }
+};
 
 export function OpeningConfig({
+  cubicleType,
+  configOption,
   openingFace,
   setOpeningFace,
   openingWidth,
@@ -30,6 +45,23 @@ export function OpeningConfig({
   setOpeningHeight,
   onValidationChange
 }: OpeningConfigProps) {
+  const openingFaceOptions = useMemo(() => {
+    const config = CONFIG_OPTIONS[cubicleType as keyof typeof CONFIG_OPTIONS];
+    if (config && configOption) {
+      const selectedWalls = config[configOption as keyof typeof config];
+      if (selectedWalls) {
+        // Filter out floor only, include walls and roof
+        return selectedWalls
+          .filter(wall => wall !== WallEnum.FLOOR)
+          .map(wall => ({
+            value: wall.toString(),
+            label: wallEnumToLabel(wall)
+          }));
+      }
+    }
+    return [];
+  }, [cubicleType, configOption]);
+
   return (
     <>
       <hr />
@@ -37,8 +69,8 @@ export function OpeningConfig({
       <UserDropdown
         label="Opening Location"
         options={openingFaceOptions}
-        value={openingFace}
-        onChange={value => setOpeningFace(value as OpeningFace)}
+        value={openingFace.toString()}
+        onChange={value => setOpeningFace(Number(value) as WallEnum)}
         fontSize="medium"
       />
 

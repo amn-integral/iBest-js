@@ -1,11 +1,14 @@
 import { UserInput, UserDropdown } from '@integralrsg/iuicomponents';
 import '@integralrsg/iuicomponents/styles';
+import { useMemo } from 'react';
 import { type CubicleType } from '../types';
-import { CUBICLE_TYPES } from '../constants';
+import { CUBICLE_TYPES, CUBICLE_CONFIGURATIONS } from '../constants';
 
 type CubicleConfigProps = {
   cubicleType: CubicleType;
   setCubicleType: (value: CubicleType) => void;
+  configOption: string;
+  setConfigOption: (value: string) => void;
   length: string;
   setLength: (value: string) => void;
   width: string;
@@ -15,7 +18,28 @@ type CubicleConfigProps = {
   onValidationChange: (field: string, hasError: boolean) => void;
 };
 
-export function CubicleConfig({ cubicleType, setCubicleType, length, setLength, width, setWidth, height, setHeight, onValidationChange }: CubicleConfigProps) {
+export function CubicleConfig({
+  cubicleType,
+  setCubicleType,
+  configOption,
+  setConfigOption,
+  length,
+  setLength,
+  width,
+  setWidth,
+  height,
+  setHeight,
+  onValidationChange
+}: CubicleConfigProps) {
+  const availableOptions = useMemo(() => {
+    const config = CUBICLE_CONFIGURATIONS.find(c => c.cubicleType === cubicleType);
+    return config?.options || [];
+  }, [cubicleType]);
+
+  const selectedConfig = useMemo(() => {
+    return availableOptions.find(opt => opt.value === configOption);
+  }, [availableOptions, configOption]);
+
   return (
     <>
       <hr />
@@ -27,6 +51,15 @@ export function CubicleConfig({ cubicleType, setCubicleType, length, setLength, 
         onChange={value => setCubicleType(value as CubicleType)}
         fontSize="medium"
       />
+
+      {availableOptions.length > 0 && (
+        <>
+          <UserDropdown label="Configuration" options={availableOptions} value={configOption} onChange={value => setConfigOption(value)} fontSize="medium" />
+          {selectedConfig && (
+            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.5rem 0', lineHeight: 1.5 }}>Walls: {selectedConfig.walls.join(', ')}</p>
+          )}
+        </>
+      )}
 
       <UserInput
         fontSize="medium"

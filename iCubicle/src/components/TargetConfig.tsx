@@ -1,8 +1,11 @@
 import { UserInput, UserDropdown } from '@integralrsg/iuicomponents';
-import { type TargetType, type TargetFaceType } from '../types';
-import { TargetType as TargetTypeConst, TARGET_TYPES, TARGET_FACES } from '../constants';
+import { type TargetType, type TargetFaceType, type CubicleType } from '../types';
+import { TargetType as TargetTypeConst, TARGET_TYPES, CONFIG_OPTIONS, WallEnum } from '../constants';
+import { useMemo } from 'react';
 
 type TargetConfigProps = {
+  cubicleType: CubicleType;
+  configOption: string;
   targetFace: TargetFaceType;
   setTargetFace: (value: TargetFaceType) => void;
   targetType: TargetType;
@@ -14,7 +17,28 @@ type TargetConfigProps = {
   onValidationChange: (field: string, hasError: boolean) => void;
 };
 
+const wallEnumToLabel = (wall: WallEnum): string => {
+  switch (wall) {
+    case WallEnum.FLOOR:
+      return '0';
+    case WallEnum.WALL_1:
+      return '1';
+    case WallEnum.WALL_2:
+      return '2';
+    case WallEnum.WALL_3:
+      return '3';
+    case WallEnum.WALL_4:
+      return '4';
+    case WallEnum.ROOF:
+      return '5';
+    default:
+      return '';
+  }
+};
+
 export function TargetConfig({
+  cubicleType,
+  configOption,
   targetFace,
   setTargetFace,
   targetType,
@@ -25,15 +49,32 @@ export function TargetConfig({
   setStripWidth,
   onValidationChange
 }: TargetConfigProps) {
+  const targetFaceOptions = useMemo(() => {
+    const config = CONFIG_OPTIONS[cubicleType as keyof typeof CONFIG_OPTIONS];
+    if (config && configOption) {
+      const selectedWalls = config[configOption as keyof typeof config];
+      if (selectedWalls) {
+        // Filter out floor only, include walls and roof
+        return selectedWalls
+          .filter(wall => wall !== WallEnum.FLOOR)
+          .map(wall => ({
+            value: wall.toString(),
+            label: wallEnumToLabel(wall)
+          }));
+      }
+    }
+    return [];
+  }, [cubicleType, configOption]);
+
   return (
     <>
       <hr />
 
       <UserDropdown
         label="Target Face"
-        options={TARGET_FACES}
-        value={targetFace}
-        onChange={value => setTargetFace(value as TargetFaceType)}
+        options={targetFaceOptions}
+        value={targetFace.toString()}
+        onChange={value => setTargetFace(Number(value) as TargetFaceType)}
         fontSize="medium"
       />
 

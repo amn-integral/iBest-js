@@ -2,10 +2,10 @@ import * as THREE from 'three';
 import { useMemo } from 'react';
 import { Text, Billboard } from '@react-three/drei';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
-import { CubicleTypes, TargetType as TargetTypeConst, TargetFaceType as TargetFaceTypeConst } from '../constants';
+import { TargetType as TargetTypeConst, CONFIG_OPTIONS, WallEnum } from '../constants';
 
 type Opening = {
-  face: 'front' | 'back' | 'left' | 'right' | 'floor' | 'roof';
+  face: WallEnum;
   width: number;
   height: number;
 };
@@ -15,6 +15,7 @@ type CubicleProps = {
   position?: [number, number, number];
   opening?: Opening;
   cubicleType?: CubicleType;
+  configOption?: string;
   targetFace?: TargetFaceType;
   targetType?: TargetType;
   stripWidth?: number;
@@ -25,30 +26,24 @@ type CubicleProps = {
 const wallMaterial = <meshStandardMaterial color="#94a3b8" transparent opacity={0.85} side={THREE.DoubleSide} />;
 const floorMaterial = <meshStandardMaterial color="#64748b" transparent opacity={0.9} side={THREE.DoubleSide} />;
 
-const getVisibleFaces = (type: CubicleType): string[] => {
-  switch (type) {
-    case CubicleTypes.CantileverWall:
-      return ['floor', 'back'];
-    case CubicleTypes.TwoAdjacentWalls:
-      return ['floor', 'back', 'right'];
-    case CubicleTypes.TwoAdjacentWallsWithRoof:
-      return ['floor', 'back', 'right', 'roof'];
-    case CubicleTypes.ThreeWalls:
-      return ['floor', 'back', 'left', 'right'];
-    case CubicleTypes.ThreeWallsWithRoof:
-      return ['floor', 'back', 'left', 'right', 'roof'];
-    case CubicleTypes.FourWalls:
-      return ['floor', 'back', 'left', 'right', 'front'];
-    case CubicleTypes.FourWallsWithRoof:
-      return ['floor', 'back', 'left', 'right', 'front', 'roof'];
+const getVisibleFaces = (type: CubicleType, configOption?: string): WallEnum[] => {
+  // Check if this cubicle type has configuration options
+  const config = CONFIG_OPTIONS[type as keyof typeof CONFIG_OPTIONS];
+  if (config && configOption) {
+    const selectedWalls = config[configOption as keyof typeof config];
+    if (selectedWalls) {
+      return selectedWalls;
+    }
   }
+  throw new Error(`No configuration found for cubicle type: ${type} with option: ${configOption}`);
 };
 
 export function Cubicle({
   size = [1, 1, 1],
   position = [0, 0, 0],
   opening,
-  cubicleType = 'Three-Walls',
+  cubicleType = 'Three-Adjacent-Walls',
+  configOption,
   targetFace,
   targetType,
   stripWidth = 1,
@@ -57,14 +52,16 @@ export function Cubicle({
 }: CubicleProps) {
   const [length, width, height] = size;
   const textSize = Math.min(length, width, height) * 0.08;
-  const visibleFaces = getVisibleFaces(cubicleType);
+  const visibleFaces = getVisibleFaces(cubicleType, configOption);
+
+  console.log('Cubicle render:', { targetFace, targetType, visibleFaces });
 
   // Calculate sphere size for threat proximity check
   const sphereSize = Math.min(length, width, height) * 0.05;
   const sphereDiameter = sphereSize * 2;
 
   // Function to calculate text offset if threat is too close
-  const getTextOffset = (faceName: string, facePos: [number, number, number]): [number, number, number] => {
+  const getTextOffset = (wallEnum: WallEnum, facePos: [number, number, number]): [number, number, number] => {
     if (!threatPosition) return facePos;
 
     const [fx, fy, fz] = facePos;
@@ -72,17 +69,16 @@ export function Cubicle({
 
     // Calculate distance from threat to face center (in 2D plane of the face)
     let distance: number;
-    if (faceName === 'floor' || faceName === 'roof') {
+    if (wallEnum === WallEnum.FLOOR || wallEnum === WallEnum.ROOF) {
       // For floor/roof, check X-Y distance
       distance = Math.sqrt((tx - fx) ** 2 + (ty - fy) ** 2);
-    } else if (faceName === 'back' || faceName === 'front') {
-      // For back/front, check X-Z distance
+    } else if (wallEnum === WallEnum.WALL_3 || wallEnum === WallEnum.WALL_1) {
+      // For back/front walls, check X-Z distance
       distance = Math.sqrt((tx - fx) ** 2 + (tz - fz) ** 2);
     } else {
-      // For left/right, check Y-Z distance
+      // For left/right walls, check Y-Z distance
       distance = Math.sqrt((ty - fy) ** 2 + (tz - fz) ** 2);
     }
-
 
     // If threat is NOT within sphere diameter from face center, keep centered
     if (distance > sphereDiameter) {
@@ -94,7 +90,7 @@ export function Cubicle({
     let offsetY = fy;
     let offsetZ = fz;
 
-    if (faceName === 'floor' || faceName === 'roof') {
+    if (wallEnum === WallEnum.FLOOR || wallEnum === WallEnum.ROOF) {
       // Offset in X-Y plane
       const dx = fx - tx;
       const dy = fy - ty;
@@ -107,22 +103,22 @@ export function Cubicle({
         // Threat is directly below/above - offset to the right
         offsetX = fx + 2 * sphereDiameter;
       }
-    } else if (faceName === 'back' || faceName === 'front') {
+    } else if (wallEnum === WallEnum.WALL_3 || wallEnum === WallEnum.WALL_1) {
       // Offset in X-Z plane
       const dx = fx - tx;
       const dz = fz - tz;
       const d = Math.sqrt(dx ** 2 + dz ** 2);
       if (d > 0.001) {
-        // For back wall, invert X offset so it appears correctly in elevation view
-        const xMultiplier = faceName === 'back' ? -1 : 1;
+        // For back wall (WALL_3), invert X offset so it appears correctly in elevation view
+        const xMultiplier = wallEnum === WallEnum.WALL_3 ? -1 : 1;
         offsetX = fx + xMultiplier * (dx / d) * 2 * sphereDiameter;
         offsetZ = fz + (dz / d) * 2 * sphereDiameter;
       } else {
         // Threat is at same X-Z position - offset to the right (inverted for back)
-        offsetX = fx + (faceName === 'back' ? -1 : 1) * 2 * sphereDiameter;
+        offsetX = fx + (wallEnum === WallEnum.WALL_3 ? -1 : 1) * 2 * sphereDiameter;
       }
     } else {
-      // Offset in Y-Z plane
+      // Offset in Y-Z plane (left/right walls)
       const dy = fy - ty;
       const dz = fz - tz;
       const d = Math.sqrt(dy ** 2 + dz ** 2);
@@ -141,28 +137,24 @@ export function Cubicle({
   // prettier-ignore
   const faces = useMemo(
     () => [
-      { name: 'floor', pos: [length / 2, width / 2, 0], rot: [0, 0, 0], width: length, height: width, label: 'Floor' },
-      { name: 'roof', pos: [length / 2, width / 2, height], rot: [0, 0, 0], width: length, height: width, label: 'Roof' },
-      { name: 'front', pos: [length / 2, width, height / 2], rot: [-Math.PI / 2, 0, 0], width: length, height: height, label: 'Front' },
-      { name: 'back', pos: [length / 2, 0, height / 2], rot: [Math.PI / 2, 0, 0], width: length, height: height, label: 'Back' },
-      { name: 'left', pos: [0, width / 2, height / 2], rot: [0, -Math.PI / 2, 0], width: height, height: width, label: 'Left' },
-      { name: 'right', pos: [length, width / 2, height / 2], rot: [0, Math.PI / 2, 0], width: height, height: width, label: 'Right' }
-    ].filter(face => visibleFaces.includes(face.name)),
+      { wallEnum: WallEnum.FLOOR, pos: [length / 2, width / 2, 0], rot: [0, 0, 0], width: length, height: width, label: '0' },
+      { wallEnum: WallEnum.ROOF, pos: [length / 2, width / 2, height], rot: [0, 0, 0], width: length, height: width, label: '5' },
+      { wallEnum: WallEnum.WALL_1, pos: [length / 2, width, height / 2], rot: [-Math.PI / 2, 0, 0], width: length, height: height, label: '1' },
+      { wallEnum: WallEnum.WALL_3, pos: [length / 2, 0, height / 2], rot: [Math.PI / 2, 0, 0], width: length, height: height, label: '3' },
+      { wallEnum: WallEnum.WALL_2, pos: [0, width / 2, height / 2], rot: [0, -Math.PI / 2, 0], width: height, height: width, label: '2' },
+      { wallEnum: WallEnum.WALL_4, pos: [length, width / 2, height / 2], rot: [0, Math.PI / 2, 0], width: height, height: width, label: '4' }
+    ].filter(face => visibleFaces.includes(face.wallEnum)),
     [length, width, height, visibleFaces]
   );
 
   return (
     <group position={position}>
-      {faces.map(({ name, pos, rot, width: faceWidth, height: faceHeight, label }) => {
-        const hasOpening = opening?.face === name;
-        const hasTarget =
-          targetFace &&
-          ((targetFace === TargetFaceTypeConst.BackWall && name === 'back') ||
-            (targetFace === TargetFaceTypeConst.SideWall && (name === 'left' || name === 'right')) ||
-            (targetFace === TargetFaceTypeConst.Roof && name === 'roof'));
+      {faces.map(({ wallEnum, pos, rot, width: faceWidth, height: faceHeight, label }) => {
+        const hasOpening = opening && opening.face === wallEnum;
+        const hasTarget = targetFace !== undefined && targetFace === wallEnum;
 
         return (
-          <group key={name}>
+          <group key={wallEnum}>
             <mesh position={pos as [number, number, number]} rotation={rot as [number, number, number]}>
               {(hasOpening && opening) || hasTarget ? (
                 <shapeGeometry
@@ -204,7 +196,7 @@ export function Cubicle({
               ) : (
                 <planeGeometry args={[faceWidth, faceHeight]} />
               )}
-              {name === 'floor' ? floorMaterial : wallMaterial}
+              {wallEnum === WallEnum.FLOOR ? floorMaterial : wallMaterial}
             </mesh>
 
             {hasOpening && opening && (
@@ -226,13 +218,13 @@ export function Cubicle({
               </mesh>
             )}
 
-            {name === 'floor' || name === 'roof' ? (
+            {wallEnum === WallEnum.FLOOR || wallEnum === WallEnum.ROOF ? (
               <Text
                 position={(() => {
-                  const offset = getTextOffset(name, pos as [number, number, number]);
+                  const offset = getTextOffset(wallEnum, pos as [number, number, number]);
                   // Add Z offset for floor/roof text readability
-                  if (name === 'floor') return [offset[0], offset[1], offset[2] - textSize];
-                  if (name === 'roof') return [offset[0], offset[1], offset[2] + textSize];
+                  if (wallEnum === WallEnum.FLOOR) return [offset[0], offset[1], offset[2] - textSize];
+                  if (wallEnum === WallEnum.ROOF) return [offset[0], offset[1], offset[2] + textSize];
                   return offset;
                 })()}
                 rotation={rot as [number, number, number]}
@@ -249,7 +241,7 @@ export function Cubicle({
             ) : (
               <Billboard
                 position={(() => {
-                  const offset = getTextOffset(name, pos as [number, number, number]);
+                  const offset = getTextOffset(wallEnum, pos as [number, number, number]);
                   return offset;
                 })()}
                 follow={true}

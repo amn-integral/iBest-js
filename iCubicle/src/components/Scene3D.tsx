@@ -142,55 +142,6 @@ export function Scene3D({
           </Canvas>
         </div>
       </div>
-
-      {/* Plan View (Top-down) */}
-      <div className={styles.viewPanel}>
-        <div className={styles.viewHeader}>
-          <h3 className={styles.viewTitle}>Plan View</h3>
-        </div>
-        <div className={styles.canvasWrapper}>
-          <Canvas
-            key={`plan-${length}-${width}-${height}`}
-            orthographic
-            className={`${styles.renderCanvas} ${styles.staticCanvas}`}
-            camera={{ position: [sceneCenter[0], sceneCenter[1], axisSize * 2], zoom: planZoom, up: [0, 1, 0] }}
-            dpr={[1, 2]}
-            onCreated={({ gl, camera }) => {
-              gl.setClearColor('#f9fafb');
-              camera.lookAt(...sceneCenter);
-            }}
-          >
-            {renderScene()}
-          </Canvas>
-        </div>
-      </div>
-
-      {/* Elevation View (Front view) */}
-      <div className={styles.viewPanel}>
-        <div className={styles.viewHeader}>
-          <h3 className={styles.viewTitle}>Elevation View</h3>
-        </div>
-        <div className={styles.canvasWrapper}>
-          <Canvas
-            key={`elevation-${length}-${width}-${height}`}
-            orthographic
-            className={`${styles.renderCanvas} ${styles.staticCanvas}`}
-            camera={{ position: [sceneCenter[0], sceneCenter[1] + axisSize * 2, sceneCenter[2]], zoom: elevationZoom, up: [1, 0, 0] }}
-            dpr={[1, 2]}
-            onCreated={({ gl, camera }) => {
-              gl.setClearColor('#f9fafb');
-              camera.lookAt(...sceneCenter);
-            }}
-          >
-            {renderScene()}
-          </Canvas>
-          <div className={styles.heightAnnotations}>
-            <span className={styles.heightMin}>Room Height (H = {formatMeasurement(height)} ft)</span>
-            <span className={styles.heightMin}>Threat Elevation (h = {formatMeasurement(threatPosition[2])} ft)</span>
-            <span className={styles.heightMin}>h/H = {formatMeasurement(heightRatio)}</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

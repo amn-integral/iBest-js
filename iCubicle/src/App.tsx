@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { type OrbitControls as OrbitControlsType } from 'three-stdlib';
 import styles from './App.module.css';
 import '@integralrsg/iuicomponents/styles';
@@ -35,6 +35,7 @@ const wallEnumToLabel = (wall: WallEnum): string => {
 export default function App() {
   const controlsRef = useRef<OrbitControlsType>(null);
   const state = useCubicleAnalysis();
+  const [isVisualizationCollapsed, setIsVisualizationCollapsed] = useState(false);
 
   // Computed values
   const lengthValue = Number(state.length);
@@ -179,7 +180,7 @@ export default function App() {
       </nav>
 
       {/* Main Content Area */}
-      <main className={styles.contentArea}>
+      <main className={styles['content-area']}>
         <section className={styles.summarySection}>
           <div className={styles.outputHeader}>
             <div>
@@ -219,26 +220,37 @@ export default function App() {
           </div>
         </section>
 
-        <section className={styles.visualSection}>
-          <div className={styles.visualHeader}>
+        <section className={`${styles['visual-section']} ${isVisualizationCollapsed ? styles.collapsed : ''}`}>
+          <div className={styles['visual-header']}>
             <div>
               <p className={styles.eyebrow}>Visualization</p>
             </div>
+            <button 
+              className={styles['collapse-button']}
+              onClick={() => setIsVisualizationCollapsed(!isVisualizationCollapsed)}
+              title={isVisualizationCollapsed ? 'Expand' : 'Collapse'}
+            >
+              {isVisualizationCollapsed ? '▼' : '▲'}
+            </button>
           </div>
-          <Scene3D
-            length={lengthValue}
-            width={widthValue}
-            height={heightValue}
-            opening={opening}
-            cubicleType={state.cubicleType}
-            configOption={state.configOption}
-            targetFace={state.targetFace}
-            targetType={state.targetType}
-            stripWidth={stripWidthValue}
-            stripHeight={stripHeightValue}
-            threatPosition={threatPosition}
-            controlsRef={controlsRef}
-          />
+          {!isVisualizationCollapsed && (
+            <div className={styles['visual-content']}>
+              <Scene3D
+                length={lengthValue}
+                width={widthValue}
+                height={heightValue}
+                opening={opening}
+                cubicleType={state.cubicleType}
+                configOption={state.configOption}
+                targetFace={state.targetFace}
+                targetType={state.targetType}
+                stripWidth={stripWidthValue}
+                stripHeight={stripHeightValue}
+                threatPosition={threatPosition}
+                controlsRef={controlsRef}
+              />
+            </div>
+          )}
         </section>
 
         {/* Output Section */}

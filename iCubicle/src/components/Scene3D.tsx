@@ -46,7 +46,7 @@ export function Scene3D({
   controlsRef
 }: Scene3DProps) {
   const axisSize = useMemo(() => Math.max(length, width, height) * 1.5, [length, width, height]);
-  const textSize = useMemo(() => Math.min(length, width, height) * 0.1, [length, width, height]);
+  const textSize = useMemo(() => Math.min(length, width, height) * 0.15, [length, width, height]);
   const sphereSize = Math.min(length, width, height) * 0.05;
   const sceneCenter = useMemo<[number, number, number]>(() => [length / 2, width / 2, height / 2], [length, width, height]);
   const planZoom = useMemo(() => clamp(200 / Math.max(length, width, 1), 20, 200), [length, width]);

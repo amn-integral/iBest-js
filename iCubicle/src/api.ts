@@ -12,7 +12,8 @@ declare global {
 
 export interface CubicleRequest {
   cubicle_type: CubicleType;
-  target_face: TargetFaceType;
+  target_wall: TargetFaceType;
+  wall_list: TargetFaceType[];
   Lc: number;
   Wc: number;
   Hc: number;
@@ -28,15 +29,18 @@ interface CubicleResponse {
   success: boolean;
   result?: {
     pressure: number;
-    impulse: Map<string, number>;
-    parameters: Map<string, number>;
+    impulse: Record<string, number>;
+    parameters: Record<string, number>;
+    pressure_curves: Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>>;
+    impulse_curves: Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>>;
   };
   message?: string;
 }
 
 export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleResponse> {
   // API URL can be configured via Django template (window.APP_CONFIG)
-  const apiUrl: string = window.APP_CONFIG?.API_BASE_URL || 'http://127.0.0.1:8000/api/iCubicle/';
+  // In development, use relative path to leverage Vite proxy
+  const apiUrl: string = window.APP_CONFIG?.API_BASE_URL || '/api/iCubicle/';
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -50,6 +54,7 @@ export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleRes
     // Try to parse JSON response even if status is not ok
     const result: unknown = await response.json();
 
+    console.log('Response Data:', result);
     if (!response.ok) {
       // If response has an error message, use it; otherwise use status text
       let message = `HTTP ${response.status}: ${response.statusText}`;
@@ -62,7 +67,6 @@ export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleRes
         message
       };
     }
-    console.log('Response Data:', result);
     return result as CubicleResponse;
   } catch (error) {
     return {

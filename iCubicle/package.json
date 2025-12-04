@@ -12,12 +12,14 @@
     "sync": "wsl rsync -avz --delete dist /home/projects/www/ibest_root/iCubicle/static/iCubicle"
   },
   "dependencies": {
+    "@integralrsg/iuicomponents": "0.1.0",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.0",
+    "chart.js": "^4.5.1",
     "react": "^19.2.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",
-    "three": "^0.181.1",
-    "@integralrsg/iuicomponents": "0.1.0"
+    "three": "^0.181.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

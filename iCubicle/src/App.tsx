@@ -9,6 +9,7 @@ import { CubicleConfig } from './components/CubicleConfig';
 import { OpeningConfig } from './components/OpeningConfig';
 import { ThreatConfig } from './components/ThreatConfig';
 import { TargetConfig } from './components/TargetConfig';
+import { AnalysisResults } from './components/AnalysisResults';
 
 const formatLabel = (value: string) => value.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
@@ -249,24 +250,12 @@ export default function App() {
             <span className={`${styles.statusPill} ${statusClassName}`}>{analysisStatus}</span>
           </div>
 
-          <div className={styles.outputDisplay}>
-            <div className={styles.outputText}>
-              <h3 className={styles.outputTitle}>Analysis Results</h3>
-              {state.analysisError ? (
-                <div className={styles.errorMessage}>{state.analysisError}</div>
-              ) : state.analysisResult ? (
-                <div className={styles.resultContent} dangerouslySetInnerHTML={{ __html: state.analysisResult }} />
-              ) : (
-                <p className={styles.outputPlaceholder}>Analysis results will appear here...</p>
-              )}
-            </div>
-            <div className={styles.outputChart}>
-              <h3 className={styles.outputTitle}>Visualization</h3>
-              <div className={styles.chartPlaceholder}>
-                <p>Chart will be displayed here</p>
-              </div>
-            </div>
-          </div>
+          <AnalysisResults
+            analysisResult={state.analysisResult}
+            analysisError={state.analysisError}
+            pressureCurves={state.pressureCurves}
+            impulseCurves={state.impulseCurves}
+          />
         </section>
       </main>
     </div>

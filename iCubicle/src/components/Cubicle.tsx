@@ -54,8 +54,6 @@ export function Cubicle({
   const textSize = Math.min(length, width, height) * 0.08;
   const visibleFaces = getVisibleFaces(cubicleType, configOption);
 
-  console.log('Cubicle render:', { targetFace, targetType, visibleFaces });
-
   // Calculate sphere size for threat proximity check
   const sphereSize = Math.min(length, width, height) * 0.05;
   const sphereDiameter = sphereSize * 2;
@@ -228,7 +226,7 @@ export function Cubicle({
                   return offset;
                 })()}
                 rotation={rot as [number, number, number]}
-                fontSize={textSize * 1.3}
+                fontSize={textSize * 4}
                 color="#1e293b"
                 anchorX="center"
                 anchorY="middle"
@@ -249,7 +247,7 @@ export function Cubicle({
                 lockY={false}
                 lockZ={false}
               >
-                <Text fontSize={textSize * 1.3} color="#1e293b" anchorX="center" anchorY="middle" outlineWidth={0.015} outlineColor="white" fontWeight="bold">
+                <Text fontSize={textSize * 4} color="#1e293b" anchorX="center" anchorY="middle" outlineWidth={0.015} outlineColor="white" fontWeight="bold">
                   {label}
                 </Text>
               </Billboard>

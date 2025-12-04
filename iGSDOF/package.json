@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
-    "sync": "wsl rsync -avz --delete dist /home/projects/www/ibest_root/iGSDOF/static/iGSDOF"
+    "sync": "rsync -avz --delete --mkpath dist/ /home/projects/www/ibest-root/iGSDOF/static/vite_build/"
   },
   "dependencies": {
     "@integralrsg/imath": "0.1.0",

@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => ({
   logLevel: 'warn',
-  base: mode === 'production' ? '/static/iGSDOF/dist/' : '/',
+  base: mode === 'production' ? '/static/vite_build/' : '/',
   plugins: [react()],
   resolve: {
     alias: [
@@ -61,7 +61,6 @@ export default defineConfig(({ mode }) => ({
   },
   assetsInclude: ['**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif'],
   publicDir: 'public',
-
   build: {
     outDir: 'dist',
     sourcemap: mode === 'development' ? 'inline' : true,

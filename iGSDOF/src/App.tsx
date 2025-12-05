@@ -27,7 +27,7 @@ export function App() {
   // Image Stuff
   const [dispImage, setDispImage] = useState<string | null>(null);
   const [rotationImage, setRotationImage] = useState<string | null>(null);
-  const [hysterisisImage, setHysterisisImage] = useState<string | null>(null);
+  const [hysteresisImage, setHysteresisImage] = useState<string | null>(null);
   const [isGeneratingChart, setIsGeneratingChart] = useState(false);
 
   const massValue = useMemo(() => evaluateExpression(massInput), [massInput]);
@@ -196,14 +196,14 @@ export function App() {
           }
         });
 
-        const hysterisisUrl = await renderWebGLChart({
+        const hysteresisUrl = await renderWebGLChart({
           imageType: 'png',
           xValues: [...result.response.u],
           yValues: [...result.response.fs],
           yMinMax: { min: result.response.summary.fs.min, max: result.response.summary.fs.max },
           xMinMax: { min: result.response.summary.u.min, max: result.response.summary.u.max },
           options: {
-            title: 'Hysterisis',
+            title: 'Hysteresis',
             color: '#050505ff',
             width: CHART_DIMENSIONS.width,
             height: CHART_DIMENSIONS.height,
@@ -214,7 +214,7 @@ export function App() {
 
         setRotationImage(rotationUrl);
         setDispImage(imageUrl);
-        setHysterisisImage(hysterisisUrl);
+        setHysteresisImage(hysteresisUrl);
       } catch (chartError) {
         console.warn('Chart generation failed:', chartError);
         setDispImage(null);
@@ -285,7 +285,14 @@ export function App() {
       <p className={appCss.appHeadingInfo}>
         All the units must be consistent. For consistent units refer to{' '}
         <a className={appCss.appHeadingLink} href="https://www.dynasupport.com/howtos/general/consistent-units" target="_blank" rel="noopener noreferrer">
-          this guide
+          this guide.
+        </a>
+        .
+      </p>
+      <p className={appCss.appHeadingInfo}>
+        For additional documentation regarding solver please refer to{' '}
+        <a className={appCss.appHeadingLink} href="/iGSDOF/help" target="_blank" rel="noopener noreferrer">
+          this guide.
         </a>
         .
       </p>
@@ -470,7 +477,7 @@ export function App() {
                 <div className={appCss.chartContainer}>
                   {dispImage && <img src={dispImage} alt="Displacement vs Time" width={CHART_DIMENSIONS.width} height={CHART_DIMENSIONS.height} />}
                   {rotationImage && <img src={rotationImage} alt="Rotation vs Time" width={CHART_DIMENSIONS.width} height={CHART_DIMENSIONS.height} />}
-                  {hysterisisImage && <img src={hysterisisImage} alt="Hysterisis" width={CHART_DIMENSIONS.width} height={CHART_DIMENSIONS.height} />}
+                  {hysteresisImage && <img src={hysteresisImage} alt="Hysteresis" width={CHART_DIMENSIONS.width} height={CHART_DIMENSIONS.height} />}
                 </div>
               ) : (
                 <div

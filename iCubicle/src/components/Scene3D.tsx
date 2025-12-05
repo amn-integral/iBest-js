@@ -28,8 +28,6 @@ type Scene3DProps = {
   controlsRef: React.RefObject<OrbitControlsType | null>;
 };
 
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-const formatMeasurement = (value: number) => (Number.isFinite(value) ? value.toFixed(2) : '0.00');
 
 export function Scene3D({
   length,
@@ -49,9 +47,6 @@ export function Scene3D({
   const textSize = useMemo(() => Math.min(length, width, height) * 0.15, [length, width, height]);
   const sphereSize = Math.min(length, width, height) * 0.05;
   const sceneCenter = useMemo<[number, number, number]>(() => [length / 2, width / 2, height / 2], [length, width, height]);
-  const planZoom = useMemo(() => clamp(200 / Math.max(length, width, 1), 20, 200), [length, width]);
-  const elevationZoom = useMemo(() => clamp(200 / Math.max(length, height, 1), 20, 200), [length, height]);
-  const heightRatio = clamp(height > 0 ? threatPosition[2] / height : 0, 0, 10);
 
   const renderScene = () => (
     <>

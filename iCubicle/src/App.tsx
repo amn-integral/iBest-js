@@ -225,7 +225,7 @@ export default function App() {
             <div>
               <p className={styles.eyebrow}>Visualization</p>
             </div>
-            <button 
+            <button
               className={styles['collapse-button']}
               onClick={() => setIsVisualizationCollapsed(!isVisualizationCollapsed)}
               title={isVisualizationCollapsed ? 'Expand' : 'Collapse'}

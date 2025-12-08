@@ -1,17 +1,18 @@
 import { UserInput, UserDropdown } from '@integralrsg/iuicomponents';
 import { type CubicleType } from '../types';
-import { CONFIG_OPTIONS, WallEnum } from '../constants';
+import { CUBICLE_WALLS_MAP, WallEnum } from '../constants';
 import { useMemo } from 'react';
 
 type OpeningConfigProps = {
   cubicleType: CubicleType;
-  configOption: string;
   openingFace: WallEnum;
   setOpeningFace: (value: WallEnum) => void;
   openingWidth: string;
   setOpeningWidth: (value: string) => void;
   openingHeight: string;
   setOpeningHeight: (value: string) => void;
+  openingWf: string;
+  setOpeningWf: (value: string) => void;
   onValidationChange: (field: string, hasError: boolean) => void;
 };
 
@@ -36,31 +37,26 @@ const wallEnumToLabel = (wall: WallEnum): string => {
 
 export function OpeningConfig({
   cubicleType,
-  configOption,
   openingFace,
   setOpeningFace,
   openingWidth,
   setOpeningWidth,
   openingHeight,
   setOpeningHeight,
+  openingWf,
+  setOpeningWf,
   onValidationChange
 }: OpeningConfigProps) {
   const openingFaceOptions = useMemo(() => {
-    const config = CONFIG_OPTIONS[cubicleType as keyof typeof CONFIG_OPTIONS];
-    if (config && configOption) {
-      const selectedWalls = config[configOption as keyof typeof config];
-      if (selectedWalls) {
-        // Filter out floor only, include walls and roof
-        return selectedWalls
-          .filter(wall => wall !== WallEnum.FLOOR)
-          .map(wall => ({
-            value: wall.toString(),
-            label: wallEnumToLabel(wall)
-          }));
-      }
-    }
-    return [];
-  }, [cubicleType, configOption]);
+    const walls = CUBICLE_WALLS_MAP[cubicleType] || [];
+    // Filter out floor only, include walls and roof
+    return walls
+      .filter(wall => wall !== WallEnum.FLOOR)
+      .map(wall => ({
+        value: wall.toString(),
+        label: wallEnumToLabel(wall)
+      }));
+  }, [cubicleType]);
 
   return (
     <>
@@ -93,6 +89,17 @@ export function OpeningConfig({
         onChange={setOpeningHeight}
         validation={{ min: 0 }}
         onValidationChange={(hasError: boolean) => onValidationChange('openingHeight', hasError)}
+      />
+      <UserInput
+        fontSize="medium"
+        label="Wf"
+        type="number"
+        unit="psi"
+        value={openingWf}
+        onChange={setOpeningWf}
+        validation={{ min: 0 }}
+        helpText='Weight of frangible element'
+        onValidationChange={(hasError: boolean) => onValidationChange('openingWf', hasError)}
       />
     </>
   );

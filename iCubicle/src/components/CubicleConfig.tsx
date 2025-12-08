@@ -2,43 +2,38 @@ import { UserInput, UserDropdown } from '@integralrsg/iuicomponents';
 import '@integralrsg/iuicomponents/styles';
 import { useMemo } from 'react';
 import { type CubicleType } from '../types';
-import { CUBICLE_TYPES, CUBICLE_CONFIGURATIONS } from '../constants';
+import { CUBICLE_TYPES, CUBICLE_WALLS_MAP } from '../constants';
 
 type CubicleConfigProps = {
   cubicleType: CubicleType;
   setCubicleType: (value: CubicleType) => void;
-  configOption: string;
-  setConfigOption: (value: string) => void;
   length: string;
   setLength: (value: string) => void;
   width: string;
   setWidth: (value: string) => void;
   height: string;
   setHeight: (value: string) => void;
+  utilization: string;
+  setUtilization: (value: string) => void;
   onValidationChange: (field: string, hasError: boolean) => void;
 };
 
 export function CubicleConfig({
   cubicleType,
   setCubicleType,
-  configOption,
-  setConfigOption,
   length,
   setLength,
   width,
   setWidth,
   height,
   setHeight,
+  utilization,
+  setUtilization,
   onValidationChange
 }: CubicleConfigProps) {
-  const availableOptions = useMemo(() => {
-    const config = CUBICLE_CONFIGURATIONS.find(c => c.cubicleType === cubicleType);
-    return config?.options || [];
+  const walls = useMemo(() => {
+    return CUBICLE_WALLS_MAP[cubicleType] || [];
   }, [cubicleType]);
-
-  const selectedConfig = useMemo(() => {
-    return availableOptions.find(opt => opt.value === configOption);
-  }, [availableOptions, configOption]);
 
   return (
     <>
@@ -52,13 +47,10 @@ export function CubicleConfig({
         fontSize="medium"
       />
 
-      {availableOptions.length > 0 && (
-        <>
-          <UserDropdown label="Configuration" options={availableOptions} value={configOption} onChange={value => setConfigOption(value)} fontSize="medium" />
-          {selectedConfig && (
-            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.5rem 0', lineHeight: 1.5 }}>Walls: {selectedConfig.walls.join(', ')}</p>
-          )}
-        </>
+      {walls.length > 0 && (
+        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.5rem 0', lineHeight: 1.5 }}>
+          Walls: {walls.join(', ')}
+        </p>
       )}
 
       <UserInput
@@ -90,6 +82,17 @@ export function CubicleConfig({
         onChange={setHeight}
         validation={{ min: 0.1 }}
         onValidationChange={(hasError: boolean) => onValidationChange('height', hasError)}
+      />
+      <UserInput
+        fontSize="medium"
+        label="Utilization"
+        type="number"
+        unit=""
+        value={utilization}
+        onChange={setUtilization}
+        validation={{ min: 0, max: 1 }}
+        helpText='Free volume, Total room volume - Interior equipment'
+        onValidationChange={(hasError: boolean) => onValidationChange('utilization', hasError)}
       />
     </>
   );

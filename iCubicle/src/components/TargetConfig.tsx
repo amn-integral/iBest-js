@@ -1,11 +1,10 @@
 import { UserInput, UserDropdown } from '@integralrsg/iuicomponents';
 import { type TargetType, type TargetFaceType, type CubicleType } from '../types';
-import { TargetType as TargetTypeConst, TARGET_TYPES, CONFIG_OPTIONS, WallEnum } from '../constants';
+import { TargetType as TargetTypeConst, TARGET_TYPES, CUBICLE_WALLS_MAP, WallEnum } from '../constants';
 import { useMemo } from 'react';
 
 type TargetConfigProps = {
   cubicleType: CubicleType;
-  configOption: string;
   targetFace: TargetFaceType;
   setTargetFace: (value: TargetFaceType) => void;
   targetType: TargetType;
@@ -38,7 +37,6 @@ const wallEnumToLabel = (wall: WallEnum): string => {
 
 export function TargetConfig({
   cubicleType,
-  configOption,
   targetFace,
   setTargetFace,
   targetType,
@@ -50,21 +48,15 @@ export function TargetConfig({
   onValidationChange
 }: TargetConfigProps) {
   const targetFaceOptions = useMemo(() => {
-    const config = CONFIG_OPTIONS[cubicleType as keyof typeof CONFIG_OPTIONS];
-    if (config && configOption) {
-      const selectedWalls = config[configOption as keyof typeof config];
-      if (selectedWalls) {
-        // Filter out floor only, include walls and roof
-        return selectedWalls
-          .filter(wall => wall !== WallEnum.FLOOR)
-          .map(wall => ({
-            value: wall.toString(),
-            label: wallEnumToLabel(wall)
-          }));
-      }
-    }
-    return [];
-  }, [cubicleType, configOption]);
+    const walls = CUBICLE_WALLS_MAP[cubicleType] || [];
+    // Filter out floor only, include walls and roof
+    return walls
+      .filter(wall => wall !== WallEnum.FLOOR)
+      .map(wall => ({
+        value: wall.toString(),
+        label: wallEnumToLabel(wall)
+      }));
+  }, [cubicleType]);
 
   return (
     <>

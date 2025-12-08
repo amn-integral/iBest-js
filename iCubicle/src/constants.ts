@@ -54,41 +54,13 @@ export enum WallEnum {
   ROOF = 5
 }
 
-export const CONFIG_OPTIONS = {
-  [CubicleTypes.CantileverWall]: {
-    Options_A: [WallEnum.WALL_1, WallEnum.FLOOR]
-  },
-  [CubicleTypes.TwoAdjacentWalls]: {
-    Options_A: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.FLOOR],
-    Options_B: [WallEnum.WALL_1, WallEnum.WALL_4, WallEnum.FLOOR]
-  },
-  [CubicleTypes.TwoAdjacentWallsWithRoof]: {
-    Options_A: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.ROOF, WallEnum.FLOOR],
-    Options_B: [WallEnum.WALL_1, WallEnum.WALL_4, WallEnum.ROOF, WallEnum.FLOOR]
-  },
-  [CubicleTypes.ThreeAdjacentWalls]: {
-    Options_A: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_4, WallEnum.FLOOR],
-    Options_B: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_3, WallEnum.FLOOR],
-    Options_C: [WallEnum.WALL_1, WallEnum.WALL_4, WallEnum.WALL_3, WallEnum.FLOOR]
-  },
-  [CubicleTypes.ThreeAdjacentWallsWithRoof]: {
-    Options_A: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_4, WallEnum.FLOOR, WallEnum.ROOF],
-    Options_B: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_3, WallEnum.FLOOR, WallEnum.ROOF],
-    Options_C: [WallEnum.WALL_1, WallEnum.WALL_4, WallEnum.WALL_3, WallEnum.FLOOR, WallEnum.ROOF]
-  },
-  [CubicleTypes.FourAdjacentWalls]: {
-    Options_A: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_3, WallEnum.WALL_4, WallEnum.FLOOR]
-  },
-  [CubicleTypes.FourAdjacentWallsWithRoof]: {
-    Options_A: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_3, WallEnum.WALL_4, WallEnum.FLOOR, WallEnum.ROOF]
-  }
-};
-
-export const CUBICLE_CONFIGURATIONS = Object.entries(CONFIG_OPTIONS).map(([cubicleType, options]) => ({
-  cubicleType,
-  options: Object.entries(options).map(([optionName, walls]) => ({
-    value: optionName,
-    label: optionName.replace('_', ' '),
-    walls: walls
-  }))
-}));
+// Simplified wall configuration - directly maps cubicle type to walls shown
+export const CUBICLE_WALLS_MAP = {
+  [CubicleTypes.CantileverWall]: [WallEnum.WALL_1, WallEnum.FLOOR],
+  [CubicleTypes.TwoAdjacentWalls]: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.FLOOR],
+  [CubicleTypes.TwoAdjacentWallsWithRoof]: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.FLOOR, WallEnum.ROOF],
+  [CubicleTypes.ThreeAdjacentWalls]: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_4, WallEnum.FLOOR],
+  [CubicleTypes.ThreeAdjacentWallsWithRoof]: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_4, WallEnum.FLOOR, WallEnum.ROOF],
+  [CubicleTypes.FourAdjacentWalls]: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_3, WallEnum.WALL_4, WallEnum.FLOOR],
+  [CubicleTypes.FourAdjacentWallsWithRoof]: [WallEnum.WALL_1, WallEnum.WALL_2, WallEnum.WALL_3, WallEnum.WALL_4, WallEnum.FLOOR, WallEnum.ROOF]
+} as const;

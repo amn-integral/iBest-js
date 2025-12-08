@@ -1,17 +1,18 @@
 import { useState, useCallback } from 'react';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
-import { CubicleTypes, TargetType as TargetTypeConst, WallEnum, CONFIG_OPTIONS } from '../constants';
+import { CubicleTypes, TargetType as TargetTypeConst, WallEnum, CUBICLE_WALLS_MAP } from '../constants';
 import { fetchCubicleData, type CubicleRequest } from '../api';
 
 export function useCubicleAnalysis() {
   const [length, setLength] = useState('10');
   const [width, setWidth] = useState('15');
   const [height, setHeight] = useState('20');
+  const [utilization, setUtilization] = useState('0.5');
   const [openingWidth, setOpeningWidth] = useState('0.0');
   const [openingHeight, setOpeningHeight] = useState('0.0');
+  const [openingWf, setOpeningWf] = useState('0.0');
   const [openingFace, setOpeningFace] = useState<WallEnum>(WallEnum.WALL_1);
   const [cubicleType, setCubicleType] = useState<CubicleType>(CubicleTypes.CantileverWall);
-  const [configOption, setConfigOption] = useState<string>('Options_A');
 
   const [threatXLocation, setThreatXLocation] = useState('5.0');
   const [threatYLocation, setThreatYLocation] = useState('10.0');
@@ -50,22 +51,10 @@ export function useCubicleAnalysis() {
     setPressureCurves(undefined);
     setImpulseCurves(undefined);
 
-    // Get wall list from configuration
-    const config = CONFIG_OPTIONS[cubicleType as keyof typeof CONFIG_OPTIONS];
-    let wallList: TargetFaceType[] = [targetFace];
-    
-    if (config && configOption) {
-      const selectedWalls = config[configOption as keyof typeof config] as WallEnum[];
-      if (selectedWalls) {
-        // Filter out floor and only include walls and roof
-        wallList = selectedWalls.filter(wall => wall !== WallEnum.FLOOR) as TargetFaceType[];
-      }
-    }
 
     const requestData: CubicleRequest = {
       cubicle_type: cubicleType,
       target_wall: targetFace,
-      wall_list: wallList,
       Lc: Number(length),
       Wc: Number(width),
       Hc: Number(height),
@@ -74,27 +63,29 @@ export function useCubicleAnalysis() {
       Z: Number(threatZLocation),
       Wo: Number(openingWidth),
       Ho: Number(openingHeight),
-      W: Number(threatWeight)
+      W: Number(threatWeight),
+      Wf: Number(openingWf),
+      Utilization: Number(utilization)
     };
 
     fetchCubicleData(requestData)
       .then(response => {
         if (response.success && response.result) {
-          const { pressure, impulse, parameters } = response.result;
+          const { Pr, Ir, CubicleParams } = response.result;
 
-          let resultHtml = `<p><strong>Pressure:</strong> ${pressure.toFixed(2)} psi</p>`;
+          let resultHtml = `<p><strong>Pressure:</strong> ${Pr.toFixed(2)} psi</p>`;
 
-          if (impulse && typeof impulse === 'object') {
+          if (Ir && typeof Ir === 'object') {
             resultHtml += '<p><strong>Impulse:</strong></p><ul>';
-            Object.entries(impulse).forEach(([key, value]) => {
+            Object.entries(Ir).forEach(([key, value]) => {
               resultHtml += `<li><strong>${key}:</strong> ${value}</li>`;
             });
             resultHtml += '</ul>';
           }
 
-          if (parameters && typeof parameters === 'object') {
+          if (CubicleParams && typeof CubicleParams === 'object') {
             resultHtml += '<p><strong>Parameters:</strong></p><ul>';
-            Object.entries(parameters).forEach(([key, value]) => {
+            Object.entries(CubicleParams).forEach(([key, value]) => {
               resultHtml += `<li><strong>${key}:</strong> ${value}</li>`;
             });
             resultHtml += '</ul>';
@@ -129,7 +120,6 @@ export function useCubicleAnalysis() {
     hasAnyErrors,
     isAnalyzing,
     cubicleType,
-    configOption,
     targetFace,
     length,
     width,
@@ -156,12 +146,16 @@ export function useCubicleAnalysis() {
     setOpeningWidth,
     openingHeight,
     setOpeningHeight,
+    openingWf,
+    setOpeningWf,
     openingFace,
     setOpeningFace,
 
     // Cubicle type
     cubicleType,
     setCubicleType,
+    utilization,
+    setUtilization,
 
     // Threat
     threatXLocation,
@@ -172,10 +166,6 @@ export function useCubicleAnalysis() {
     setThreatZLocation,
     threatWeight,
     setThreatWeight,
-
-    // Configuration
-    configOption,
-    setConfigOption,
 
     // Target
     targetType,

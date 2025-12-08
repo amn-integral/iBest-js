@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { useMemo } from 'react';
 import { Text, Billboard } from '@react-three/drei';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
-import { TargetType as TargetTypeConst, CONFIG_OPTIONS, WallEnum } from '../constants';
+import { TargetType as TargetTypeConst, CUBICLE_WALLS_MAP, WallEnum } from '../constants';
 
 type Opening = {
   face: WallEnum;
@@ -15,7 +15,6 @@ type CubicleProps = {
   position?: [number, number, number];
   opening?: Opening;
   cubicleType?: CubicleType;
-  configOption?: string;
   targetFace?: TargetFaceType;
   targetType?: TargetType;
   stripWidth?: number;
@@ -26,16 +25,8 @@ type CubicleProps = {
 const wallMaterial = <meshStandardMaterial color="#94a3b8" transparent opacity={0.85} side={THREE.DoubleSide} />;
 const floorMaterial = <meshStandardMaterial color="#64748b" transparent opacity={0.9} side={THREE.DoubleSide} />;
 
-const getVisibleFaces = (type: CubicleType, configOption?: string): WallEnum[] => {
-  // Check if this cubicle type has configuration options
-  const config = CONFIG_OPTIONS[type as keyof typeof CONFIG_OPTIONS];
-  if (config && configOption) {
-    const selectedWalls = config[configOption as keyof typeof config];
-    if (selectedWalls) {
-      return selectedWalls;
-    }
-  }
-  throw new Error(`No configuration found for cubicle type: ${type} with option: ${configOption}`);
+const getVisibleFaces = (type: CubicleType): readonly WallEnum[] => {
+  return CUBICLE_WALLS_MAP[type] || [];
 };
 
 export function Cubicle({
@@ -43,7 +34,6 @@ export function Cubicle({
   position = [0, 0, 0],
   opening,
   cubicleType = 'Three-Adjacent-Walls',
-  configOption,
   targetFace,
   targetType,
   stripWidth = 1,
@@ -52,7 +42,7 @@ export function Cubicle({
 }: CubicleProps) {
   const [length, width, height] = size;
   const textSize = Math.min(length, width, height) * 0.08;
-  const visibleFaces = getVisibleFaces(cubicleType, configOption);
+  const visibleFaces = getVisibleFaces(cubicleType);
 
   // Calculate sphere size for threat proximity check
   const sphereSize = Math.min(length, width, height) * 0.05;

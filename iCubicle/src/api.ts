@@ -13,26 +13,29 @@ declare global {
 export interface CubicleRequest {
   cubicle_type: CubicleType;
   target_wall: TargetFaceType;
-  wall_list: TargetFaceType[];
   Lc: number;
   Wc: number;
   Hc: number;
+  Utilization?: number;
   X: number;
   Y: number;
   Z: number;
   Wo: number;
   Ho: number;
   W: number;
+  Wf: number;
 }
 
 interface CubicleResponse {
   success: boolean;
   result?: {
-    pressure: number;
-    impulse: Record<string, number>;
-    parameters: Record<string, number>;
+    Pr: number;
+    Ir: Record<string, number>;
+    CubicleParams: Record<string, number>;
     pressure_curves: Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>>;
     impulse_curves: Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>>;
+    Pg: number;
+    Ig: Number;
   };
   message?: string;
 }

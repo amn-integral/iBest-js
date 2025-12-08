@@ -93,14 +93,14 @@ export default function App() {
             <CubicleConfig
               cubicleType={state.cubicleType}
               setCubicleType={state.setCubicleType}
-              configOption={state.configOption}
-              setConfigOption={state.setConfigOption}
               length={state.length}
               setLength={state.setLength}
               width={state.width}
               setWidth={state.setWidth}
               height={state.height}
               setHeight={state.setHeight}
+              utilization={state.utilization}
+              setUtilization={state.setUtilization}
               onValidationChange={state.setFieldError}
             />
           </section>
@@ -111,13 +111,14 @@ export default function App() {
             </header>
             <OpeningConfig
               cubicleType={state.cubicleType}
-              configOption={state.configOption}
               openingFace={state.openingFace}
               setOpeningFace={state.setOpeningFace}
               openingWidth={state.openingWidth}
               setOpeningWidth={state.setOpeningWidth}
               openingHeight={state.openingHeight}
               setOpeningHeight={state.setOpeningHeight}
+              openingWf={state.openingWf}
+              setOpeningWf={state.setOpeningWf}
               onValidationChange={state.setFieldError}
             />
           </section>
@@ -148,7 +149,6 @@ export default function App() {
             </header>
             <TargetConfig
               cubicleType={state.cubicleType}
-              configOption={state.configOption}
               targetFace={state.targetFace}
               setTargetFace={state.setTargetFace}
               targetType={state.targetType}
@@ -241,7 +241,6 @@ export default function App() {
                 height={heightValue}
                 opening={opening}
                 cubicleType={state.cubicleType}
-                configOption={state.configOption}
                 targetFace={state.targetFace}
                 targetType={state.targetType}
                 stripWidth={stripWidthValue}

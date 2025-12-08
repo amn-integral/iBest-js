@@ -19,7 +19,6 @@ type Scene3DProps = {
   height: number;
   opening: Opening;
   cubicleType: CubicleType;
-  configOption: string;
   targetFace: TargetFaceType;
   targetType: TargetType;
   stripWidth: number;
@@ -35,7 +34,6 @@ export function Scene3D({
   height,
   opening,
   cubicleType,
-  configOption,
   targetFace,
   targetType,
   stripWidth,
@@ -70,7 +68,6 @@ export function Scene3D({
         position={[0, 0, 0]}
         opening={opening}
         cubicleType={cubicleType}
-        configOption={configOption}
         targetFace={targetFace}
         targetType={targetType}
         stripWidth={stripWidth}

@@ -36,6 +36,41 @@ export default function App() {
   const controlsRef = useRef<OrbitControlsType>(null);
   const state = useCubicleAnalysis();
   const [isVisualizationCollapsed, setIsVisualizationCollapsed] = useState(false);
+  const [copyLinkSuccess, setCopyLinkSuccess] = useState(false);
+
+  const handleCopyLink = () => {
+    const params = new URLSearchParams();
+    params.set('cubicleType', state.cubicleType);
+    params.set('length', state.length);
+    params.set('width', state.width);
+    params.set('height', state.height);
+    params.set('utilization', state.utilization);
+    params.set('openingWidth', state.openingWidth);
+    params.set('openingHeight', state.openingHeight);
+    params.set('openingWf', state.openingWf);
+    params.set('openingFace', String(state.openingFace));
+    params.set('threatXLocation', state.threatXLocation);
+    params.set('threatYLocation', state.threatYLocation);
+    params.set('threatZLocation', state.threatZLocation);
+    params.set('threatWeight', state.threatWeight);
+    params.set('targetType', state.targetType);
+    params.set('targetFace', String(state.targetFace));
+    params.set('stripWidth', state.stripWidth);
+    params.set('stripHeight', state.stripHeight);
+
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    
+    navigator.clipboard.writeText(url).then(
+      () => {
+        setCopyLinkSuccess(true);
+        setTimeout(() => setCopyLinkSuccess(false), 2000);
+      },
+      (err) => {
+        console.error('Failed to copy link:', err);
+        alert('Failed to copy link to clipboard');
+      }
+    );
+  };
 
   // Computed values
   const lengthValue = Number(state.length);
@@ -170,6 +205,9 @@ export default function App() {
           <p className={styles.footerHint}>
             {state.isValid ? 'All fields validated. Ready to compute blast loads.' : 'Adjust inputs until validation passes.'}
           </p>
+          <button className={styles.copyLinkButton} onClick={handleCopyLink} title="Copy link to current configuration">
+            {copyLinkSuccess ? '✓ Link Copied!' : '🔗 Copy Link'}
+          </button>
         </div>
       </nav>
 

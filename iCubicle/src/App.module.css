@@ -151,6 +151,34 @@
   box-shadow: none;
 }
 
+.copyLinkButton {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6366f1;
+  background: #ffffff;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.copyLinkButton:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  transform: translateY(-1px);
+}
+
+.copyLinkButton:active {
+  transform: translateY(0);
+  background: #e0e7ff;
+}
+
 /* Right Column */
 .contentArea {
   background: #ffffff;

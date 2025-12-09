@@ -1,7 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
 import { CubicleTypes, TargetType as TargetTypeConst, WallEnum } from '../constants';
 import { fetchCubicleData, type CubicleRequest, type CubicleResponse } from '../api';
+
+function isValidWallEnum(value: string | null): boolean {
+  if (!value) return false;
+  return (Object.values(WallEnum) as string[]).includes(value);
+}
 
 export function useCubicleAnalysis() {
   const [length, setLength] = useState('10');
@@ -102,6 +107,45 @@ export function useCubicleAnalysis() {
     openingWf,
     utilization
   ]);
+
+  // Parse URL query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('length')) setLength(params.get('length') || '10');
+    if (params.has('width')) setWidth(params.get('width') || '15');
+    if (params.has('height')) setHeight(params.get('height') || '20');
+    if (params.has('utilization')) setUtilization(params.get('utilization') || '0.5');
+    if (params.has('openingWidth')) setOpeningWidth(params.get('openingWidth') || '0.1');
+    if (params.has('openingHeight')) setOpeningHeight(params.get('openingHeight') || '0.1');
+    if (params.has('openingWf')) setOpeningWf(params.get('openingWf') || '0.0');
+    if (params.has('cubicleType')) setCubicleType((params.get('cubicleType') as CubicleType) || CubicleTypes.CantileverWall);
+    if (params.has('threatXLocation')) setThreatXLocation(params.get('threatXLocation') || '5.0');
+    if (params.has('threatYLocation')) setThreatYLocation(params.get('threatYLocation') || '10.0');
+    if (params.has('threatZLocation')) setThreatZLocation(params.get('threatZLocation') || '5.0');
+    if (params.has('threatWeight')) setThreatWeight(params.get('threatWeight') || '12.0');
+    if (params.has('targetType')) setTargetType((params.get('targetType') as TargetType) || TargetTypeConst.FullWall);
+    if (params.has('stripHeight')) setStripHeight(params.get('stripHeight') || '1.0');
+    if (params.has('stripWidth')) setStripWidth(params.get('stripWidth') || '1.0');
+    // Safe enum casting with validation for targetFace
+    if (params.has('targetFace')) {
+      const faceParam = params.get('targetFace');
+      if (isValidWallEnum(faceParam)) {
+        setTargetFace(faceParam as unknown as TargetFaceType);
+      } else {
+        setTargetFace(WallEnum.WALL_1);
+      }
+    }
+
+    // Safe enum casting with validation for openingFace
+    if (params.has('openingFace')) {
+      const openingFaceParam = params.get('openingFace');
+      if (isValidWallEnum(openingFaceParam)) {
+        setOpeningFace(openingFaceParam as unknown as WallEnum);
+      } else {
+        setOpeningFace(WallEnum.WALL_1);
+      }
+    }
+  }, []);
 
   return {
     // Dimensions

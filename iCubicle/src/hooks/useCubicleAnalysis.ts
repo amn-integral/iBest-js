@@ -1,15 +1,15 @@
 import { useState, useCallback } from 'react';
 import { type CubicleType, type TargetType, type TargetFaceType } from '../types';
-import { CubicleTypes, TargetType as TargetTypeConst, WallEnum, CUBICLE_WALLS_MAP } from '../constants';
-import { fetchCubicleData, type CubicleRequest } from '../api';
+import { CubicleTypes, TargetType as TargetTypeConst, WallEnum } from '../constants';
+import { fetchCubicleData, type CubicleRequest, type CubicleResponse } from '../api';
 
 export function useCubicleAnalysis() {
   const [length, setLength] = useState('10');
   const [width, setWidth] = useState('15');
   const [height, setHeight] = useState('20');
   const [utilization, setUtilization] = useState('0.5');
-  const [openingWidth, setOpeningWidth] = useState('0.0');
-  const [openingHeight, setOpeningHeight] = useState('0.0');
+  const [openingWidth, setOpeningWidth] = useState('0.1');
+  const [openingHeight, setOpeningHeight] = useState('0.1');
   const [openingWf, setOpeningWf] = useState('0.0');
   const [openingFace, setOpeningFace] = useState<WallEnum>(WallEnum.WALL_1);
   const [cubicleType, setCubicleType] = useState<CubicleType>(CubicleTypes.CantileverWall);
@@ -26,10 +26,14 @@ export function useCubicleAnalysis() {
 
   const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<CubicleResponse | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [pressureCurves, setPressureCurves] = useState<Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>> | undefined>();
-  const [impulseCurves, setImpulseCurves] = useState<Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>> | undefined>();
+  const [pressureCurves, setPressureCurves] = useState<
+    Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>> | undefined
+  >();
+  const [impulseCurves, setImpulseCurves] = useState<
+    Record<number, Array<{ curve_name: string; xdata: number[]; ydata: number[]; num_points: number }>> | undefined
+  >();
 
   const setFieldError = useCallback((fieldName: string, hasError: boolean) => {
     setValidationErrors(prev => {
@@ -51,7 +55,6 @@ export function useCubicleAnalysis() {
     setPressureCurves(undefined);
     setImpulseCurves(undefined);
 
-
     const requestData: CubicleRequest = {
       cubicle_type: cubicleType,
       target_wall: targetFace,
@@ -71,41 +74,7 @@ export function useCubicleAnalysis() {
     fetchCubicleData(requestData)
       .then(response => {
         if (response.success && response.result) {
-          const { Pr, Ir, CubicleParams } = response.result;
-
-          let resultHtml = `<p><strong>Pressure:</strong> ${Pr.toFixed(2)} psi</p>`;
-
-          if (Ir && typeof Ir === 'object') {
-            resultHtml += '<p><strong>Impulse:</strong></p><ul>';
-            Object.entries(Ir).forEach(([key, value]) => {
-              resultHtml += `<li><strong>${key}:</strong> ${value}</li>`;
-            });
-            resultHtml += '</ul>';
-          }
-
-          if (CubicleParams && typeof CubicleParams === 'object') {
-            resultHtml += '<p><strong>Parameters:</strong></p><ul>';
-            Object.entries(CubicleParams).forEach(([key, value]) => {
-              resultHtml += `<li><strong>${key}:</strong> ${value}</li>`;
-            });
-            resultHtml += '</ul>';
-          }
-
-          setAnalysisResult(resultHtml);
-          
-          // Store curve data
-          console.log('API Response:', response.result);
-          console.log('Pressure curves from API:', response.result.pressure_curves);
-          console.log('Impulse curves from API:', response.result.impulse_curves);
-          
-          if (response.result.pressure_curves) {
-            console.log('Setting pressure curves:', response.result.pressure_curves);
-            setPressureCurves(response.result.pressure_curves);
-          }
-          if (response.result.impulse_curves) {
-            console.log('Setting impulse curves:', response.result.impulse_curves);
-            setImpulseCurves(response.result.impulse_curves);
-          }
+          setAnalysisResult(response);
         } else {
           setAnalysisError(response.message || 'Analysis failed');
         }
@@ -129,7 +98,9 @@ export function useCubicleAnalysis() {
     threatZLocation,
     openingWidth,
     openingHeight,
-    threatWeight
+    threatWeight,
+    openingWf,
+    utilization
   ]);
 
   return {

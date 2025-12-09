@@ -22,6 +22,8 @@ const unit = (node: React.ReactNode, u: React.ReactNode) => (
     {node} <span className={styles.unit}>({u})</span>
   </>
 );
+// Different color for each index
+const colorForIndex = (i: number) => `hsl(${(i * 57) % 360}, 70%, 50%)`;
 
 // prettier-ignore
 const KEY_LABELS: Record<string, React.ReactNode> = {
@@ -85,8 +87,8 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
         label: curve.curve_name,
         data: points,
         fill: false,
-        borderColor: idx === 0 ? 'rgb(255, 99, 132)' : 'rgb(75, 192, 192)',
-        tension: 0.1,
+        borderColor: colorForIndex(idx),
+        tension: 0.0,
         pointRadius: 5,
         pointHoverRadius: 7
       };

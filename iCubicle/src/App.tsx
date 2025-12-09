@@ -74,6 +74,7 @@ export default function App() {
       : state.analysisResult
         ? 'Result ready'
         : 'Awaiting analysis';
+
   const statusClassName = state.isAnalyzing ? styles.statusActive : state.analysisError ? styles.statusError : styles.statusIdle;
 
   return (
@@ -160,13 +161,6 @@ export default function App() {
               onValidationChange={state.setFieldError}
             />
           </section>
-
-          <section className={styles.navCard}>
-            <header className={styles.navCardHeader}>
-              <p className={styles.sectionTitle}>Analysis Parameters</p>
-            </header>
-            <p className={styles.analysisNote}>Contains text output from the model.</p>
-          </section>
         </div>
 
         <div className={styles.navFooter}>
@@ -180,7 +174,7 @@ export default function App() {
       </nav>
 
       {/* Main Content Area */}
-      <main className={styles['content-area']}>
+      <main className={styles.contentArea}>
         <section className={styles.summarySection}>
           <div className={styles.outputHeader}>
             <div>
@@ -220,13 +214,13 @@ export default function App() {
           </div>
         </section>
 
-        <section className={`${styles['visual-section']} ${isVisualizationCollapsed ? styles.collapsed : ''}`}>
-          <div className={styles['visual-header']}>
+        <section className={`${styles.visualSection} ${isVisualizationCollapsed ? styles.collapsed : ''}`}>
+          <div className={styles.visualHeader}>
             <div>
               <p className={styles.eyebrow}>Visualization</p>
             </div>
             <button
-              className={styles['collapse-button']}
+              className={styles.collapseButton}
               onClick={() => setIsVisualizationCollapsed(!isVisualizationCollapsed)}
               title={isVisualizationCollapsed ? 'Expand' : 'Collapse'}
             >
@@ -234,7 +228,7 @@ export default function App() {
             </button>
           </div>
           {!isVisualizationCollapsed && (
-            <div className={styles['visual-content']}>
+            <div className={styles.visualContent}>
               <Scene3D
                 length={lengthValue}
                 width={widthValue}
@@ -261,12 +255,7 @@ export default function App() {
             <span className={`${styles.statusPill} ${statusClassName}`}>{analysisStatus}</span>
           </div>
 
-          <AnalysisResults
-            analysisResult={state.analysisResult}
-            analysisError={state.analysisError}
-            pressureCurves={state.pressureCurves}
-            impulseCurves={state.impulseCurves}
-          />
+          <AnalysisResults props={state.analysisResult} />
         </section>
       </main>
     </div>

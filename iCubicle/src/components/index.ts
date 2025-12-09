@@ -4,4 +4,3 @@ export { CubicleConfig } from './CubicleConfig';
 export { OpeningConfig } from './OpeningConfig';
 export { ThreatConfig } from './ThreatConfig';
 export { TargetConfig } from './TargetConfig';
-export {CurveCharts} from './CurveCharts';

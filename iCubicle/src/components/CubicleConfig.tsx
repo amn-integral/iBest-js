@@ -47,11 +47,7 @@ export function CubicleConfig({
         fontSize="medium"
       />
 
-      {walls.length > 0 && (
-        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.5rem 0', lineHeight: 1.5 }}>
-          Walls: {walls.join(', ')}
-        </p>
-      )}
+      {walls.length > 0 && <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.5rem 0', lineHeight: 1.5 }}>Walls: {walls.join(', ')}</p>}
 
       <UserInput
         fontSize="medium"
@@ -91,7 +87,7 @@ export function CubicleConfig({
         value={utilization}
         onChange={setUtilization}
         validation={{ min: 0, max: 1 }}
-        helpText='Free volume, Total room volume - Interior equipment'
+        helpText="Free volume, Total room volume - Interior equipment"
         onValidationChange={(hasError: boolean) => onValidationChange('utilization', hasError)}
       />
     </>

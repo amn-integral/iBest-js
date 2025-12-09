@@ -27,7 +27,6 @@ type Scene3DProps = {
   controlsRef: React.RefObject<OrbitControlsType | null>;
 };
 
-
 export function Scene3D({
   length,
   width,

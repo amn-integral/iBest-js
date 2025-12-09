@@ -98,7 +98,7 @@ export function OpeningConfig({
         value={openingWf}
         onChange={setOpeningWf}
         validation={{ min: 0 }}
-        helpText='Weight of frangible element'
+        helpText="Weight of frangible element"
         onValidationChange={(hasError: boolean) => onValidationChange('openingWf', hasError)}
       />
     </>

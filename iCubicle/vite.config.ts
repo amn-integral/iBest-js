@@ -21,28 +21,17 @@ export default defineConfig(({ mode }) => {
       alias: [
         {
           find: '@integralrsg/imath',
-          replacement: path.resolve(
-            __dirname,
-            isDev ? '../iMath/src' : '../iMath/dist'
-          ),
+          replacement: path.resolve(__dirname, isDev ? '../iMath/src' : '../iMath/dist')
         },
         {
           find: '@integralrsg/iuicomponents/styles',
-          replacement: path.resolve(
-            __dirname,
-            isDev
-              ? '../iUIComponents/src/styles.ts'
-              : '../iUIComponents/dist/iuicomponents.css'
-          ),
+          replacement: path.resolve(__dirname, isDev ? '../iUIComponents/src/styles.ts' : '../iUIComponents/dist/iuicomponents.css')
         },
         {
           find: '@integralrsg/iuicomponents',
-          replacement: path.resolve(
-            __dirname,
-            isDev ? '../iUIComponents/src/index.ts' : '../iUIComponents/dist'
-          ),
-        },
-      ],
+          replacement: path.resolve(__dirname, isDev ? '../iUIComponents/src/index.ts' : '../iUIComponents/dist')
+        }
+      ]
     },
 
     server: {
@@ -52,44 +41,32 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
-          secure: false,
-        },
-      },
+          secure: false
+        }
+      }
     },
 
     optimizeDeps: {
       // Prebundle the heavy stuff used in dev
-      include: [
-        'react',
-        'react-dom',
-        'three',
-        '@react-three/fiber',
-        '@react-three/drei',
-      ],
+      include: ['react', 'react-dom', 'three', '@react-three/fiber', '@react-three/drei']
     },
 
     esbuild: {
       // Better stack traces & preserved function names
       keepNames: true,
-      target: 'esnext',
+      target: 'esnext'
     },
 
     css: {
       modules: {
         scopeBehaviour: 'local',
         localsConvention: 'camelCase',
-        generateScopedName: 'iCubicle_app__[name]__[local]___[hash:base64:5]',
+        generateScopedName: 'iCubicle_app__[name]__[local]___[hash:base64:5]'
       },
-      devSourcemap: true,
+      devSourcemap: true
     },
 
-    assetsInclude: [
-      '**/*.svg',
-      '**/*.png',
-      '**/*.jpg',
-      '**/*.jpeg',
-      '**/*.gif',
-    ],
+    assetsInclude: ['**/*.svg', '**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif'],
 
     publicDir: 'public',
 
@@ -135,9 +112,9 @@ export default defineConfig(({ mode }) => {
             ) {
               return 'vendor';
             }
-          },
-        },
-      },
-    },
+          }
+        }
+      }
+    }
   };
 });

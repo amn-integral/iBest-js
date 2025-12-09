@@ -71,12 +71,6 @@
   min-height: 0;
 }
 
-.primaryCanvas {
-  width: 100%;
-  height: 100%;
-  max-height: 100%;
-}
-
 .renderCanvas {
   width: 100%;
   height: 100%;
@@ -84,21 +78,4 @@
   max-height: 100%;
   display: block;
   object-fit: contain;
-}
-
-.staticCanvas {
-  filter: saturate(0.85);
-}
-
-.heightAnnotations {
-  padding: 0.6rem 1rem;
-  font-size: 0.8rem;
-  color: #475569;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.heightMin {
-  font-weight: 600;
 }

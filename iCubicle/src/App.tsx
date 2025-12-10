@@ -59,13 +59,13 @@ export default function App() {
     params.set('stripHeight', state.stripHeight);
 
     const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    
+
     navigator.clipboard.writeText(url).then(
       () => {
         setCopyLinkSuccess(true);
         setTimeout(() => setCopyLinkSuccess(false), 2000);
       },
-      (err) => {
+      err => {
         console.error('Failed to copy link:', err);
         alert('Failed to copy link to clipboard');
       }

@@ -69,6 +69,47 @@
   margin-bottom: 0.5rem;
 }
 
+.headerButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.pdfButton {
+  border-radius: 6px;
+  border: 1px solid #3498db;
+  background-color: #3498db;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.pdfButton:hover:not(:disabled) {
+  background-color: #2980b9;
+  border-color: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pdfButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorMessage {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  background-color: #fee;
+  color: #c00;
+  font-size: 0.875rem;
+  border: 1px solid #fcc;
+}
+
 .analysisHelpButton {
   position: relative;
   width: 24px;

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 import { Line } from 'react-chartjs-2';
+import { useGeneratePDF } from '../hooks/useGeneratePDF';
 // prettier-ignore
 const sub = (base: React.ReactNode, s: React.ReactNode, tail?: React.ReactNode) => (
 	<>{base}<sub>{s}</sub>{tail}</>);
@@ -52,6 +53,23 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+
+  // PDF generation hook
+  const { generatePDF, isGenerating, progress, error: pdfError } = useGeneratePDF();
+
+  const handleDownloadPDF = async () => {
+    if (!props || !props.success) {
+      alert('No analysis results to generate PDF');
+      return;
+    }
+
+    try {
+      await generatePDF(props, { filename: 'cubicle_analysis_report.pdf' });
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      alert(`PDF generation failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
 
   // Close on ESC or click outside
   useEffect(() => {
@@ -103,17 +121,26 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
         <div className={styles.resultColumn}>
           <div className={styles.resultHeader}>
             <h2 className={styles.eyebrow}>Parameters</h2>
-            <button
-              ref={buttonRef}
-              type="button"
-              className={styles.analysisHelpButton}
-              onClick={() => setOpen(v => !v)}
-              aria-expanded={open}
-              aria-controls="analysis-help-text"
-            >
-              ?
-            </button>
+            <div className={styles.headerButtons}>
+              {props?.success && props.pressure_steps && (
+                <button type="button" className={styles.pdfButton} onClick={handleDownloadPDF} disabled={isGenerating} title="Download PDF Report">
+                  {isGenerating ? `Generating... ${progress}%` : '📄 PDF'}
+                </button>
+              )}
+              <button
+                ref={buttonRef}
+                type="button"
+                className={styles.analysisHelpButton}
+                onClick={() => setOpen(v => !v)}
+                aria-expanded={open}
+                aria-controls="analysis-help-text"
+              >
+                ?
+              </button>
+            </div>
           </div>
+
+          {pdfError && <div className={styles.errorMessage}>PDF Error: {pdfError}</div>}
 
           {open && (
             <div ref={popupRef} id="analysis-help-text" className={styles.analysisHelpText} role="note">

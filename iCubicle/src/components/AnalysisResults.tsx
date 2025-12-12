@@ -49,7 +49,7 @@ const KEY_LABELS: Record<string, React.ReactNode> = {
 const renderKey = (key: string) => KEY_LABELS[key] ?? key;
 
 export function AnalysisResults({ props: props }: { props: CubicleResponse | null }) {
-  const hasChartData = props?.success && props.result?.Chart?.curves && props.result.Chart.curves.length > 0;
+  const hasChartData = props?.success && props.result?.FinalChart?.curves && props.result.FinalChart.curves.length > 0;
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -95,9 +95,9 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
   }, [open]);
 
   const data = useMemo(() => {
-    if (!hasChartData || !props?.result?.Chart) return null;
+    if (!hasChartData || !props?.result?.FinalChart) return null;
 
-    const chart = props.result.Chart;
+    const chart = props.result.FinalChart;
 
     const datasets = chart.curves.map((curve, idx) => {
       const points = curve.xdata.map((x, i) => ({ x, y: curve.ydata[i] }));
@@ -122,7 +122,7 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
           <div className={styles.resultHeader}>
             <h2 className={styles.eyebrow}>Parameters</h2>
             <div className={styles.headerButtons}>
-              {props?.success && props.pressure_steps && (
+              {props?.success && props.result?.ShockPressureSteps && (
                 <button type="button" className={styles.pdfButton} onClick={handleDownloadPDF} disabled={isGenerating} title="Download PDF Report">
                   {isGenerating ? `Generating... ${progress}%` : '📄 PDF'}
                 </button>
@@ -177,9 +177,9 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
 
           {props?.success ? (
             // Iterate over params and display key-value pairs
-            props.result?.Params ? (
+            props.result?.CalculatedParams ? (
               <div className={styles.paramsList}>
-                {Object.entries(props.result.Params).map(([key, value]) => (
+                {Object.entries(props.result.CalculatedParams).map(([key, value]) => (
                   <div className={styles.paramDisplay} key={key}>
                     <div className={styles.paramKey}>{renderKey(key)}</div>
                     <div className={styles.paramValue}>{typeof value === 'number' ? value.toFixed(2) : value}</div>

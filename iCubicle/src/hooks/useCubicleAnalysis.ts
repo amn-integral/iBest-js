@@ -9,9 +9,9 @@ function isValidWallEnum(value: string | null): boolean {
 }
 
 export function useCubicleAnalysis() {
-  const [length, setLength] = useState('10');
-  const [width, setWidth] = useState('15');
-  const [height, setHeight] = useState('20');
+  const [length, setLength] = useState('12');
+  const [width, setWidth] = useState('16');
+  const [height, setHeight] = useState('35');
   const [utilization, setUtilization] = useState('0.5');
   const [openingWidth, setOpeningWidth] = useState('0.1');
   const [openingHeight, setOpeningHeight] = useState('0.1');

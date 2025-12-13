@@ -70,7 +70,6 @@ export async function renderChartToBase64(
       xMax = Math.round(Math.max(...curve.xdata));
       xMin = Math.round(Math.min(...curve.xdata));
     }
-    console.log(`Rendering curve: ${curve.curve_name}, Interpolated: ${isInterpolated}`);
     return {
       label: curve.curve_name,
       data: curve.xdata.map((x, i) => ({ x, y: curve.ydata[i] })),
@@ -86,16 +85,16 @@ export async function renderChartToBase64(
 
   if (interpolationPoint) {
     const [px, py] = interpolationPoint;
-    console.log(`Adding interpolation point at (${px}, ${py})`);
+    console.log('Adding interpolation point at:', px, py);
     datasets.push({
       label: 'Interpolated Result',
       data: [{ x: px, y: py }],
       borderColor: '#2e01f8ff',
       backgroundColor: '#0617f8ff',
-      pointRadius: 5,
+      pointRadius: 3,
       pointStyle: 'circle', // Chart.js built-in "X" marker
       borderWidth: 0,
-      pointBorderWidth: 3, // Make the cross thicker
+      pointBorderWidth: 1, // Make the cross thicker
       showLine: false // only show the point, no connecting line
     });
   }

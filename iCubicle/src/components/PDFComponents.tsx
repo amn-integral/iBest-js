@@ -91,10 +91,12 @@ interface StepHeaderProps {
   description?: string;
 }
 
-export const PDFStepHeader: React.FC<StepHeaderProps> = ({ stepNum, description }) => {
+export const PDFStepHeader: React.FC<StepHeaderProps & { stepName?: string }> = ({ stepNum, description, stepName = 'Shock Pressure Step' }) => {
   return (
     <div>
-      <h2 className={styles.stepHeader}>Shock Pressure Analysis - Step {stepNum}</h2>
+      <h2 className={styles.stepHeader}>
+        {stepName} - Step {stepNum}
+      </h2>
       <p className={styles.stepDescription}>{description}</p>
     </div>
   );

@@ -182,7 +182,7 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
                 {Object.entries(props.result.CalculatedParams).map(([key, value]) => (
                   <div className={styles.paramDisplay} key={key}>
                     <div className={styles.paramKey}>{renderKey(key)}</div>
-                    <div className={styles.paramValue}>{typeof value === 'number' ? value.toFixed(2) : value}</div>
+                    <div className={styles.paramValue}>{typeof value === 'number' ? value.toFixed(4) : value}</div>
                   </div>
                 ))}
               </div>

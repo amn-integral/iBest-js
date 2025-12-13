@@ -205,14 +205,35 @@ export function useGeneratePDF(): GeneratePDFResult {
         renderToStaticMarkup(<Paragraph text={`The final interpolated shock pressure at the target wall is Ps = ${CalculatedParams.Ps.toFixed(2)} psi.`} />)
       );
 
+      // Shock Impulse step
+      pdf.addPage();
+      currentY = margin;
+      await renderSection(renderToStaticMarkup(<SectionHeader {...{ title: 'Shock Impulse Final Curve' }} />));
       await renderSection(
-        renderToStaticMarkup(<Paragraph text={`Similar steps are repeater for Shock Impulse = ${CalculatedParams.Is.toFixed(2)} psi-msec.`} />)
+        renderToStaticMarkup(
+          <Paragraph
+            text={`Similar steps are repeated for Shock Impulse = ${CalculatedParams.Is.toFixed(2)} psi-msec.
+        ir/W^(1/3) = ${CalculatedParams.ir_over_W_cube_root} and L/Ra = ${CalculatedParams.L_over_Ra}
+        `}
+          />
+        )
+      );
+      currentY = addChartsToPdf(
+        pdf,
+        await renderChartToBase64(ShockImpulseSteps[Object.keys(ShockImpulseSteps).length - 1][0], { width: 400, height: 300 }, [
+          CalculatedParams.L_over_Ra,
+          CalculatedParams.ir_over_W_cube_root
+        ]).then(base64 => [base64]),
+        currentY,
+        contentWidth,
+        pdfHeight,
+        margin
       );
 
+      // Gas Pressure step
       pdf.addPage();
       currentY = margin;
       await renderSection(renderToStaticMarkup(<SectionHeader {...{ title: 'Gas Pressure Steps' }} />));
-      console.log(GasPressureSteps[1][0]);
       currentY = addChartsToPdf(
         pdf,
         await renderChartToBase64(GasPressureSteps[1][0], { width: 400, height: 300 }, [CalculatedParams.W_over_Vf, CalculatedParams.Pg]).then(base64 => [
@@ -224,7 +245,11 @@ export function useGeneratePDF(): GeneratePDFResult {
         margin
       );
       await renderSection(
-        renderToStaticMarkup(<Paragraph text={`The final interpolated gas pressure at the target wall is Pg = ${CalculatedParams.Pg.toFixed(2)} psi.`} />)
+        renderToStaticMarkup(
+          <Paragraph
+            text={`The final interpolated gas pressure for W/Vf = ${CalculatedParams.W_over_Vf.toFixed(3)} at the target wall is Pg = ${CalculatedParams.Pg.toFixed(2)} psi.`}
+          />
+        )
       );
 
       // Gas Impulse Steps
@@ -235,6 +260,7 @@ export function useGeneratePDF(): GeneratePDFResult {
         renderToStaticMarkup(
           <PDFStepHeader
             stepNum={1}
+            stepName="Gas Impulse Step"
             description={`All the curves from Fig 2-153 to Fig 2-164 in UFC 3-340-02 are interpolated for Wf/W^(1/3) = ${CalculatedParams.Wf_over_W_cube_root} `}
           />
         )
@@ -258,7 +284,8 @@ export function useGeneratePDF(): GeneratePDFResult {
         renderToStaticMarkup(
           <PDFStepHeader
             stepNum={2}
-            description={`All the curves are then combined by i/W^(1/3) and interpolated for required value = ${CalculatedParams.i_over_W_cube_root} `}
+            stepName="Gas Impulse Step"
+            description={`All the curves are then combined by i/W^(1/3) and interpolated for required value = ${CalculatedParams.ir_over_W_cube_root} `}
           />
         )
       );
@@ -281,7 +308,8 @@ export function useGeneratePDF(): GeneratePDFResult {
         renderToStaticMarkup(
           <PDFStepHeader
             stepNum={3}
-            description={`All the curves are then combined by W/Vf and interpolated for required value = ${CalculatedParams.W_over_Vf} `}
+            stepName="Gas Impulse Step"
+            description={`All the curves are then combined by W/Vf and interpolated for required value = ${CalculatedParams.W_over_Vf}`}
           />
         )
       );
@@ -297,18 +325,23 @@ export function useGeneratePDF(): GeneratePDFResult {
         margin
       );
 
-      // Final Gas Pressure
+      // Final Gas Impulse chart
       await renderSection(
         renderToStaticMarkup(
-          <PDFStepHeader stepNum={4} description={`The final chart is interpolated for A/V^(2/3) = ${CalculatedParams.A_over_Vf_cube_root_squared}`} />
+          <PDFStepHeader
+            stepNum={4}
+            stepName="Gas Impulse Step"
+            description={`The final chart is interpolated for A/V^(2/3) = ${CalculatedParams.A_over_Vf_cube_root_squared} \n Ig = ${CalculatedParams.Ig} psi-msec  Ir/W^(1/3) = ${CalculatedParams.Ig_over_W_cube_root}`}
+          />
         )
       );
-
+      console.log(CalculatedParams);
       currentY = addChartsToPdf(
         pdf,
-        await renderChartToBase64(GasImpulseSteps[6][0], { width: 400, height: 300 }, [CalculatedParams.A_over_Vf_cube_root_squared, CalculatedParams.Ig]).then(
-          base64 => [base64]
-        ),
+        await renderChartToBase64(GasImpulseSteps[6][0], { width: 400, height: 300 }, [
+          CalculatedParams.A_over_Vf_cube_root_squared,
+          CalculatedParams.Ig_over_W_cube_root
+        ]).then(base64 => [base64]),
         currentY,
         contentWidth,
         pdfHeight,

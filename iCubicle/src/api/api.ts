@@ -27,7 +27,6 @@ export async function fetchCubicleData(data: CubicleRequest): Promise<CubicleRes
     // Try to parse JSON response even if status is not ok
     const result: unknown = await response.json();
 
-    console.log('Response Data:', result);
     if (!response.ok) {
       // If response has an error message, use it; otherwise use status text
       let message = `HTTP ${response.status}: ${response.statusText}`;

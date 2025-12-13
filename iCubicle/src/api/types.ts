@@ -54,7 +54,8 @@ export interface CubicleCalculatedParams {
   h_over_H: number;
   l_over_L: number;
   Ra_over_W_cube_root: number;
-  i_over_W_cube_root: number;
+  Ig_over_W_cube_root: number;
+  ir_over_W_cube_root: number;
   L_over_Ra: number;
   L_over_H: number;
   W_over_Vf: number;

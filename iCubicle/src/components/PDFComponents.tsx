@@ -30,55 +30,55 @@ export const PDFSummaryTable: React.FC<SummaryTableProps> = ({ results }) => {
     <div>
       <h2 className={styles.sectionHeader}>Analysis Summary</h2>
       <table className={styles.table}>
-        <thead className={styles.tableHeader}>
+        <thead>
           <tr>
-            <th className={styles.tableHeaderCell}>Parameter</th>
-            <th className={styles.tableHeaderCell}>Value</th>
-            <th className={styles.tableHeaderCell}>Units</th>
+            <th>Parameter</th>
+            <th>Value</th>
+            <th>Units</th>
           </tr>
         </thead>
         <tbody>
-          <tr className={styles.tableRow}>
-            <td className={styles.tableCell}>
+          <tr>
+            <td>
               <strong>Shock Pressure (Ps)</strong>
             </td>
-            <td className={styles.tableCell}>{results.Ps?.toFixed(3)}</td>
-            <td className={styles.tableCell}>psi</td>
+            <td>{results.Ps?.toFixed(3)}</td>
+            <td>psi</td>
           </tr>
-          <tr className={styles.tableRowAlt}>
-            <td className={styles.tableCell}>
+          <tr>
+            <td>
               <strong>Shock Impulse (Is)</strong>
             </td>
-            <td className={styles.tableCell}>{results.Is?.toFixed(3)}</td>
-            <td className={styles.tableCell}>psi-ms</td>
+            <td>{results.Is?.toFixed(3)}</td>
+            <td>psi-ms</td>
           </tr>
-          <tr className={styles.tableRow}>
-            <td className={styles.tableCell}>
+          <tr>
+            <td>
               <strong>Shock Duration (Ts)</strong>
             </td>
-            <td className={styles.tableCell}>{results.Ts?.toFixed(3)}</td>
-            <td className={styles.tableCell}>ms</td>
+            <td>{results.Ts?.toFixed(3)}</td>
+            <td>ms</td>
           </tr>
-          <tr className={styles.tableRowAlt}>
-            <td className={styles.tableCell}>
+          <tr>
+            <td>
               <strong>Gas Pressure (Pg)</strong>
             </td>
-            <td className={styles.tableCell}>{results.Pg?.toFixed(3)}</td>
-            <td className={styles.tableCell}>psi</td>
+            <td>{results.Pg?.toFixed(3)}</td>
+            <td>psi</td>
           </tr>
-          <tr className={styles.tableRow}>
-            <td className={styles.tableCell}>
+          <tr>
+            <td>
               <strong>Gas Impulse (Ig)</strong>
             </td>
-            <td className={styles.tableCell}>{results.Ig?.toFixed(3)}</td>
-            <td className={styles.tableCell}>psi-ms</td>
+            <td>{results.Ig?.toFixed(3)}</td>
+            <td>psi-ms</td>
           </tr>
-          <tr className={styles.tableRowAlt}>
-            <td className={styles.tableCell}>
+          <tr>
+            <td>
               <strong>Gas Duration (Tg)</strong>
             </td>
-            <td className={styles.tableCell}>{results.Tg?.toFixed(3)}</td>
-            <td className={styles.tableCell}>ms</td>
+            <td>{results.Tg?.toFixed(3)}</td>
+            <td>ms</td>
           </tr>
         </tbody>
       </table>
@@ -116,8 +116,8 @@ export const TableChargeGeometry: React.FC<CubicleInputType> = inputParams => {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th className={styles.tableHeaderCell}>Parameter</th>
-            <th className={styles.tableHeaderCell}>Value</th>
+            <th>Parameter</th>
+            <th>Value</th>
           </tr>
         </thead>
         <tbody>
@@ -214,5 +214,5 @@ export const SectionHeader: React.FC<{ title: string }> = ({ title }) => {
 };
 
 export const Paragraph: React.FC<{ text: string }> = ({ text }) => {
-  return <p className={styles.paragraph}>{text}</p>;
+  return <p>{text}</p>;
 };

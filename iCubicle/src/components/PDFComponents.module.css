@@ -1,13 +1,5 @@
 /* PDF Report Styles */
 
-.report {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11pt;
-  line-height: 1.4;
-  color: #333;
-  background: white;
-}
-
 /* Title Section */
 .title {
   text-align: center;
@@ -72,11 +64,6 @@
   background-color: #ecf0f1;
 }
 
-/* Parameters Section */
-.paramsContainer {
-  margin: 0 0;
-}
-
 /* Chart Section */
 .stepHeader {
   margin: 0px 0 10px 0;
@@ -88,26 +75,4 @@
   font-size: 12pt;
   color: #7f8c8d;
   margin: 0 0 15px 0;
-}
-
-.chartsRow {
-  display: flex;
-  gap: 10px;
-  margin: 10px 0;
-  justify-content: center;
-}
-
-.chartImage {
-  width: 400px;
-  height: 300px;
-}
-
-/* Footer */
-.footer {
-  margin-top: 30px;
-  padding-top: 10px;
-  border-top: 1px solid #bdc3c7;
-  font-size: 9pt;
-  color: #7f8c8d;
-  text-align: center;
 }

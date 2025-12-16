@@ -5,7 +5,8 @@
     "iMath",
     "iGSDOF",
     "iUIComponents",
-    "iCubicle"
+    "iCubicle",
+    "iCalcPad"
   ],
   "scripts": {
     "build_iMath": "npm run build -w iMath && npm run sync-builds",

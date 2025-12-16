@@ -18,7 +18,13 @@
       "types": "./dist/styles.d.ts",
       "default": "./dist/iuicomponents.css"
     },
-    "./dist/iuicomponents.css": "./dist/iuicomponents.css"
+    "./dist/iuicomponents.css": "./dist/iuicomponents.css",
+    "./storage":{
+      "types": "./dist/storage/index.d.ts",
+      "import": "./dist/storage/index.js",
+      "require": "./dist/storage/index.cjs",
+      "default": "./dist/storage/index.js"
+    }
   },
   "files": [
     "dist"
@@ -45,5 +51,9 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "dexie": "^4.2.1",
+    "dexie-react-hooks": "^4.2.0"
   }
 }

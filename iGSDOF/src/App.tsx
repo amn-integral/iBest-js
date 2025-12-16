@@ -280,6 +280,34 @@ export function App() {
     }
   };
 
+  // Expose state to save widget
+  useEffect(() => {
+    (window as any).iGSDOFState = {
+      getCurrentState: () => ({
+        inputs: {
+          mass: massInput,
+          rotationLength: rotationLengthInput,
+          orientation,
+          resistance,
+          displacement,
+          klm: klmInput,
+          u0: u0Input,
+          v0: v0Input,
+          force,
+          time,
+          unitSystem: selectedUnitSystemId
+        },
+        summary,
+        url: window.location.href,
+        timestamp: Date.now()
+      })
+    };
+
+    return () => {
+      delete (window as any).iGSDOFState;
+    };
+  }, [massInput, rotationLengthInput, orientation, resistance, displacement, klmInput, u0Input, v0Input, force, time, selectedUnitSystemId, summary]);
+
   return (
     <div className={appCss.appLayout}>
       <p className={appCss.appHeadingInfo}>

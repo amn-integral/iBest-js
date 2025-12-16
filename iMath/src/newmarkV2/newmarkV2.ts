@@ -6,10 +6,22 @@ import { averageAcceleration } from '../newmark/solver';
 
 const TWO_PI = Math.PI * 2;
 const MAX_ITERATIONS = 22;
-const CONVERGNCE_TOLERANCE = 0.0001;
+const CONVERGENCE_TOLERANCE = 0.0001;
 const MAX_SOLVER_STEPS = 1e6;
 
-export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneCurveV2, dampingRatio: number, force: ForceCurveV2, initialConditions: InitialConditions, settings: SolverSettings, gravity_effect: boolean = false, added_weight: number = 0, gravity_constant: number = 386, params: NewmarkParameters = averageAcceleration): NewmarkResponseV2 {
+export function newmarkSolverV2(
+  mass: number,
+  klm: number,
+  resistance: BackboneCurveV2,
+  dampingRatio: number,
+  force: ForceCurveV2,
+  initialConditions: InitialConditions,
+  settings: SolverSettings,
+  gravity_effect: boolean = false,
+  added_weight: number = 0,
+  gravity_constant: number = 386,
+  params: NewmarkParameters = averageAcceleration
+): NewmarkResponseV2 {
   const beta = params.beta,
     gamma = params.gamma;
 
@@ -25,9 +37,11 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
   const steps = Math.floor(totalTime / dt) + 1;
 
   if (steps > MAX_SOLVER_STEPS) {
-    throw new Error(`Estimated ${steps.toLocaleString()} steps exceeds maximum limit of ${MAX_SOLVER_STEPS.toLocaleString()}. ` +
-      `Reduce total time or increase time step to prevent memory issues. ` +
-      `Suggested: Total time ≤ ${(MAX_SOLVER_STEPS * dt).toFixed(1)} s`);
+    throw new Error(
+      `Estimated ${steps.toLocaleString()} steps exceeds maximum limit of ${MAX_SOLVER_STEPS.toLocaleString()}. ` +
+        `Reduce total time or increase time step to prevent memory issues. ` +
+        `Suggested: Total time ≤ ${(MAX_SOLVER_STEPS * dt).toFixed(1)} s`
+    );
   }
 
   const inv_beta = 1 / beta;
@@ -41,11 +55,16 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
   const inv_2beta_minus_one = 0.5 * inv_beta - 1;
 
   // Initialize as Float32Array instead of regular arrays
-  const rHat = new Float32Array(steps),pHat = new Float32Array(steps);
-  const kT = new Float32Array(steps),kTHat = new Float32Array(steps);
-  const u = new Float32Array(steps), v = new Float32Array(steps);
-  const a = new Float32Array(steps), t = new Float32Array(steps);
-  const fs = new Float32Array(steps), p = new Float32Array(steps);
+  const rHat = new Float32Array(steps),
+    pHat = new Float32Array(steps);
+  const kT = new Float32Array(steps),
+    kTHat = new Float32Array(steps);
+  const u = new Float32Array(steps),
+    v = new Float32Array(steps);
+  const a = new Float32Array(steps),
+    t = new Float32Array(steps);
+  const fs = new Float32Array(steps),
+    p = new Float32Array(steps);
 
   // Time array
   for (let i = 0; i < steps; i++) {
@@ -53,7 +72,8 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
   }
 
   // Initial conditions
-  ((u[0] = initialConditions.u0), (v[0] = initialConditions.v0));
+  u[0] = initialConditions.u0;
+  v[0] = initialConditions.v0;
 
   let gravity_force = 0.0;
   if (gravity_effect) {
@@ -68,7 +88,8 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
 
   // Initial calculations
   const [fs0, kt0] = resistance.getAt(u[0]);
-  ((fs[0] = fs0), (kT[0] = kt0));
+  fs[0] = fs0;
+  kT[0] = kt0;
 
   if (gravity_force > resistance.maxResistance) {
     throw new Error(`Gravity force ${gravity_force.toFixed(4)} beyond backbone maximum resistance ${resistance.maxResistance.toFixed(4)}.`);
@@ -109,17 +130,16 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
     let kTHat_num = kTHat[i + 1];
     let rHat_num = 0;
     let du = 0.0;
-    
+
     while (true) {
       rHat_num = pHat[i + 1] - fs_num - a1 * u_num;
       // Check convergence
-      if (rHat_num * rHat_num < CONVERGNCE_TOLERANCE) {
-
-        u[i+1] = u_num;
-        fs[i+1] = fs_num;
-        kT[i+1] = kT_num;
-        rHat[i+1] = rHat_num;
-        kTHat[i+1] = kTHat_num;
+      if (rHat_num * rHat_num < CONVERGENCE_TOLERANCE) {
+        u[i + 1] = u_num;
+        fs[i + 1] = fs_num;
+        kT[i + 1] = kT_num;
+        rHat[i + 1] = rHat_num;
+        kTHat[i + 1] = kTHat_num;
 
         v[i + 1] = gamma_over_beta_dt * (u[i + 1] - u[i]) + one_minus_gamma_over_beta * v[i] + dt_one_minus_gamma_over_2beta * a[i];
         a[i + 1] = inv_beta_dt2 * (u[i + 1] - u[i]) - inv_beta_dt * v[i] - inv_2beta_minus_one * a[i];
@@ -155,12 +175,11 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
       // }
       j += 1;
       if (j > MAX_ITERATIONS) {
-
-        const msg = `Newton-Raphson did not converge \n Computed rHat: ${rHat_num.toFixed(6)}, Limit: ${CONVERGNCE_TOLERANCE}\n`;
+        const msg = `Newton-Raphson did not converge \n Computed rHat: ${rHat_num.toFixed(6)}, Limit: ${CONVERGENCE_TOLERANCE}\n`;
         msg.concat(`phat: ${pHat[i + 1].toFixed(6)}, fs: ${fs_num.toFixed(6)}, a1*u: ${(a1 * u_num).toFixed(6)}\n`);
-        msg.concat(`-----------------------------------------------------`)
-        msg.concat(`Time Step = ${dt}`)
-        msg.concat(`Try increaseing time step to make pHat smaller to meet the convergence limit of ${CONVERGNCE_TOLERANCE}`)
+        msg.concat(`-----------------------------------------------------`);
+        msg.concat(`Time Step = ${dt}`);
+        msg.concat(`Try increaseing time step to make pHat smaller to meet the convergence limit of ${CONVERGENCE_TOLERANCE}`);
         throw new Error(`Newton-Raphson did not converge in ${MAX_ITERATIONS} iterations at time ${t[i + 1].toFixed(4)}s.`);
       }
     }
@@ -175,6 +194,6 @@ export function newmarkSolverV2(mass: number, klm: number, resistance: BackboneC
     fs: fs,
     p: p,
     steps: steps,
-    summary: {u: {min: uMin, max: uMax}, fs: {min: fsMin, max: fsMax}}
+    summary: { u: { min: uMin, max: uMax }, fs: { min: fsMin, max: fsMax } }
   };
 }

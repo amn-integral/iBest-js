@@ -28,5 +28,8 @@
     "typecheck": "tsc -p tsconfig.dev.json --noEmit",
     "test": "npm run build && node tests/newmarkV2.test.mjs",
     "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "mathjs": "^15.1.0"
   }
 }

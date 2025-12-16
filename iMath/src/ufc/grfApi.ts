@@ -1,10 +1,10 @@
 /**
  * GRF API Client
- * 
+ *
  * Provides functions to fetch GRF curve data from the backend API
  */
 
-import type { Curve, GRFCurve } from "./types";
+import type { Curve, GRFCurve } from './types';
 
 /**
  * Configuration for the GRF API
@@ -33,38 +33,33 @@ interface GRFApiResponse {
 
 /**
  * Fetch GRF curve data from the API
- * 
+ *
  * @param filename - The GRF filename to fetch (e.g., "02_154.GRF")
  * @param config - Optional API configuration
  * @returns Promise resolving to GRFCurve data
- * 
+ *
  * @example
  * ```ts
  * const data = await getGRFApi("02_154.GRF");
  * console.log(data.curves.length);
  * ```
  */
-export async function getGRFApi(
-  filename: string = "02_154.GRF",
-  config?: GRFApiConfig
-): Promise<GRFCurve> {
-  const baseUrl = config?.baseUrl ?? "http://127.0.0.1:8000";
-  const endpoint = config?.endpoint ?? "/api/grf/data/";
+export async function getGRFApi(filename: string = '02_154.GRF', config?: GRFApiConfig): Promise<GRFCurve> {
+  const baseUrl = config?.baseUrl ?? 'http://127.0.0.1:8000';
+  const endpoint = config?.endpoint ?? '/api/grf/data/';
   const url = `${baseUrl}${endpoint}`;
 
   try {
     const response = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ filename }),
+      body: JSON.stringify({ filename })
     });
 
     if (!response.ok) {
-      throw new Error(
-        `API request failed: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
     const data: GRFApiResponse = await response.json();
@@ -79,9 +74,9 @@ export async function getGRFApi(
           curveName: curve.curve_name,
           xdata: curve.xdata,
           ydata: curve.ydata,
-          numPoints: curve.num_points,
+          numPoints: curve.num_points
         })
-      ),
+      )
     };
 
     return grfCurve;
@@ -95,7 +90,7 @@ export async function getGRFApi(
 
 /**
  * Configure the default API settings (not needed - just pass config to getGRFApi)
- * 
+ *
  * @deprecated Use config parameter in getGRFApi instead
  * @param _config - New default configuration (ignored)
  */

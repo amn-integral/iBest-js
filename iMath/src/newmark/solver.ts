@@ -1,15 +1,15 @@
-import { BackboneCurve } from "./backbone";
-import { ForceCurve } from "./force";
-import type { InitialConditions, SolverSettings, NewmarkParameters, NewmarkResponse } from "./types";
+import { BackboneCurve } from './backbone';
+import { ForceCurve } from './force';
+import type { InitialConditions, SolverSettings, NewmarkParameters, NewmarkResponse } from './types';
 
 export const averageAcceleration: NewmarkParameters = {
   gamma: 0.5,
-  beta: 0.25,
+  beta: 0.25
 };
 
 export const linearAcceleration: NewmarkParameters = {
   gamma: 0.5,
-  beta: 1 / 6,
+  beta: 1 / 6
 };
 
 const TWO_PI = Math.PI * 2;
@@ -26,7 +26,7 @@ export function newmarkSolver(
   params: NewmarkParameters = averageAcceleration,
   gravity_effect: boolean = false,
   added_weight: number = 0,
-  gravity_constant: number = 386,
+  gravity_constant: number = 386
 ): NewmarkResponse {
   const beta = params.beta;
   const gamma = params.gamma;
@@ -35,7 +35,7 @@ export function newmarkSolver(
   const totalTime = settings.t;
 
   if (!auto && (!settings.dt || settings.dt <= 0)) {
-    throw new Error("dt must be greater than 0 for fixed time step");
+    throw new Error('dt must be greater than 0 for fixed time step');
   }
 
   const naturalPeriod = TWO_PI * Math.sqrt(mass / resistance.inboundStiffness);
@@ -74,7 +74,7 @@ export function newmarkSolver(
   let gravity_force = 0.0;
   if (gravity_effect) {
     gravity_force += mass * gravity_constant + added_weight;
-  }  
+  }
 
   resistance.updateCurrentRegion(u[0]);
 
@@ -85,7 +85,7 @@ export function newmarkSolver(
   fs[0] = resistance.getAt(u[0]);
   kT[0] = resistance.getStiffnessInRegion(resistance.currentRegion);
 
-  if (gravity_force > resistance.max_resistance){
+  if (gravity_force > resistance.max_resistance) {
     throw new Error(`Gravitational force ${gravity_force.toPrecision(4)} exceeds maximum backbone resistance ${resistance.max_resistance.toPrecision(4)}.`);
   }
 
@@ -94,7 +94,7 @@ export function newmarkSolver(
   let effectiveMass = klm * baseMass;
 
   if (Math.abs(effectiveMass) < 1e-12) {
-    throw new Error("Effective mass must be non-zero");
+    throw new Error('Effective mass must be non-zero');
   }
 
   const stiffness0 = kT[0];
@@ -125,14 +125,8 @@ export function newmarkSolver(
     while (true) {
       rHat[i + 1] = pHat[i + 1] - fs[i + 1] - a1 * u[i + 1];
       if (rHat[i + 1] * rHat[i + 1] < convTolSq) {
-        v[i + 1] =
-          gammaOverBetaDt * (u[i + 1] - u[i]) +
-          oneMinusGammaOverBeta * v[i] +
-          dtOneMinusGammaOver2beta * a[i];
-        a[i + 1] =
-          invBetaDt2 * (u[i + 1] - u[i]) -
-          invBetaDt * v[i] -
-          inv2betaMinusOne * a[i];
+        v[i + 1] = gammaOverBetaDt * (u[i + 1] - u[i]) + oneMinusGammaOverBeta * v[i] + dtOneMinusGammaOver2beta * a[i];
+        a[i + 1] = invBetaDt2 * (u[i + 1] - u[i]) - invBetaDt * v[i] - inv2betaMinusOne * a[i];
 
         if (i > 0 && v[i] * v[i + 1] < 0) {
           resistance.shiftBackbone(u[i + 1]);
@@ -145,13 +139,10 @@ export function newmarkSolver(
             klm = newKlm;
             effectiveMass = klm * baseMass;
             if (Math.abs(effectiveMass) < 1e-12) {
-              throw new Error("Effective mass must be non-zero");
+              throw new Error('Effective mass must be non-zero');
             }
             const newStiffness = kT[i + 1];
-            let newC =
-              2 *
-              dampingRatio *
-              Math.sqrt(Math.abs(effectiveMass * newStiffness));
+            let newC = 2 * dampingRatio * Math.sqrt(Math.abs(effectiveMass * newStiffness));
             if (effectiveMass * newStiffness < 0) {
               newC = -newC;
             }
@@ -159,8 +150,7 @@ export function newmarkSolver(
 
             a1 = effectiveMass * invBetaDt2 + c * gammaOverBetaDt;
             a2 = effectiveMass * invBetaDt - c * oneMinusGammaOverBeta;
-            a3 =
-              effectiveMass * inv2betaMinusOne - c * dtOneMinusGammaOver2beta;
+            a3 = effectiveMass * inv2betaMinusOne - c * dtOneMinusGammaOver2beta;
           }
         }
         break;
@@ -190,6 +180,6 @@ export function newmarkSolver(
     acceleration: a,
     stiffness: kT,
     restoringForce: fs,
-    appliedForce: applied,
+    appliedForce: applied
   };
 }

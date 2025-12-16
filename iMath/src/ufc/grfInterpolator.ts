@@ -1,16 +1,16 @@
 /**
  * GRF Curve Interpolation Module
- * 
+ *
  * Provides utilities for interpolating and evaluating GRF (Gas Response Function) curves
  * in log-log space, with support for extrapolation and curve extension.
  */
 
-import type { Curve, GRFCurve } from "./types";
+import type { Curve, GRFCurve } from './types';
 
 /**
  * Generate logarithmically spaced points
  * Pure TypeScript replacement for numpy's logspace
- * 
+ *
  * @param start - Starting exponent (base 10)
  * @param stop - Ending exponent (base 10)
  * @param num - Number of points to generate
@@ -30,23 +30,19 @@ export function logspace(start: number, stop: number, num: number): number[] {
 /**
  * Linear interpolation/extrapolation
  * Pure TypeScript replacement for scipy's interp1d
- * 
+ *
  * @param xVals - X values (must be sorted in ascending order)
  * @param yVals - Y values corresponding to xVals
  * @param xTarget - Target x value to interpolate/extrapolate
  * @returns Interpolated/extrapolated y value
  */
-export function linearInterp(
-  xVals: number[],
-  yVals: number[],
-  xTarget: number
-): number {
+export function linearInterp(xVals: number[], yVals: number[], xTarget: number): number {
   if (xVals.length !== yVals.length) {
-    throw new Error("xVals and yVals must have the same length");
+    throw new Error('xVals and yVals must have the same length');
   }
 
   if (xVals.length === 0) {
-    throw new Error("Empty data arrays");
+    throw new Error('Empty data arrays');
   }
 
   if (xVals.length === 1) {
@@ -92,17 +88,13 @@ export function linearInterp(
 /**
  * Constructs a new GRF curve by interpolating (or extrapolating) between nearest existing curves
  * in log-log space. The new curve extends across the combined x-range of its parent curves.
- * 
+ *
  * @param data - GRFCurve object containing multiple curves
  * @param curveName - Name/value of the curve to create (as string)
  * @param extendFactor - Factor to extend x-range (default 1.0)
  * @returns Curve object with interpolated data
  */
-export function interpolateGRF(
-  data: GRFCurve,
-  curveName: string,
-  extendFactor: number = 1.0
-): Curve {
+export function interpolateGRF(data: GRFCurve, curveName: string, extendFactor: number = 1.0): Curve {
   // --- Convert curve names to floats ---
   const existing: Array<[number, Curve]> = [];
   for (const c of data.curves) {
@@ -113,7 +105,7 @@ export function interpolateGRF(
   }
 
   if (existing.length === 0) {
-    throw new Error("No numeric curve names found for interpolation.");
+    throw new Error('No numeric curve names found for interpolation.');
   }
 
   if (existing.length === 1) {
@@ -123,7 +115,7 @@ export function interpolateGRF(
       curveName: String(curveName),
       xdata: [...singleCurve.xdata],
       ydata: [...singleCurve.ydata],
-      numPoints: singleCurve.xdata.length,
+      numPoints: singleCurve.xdata.length
     };
   }
 
@@ -162,12 +154,10 @@ export function interpolateGRF(
   // --- Helper: interpolate one curve in log-log space ---
   const interpCurve = (c: Curve): number[] => {
     // Filter positive values only
-    const validData = c.xdata
-      .map((x: number, i: number) => [x, c.ydata[i]] as [number, number])
-      .filter(([x, y]: [number, number]) => x > 0 && y > 0);
+    const validData = c.xdata.map((x: number, i: number) => [x, c.ydata[i]] as [number, number]).filter(([x, y]: [number, number]) => x > 0 && y > 0);
 
     if (validData.length === 0) {
-      throw new Error("Curve has no valid positive data");
+      throw new Error('Curve has no valid positive data');
     }
 
     // Sort by x
@@ -207,17 +197,15 @@ export function interpolateGRF(
   // (clipping would disable extrapolation)
 
   // --- Interpolate/extrapolate between curves ---
-  const logYNew = y1.map((y1i, i) => 
-    Math.log10(y1i) * (1 - w) + Math.log10(y2[i]) * w
-  );
-  const yNew = logYNew.map((logYi) => 10 ** logYi);
+  const logYNew = y1.map((y1i, i) => Math.log10(y1i) * (1 - w) + Math.log10(y2[i]) * w);
+  const yNew = logYNew.map(logYi => 10 ** logYi);
 
   // --- Construct and return new curve ---
   const newCurve: Curve = {
     curveName: String(curveName),
     xdata: xCommon,
     ydata: yNew,
-    numPoints: xCommon.length,
+    numPoints: xCommon.length
   };
 
   return newCurve;
@@ -225,28 +213,24 @@ export function interpolateGRF(
 
 /**
  * Evaluate y(xPoint) for a GRFCurve that contains a *single* Curve.
- * 
+ *
  * - Uses log-log interpolation/extrapolation in x.
  * - If extendFactor > 1, it will build an extended x-grid
  *   [xMin/extendFactor, xMax*extendFactor] (log-spaced),
  *   interpolate the original curve onto that grid,
  *   and replace data.curves[0] with this extended curve.
- * 
+ *
  * @param data - GRFCurve object (or array containing one) with a single curve
  * @param xPoint - Point at which to evaluate the curve
  * @param extendFactor - Factor to extend the curve range (default 1.0)
  * @returns Interpolated/extrapolated y value at xPoint
  */
-export function evalGRFSingleAndCache(
-  data: GRFCurve | GRFCurve[],
-  xPoint: number,
-  extendFactor: number = 1.0
-): number {
+export function evalGRFSingleAndCache(data: GRFCurve | GRFCurve[], xPoint: number, extendFactor: number = 1.0): number {
   // Handle both array input and direct GRFCurve input
   let dataObj: GRFCurve;
   if (Array.isArray(data)) {
     if (data.length === 0) {
-      throw new Error("Empty data list");
+      throw new Error('Empty data list');
     }
     dataObj = data[0];
   } else {
@@ -254,7 +238,7 @@ export function evalGRFSingleAndCache(
   }
 
   if (dataObj.curves.length === 0) {
-    throw new Error("GRFCurve has no curves.");
+    throw new Error('GRFCurve has no curves.');
   }
 
   // Always work from the (current) single curve
@@ -266,7 +250,7 @@ export function evalGRFSingleAndCache(
     .filter(([x, y]: [number, number]) => x > 0 && y > 0);
 
   if (validData.length === 0) {
-    throw new Error("Curve has no valid positive x/y values for log-log interpolation.");
+    throw new Error('Curve has no valid positive x/y values for log-log interpolation.');
   }
 
   // Sort by x
@@ -299,10 +283,10 @@ export function evalGRFSingleAndCache(
     }
 
     const extendedCurve: Curve = {
-      curveName: baseCurve.curveName + " (extended)",
+      curveName: baseCurve.curveName + ' (extended)',
       xdata: xCommon,
       ydata: yCommon,
-      numPoints: xCommon.length,
+      numPoints: xCommon.length
     };
 
     // Replace the original curve with the extended one

@@ -1,13 +1,12 @@
-import { interpolateSorted } from "./helpers";
-import { findMinMax } from "../core/arrayStats";
-import { BackbonePoint } from "./types";
-
+import { interpolateSorted } from './helpers';
+import { findMinMax } from '../core/arrayStats';
+import { BackbonePoint } from './types';
 
 function clonePoints(points: BackbonePoint[]): BackbonePoint[] {
-  return points.map((point) => ({
+  return points.map(point => ({
     displacement: point.displacement,
     resistance: point.resistance,
-    klm: point.klm ?? 1,
+    klm: point.klm ?? 1
   }));
 }
 
@@ -21,8 +20,8 @@ function extendCurve(points: BackbonePoint[]): BackbonePoint[] {
     {
       displacement: last.displacement * 1.2,
       resistance: last.resistance,
-      klm: last.klm ?? 1,
-    },
+      klm: last.klm ?? 1
+    }
   ];
 }
 
@@ -54,9 +53,7 @@ export class BackboneCurve {
 
   constructor(inbound: BackbonePoint[], rebound: BackbonePoint[]) {
     if (!inbound.length || !rebound.length) {
-      throw new Error(
-        "inboundData and reboundData must be non-empty lists of BackbonePoint"
-      );
+      throw new Error('inboundData and reboundData must be non-empty lists of BackbonePoint');
     }
 
     this.originalInbound = clonePoints(inbound);
@@ -137,13 +134,12 @@ export class BackboneCurve {
 
   public shiftBackbone(displacement: number): void {
     const midValue = this.xValues[this.midIndex];
-    const stiffness =
-      displacement > midValue ? this.inboundStiffness : this.reboundStiffness;
+    const stiffness = displacement > midValue ? this.inboundStiffness : this.reboundStiffness;
     if (Math.abs(stiffness) < 1e-10) {
       return;
     }
     const dx = displacement - this.getAt(displacement) / stiffness - midValue;
-    this.xValues = this.xValues.map((value) => value + dx);
+    this.xValues = this.xValues.map(value => value + dx);
   }
 
   public reset(): void {
@@ -165,19 +161,15 @@ export class BackboneCurve {
     const midPoint: BackbonePoint = {
       displacement: 0,
       resistance: 0,
-      klm: 1,
+      klm: 1
     };
 
-    const allPoints = [
-      ...clonePoints(this.reboundData),
-      midPoint,
-      ...clonePoints(this.inboundData),
-    ].sort((a, b) => a.displacement - b.displacement);
+    const allPoints = [...clonePoints(this.reboundData), midPoint, ...clonePoints(this.inboundData)].sort((a, b) => a.displacement - b.displacement);
 
-    this.xValues = allPoints.map((point) => point.displacement);
-    this.yValues = allPoints.map((point) => point.resistance);
-    this.klmValues = allPoints.map((point) => point.klm ?? 1);
-    this.midIndex = allPoints.findIndex((point) => point === midPoint);
+    this.xValues = allPoints.map(point => point.displacement);
+    this.yValues = allPoints.map(point => point.resistance);
+    this.klmValues = allPoints.map(point => point.klm ?? 1);
+    this.midIndex = allPoints.findIndex(point => point === midPoint);
 
     this.stiffnessCache = new Map();
     this.klmCache = new Map();

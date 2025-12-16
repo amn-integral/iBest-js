@@ -7,8 +7,8 @@ export interface NewmarkResponseV2 {
   fs: Float32Array;
   p: Float32Array;
   steps: number;
-  summary:{
-    u: { min: number; max: number},
-    fs: { min: number; max: number}
-  }
+  summary: {
+    u: { min: number; max: number };
+    fs: { min: number; max: number };
+  };
 }

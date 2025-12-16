@@ -3,27 +3,20 @@ interface DiscretizedCurve {
   f: Float32Array;
 }
 
-function interpolateSortedBatch(
-  xValues: number[],
-  yValues: number[],
-  xArray: number[],
-): number[] {
+function interpolateSortedBatch(xValues: number[], yValues: number[], xArray: number[]): number[] {
   const n = xValues.length;
   if (n !== yValues.length) {
-    throw new Error("xValues and yValues must have equal length");
+    throw new Error('xValues and yValues must have equal length');
   }
   if (n < 2) {
-    throw new Error("At least two points are required for interpolation");
+    throw new Error('At least two points are required for interpolation');
   }
 
   const result = new Array<number>(xArray.length);
   const xMin = xValues[0];
   const xMax = xValues[n - 1];
-  const slopeLeft =
-    (yValues[1] - yValues[0]) / (xValues[1] - xValues[0]);
-  const slopeRight =
-    (yValues[n - 1] - yValues[n - 2]) /
-    (xValues[n - 1] - xValues[n - 2]);
+  const slopeLeft = (yValues[1] - yValues[0]) / (xValues[1] - xValues[0]);
+  const slopeRight = (yValues[n - 1] - yValues[n - 2]) / (xValues[n - 1] - xValues[n - 2]);
 
   for (let idx = 0; idx < xArray.length; idx += 1) {
     const val = xArray[idx];
@@ -68,10 +61,10 @@ export class ForceCurveV2 {
 
   constructor(xValues: number[], yValues: number[]) {
     if (xValues.length !== yValues.length) {
-      throw new Error("xValues and yValues must have equal length");
+      throw new Error('xValues and yValues must have equal length');
     }
     if (xValues.length < 2) {
-      throw new Error("At least two points are required to define a curve");
+      throw new Error('At least two points are required to define a curve');
     }
 
     this.xValues = [...xValues];
@@ -80,10 +73,10 @@ export class ForceCurveV2 {
 
   public discretizeCurve(steps: number, dt: number): DiscretizedCurve {
     if (steps <= 0) {
-      throw new Error("steps must be greater than 0");
+      throw new Error('steps must be greater than 0');
     }
     if (dt <= 0) {
-      throw new Error("dt must be greater than 0");
+      throw new Error('dt must be greater than 0');
     }
 
     const tValues = new Array<number>(steps);

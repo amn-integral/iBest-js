@@ -1,10 +1,4 @@
-function interpolateSorted(
-  xValues: number[],
-  yValues: number[],
-  x: number,
-  n: number
-): [number, number] {
-
+function interpolateSorted(xValues: number[], yValues: number[], x: number, n: number): [number, number] {
   // Handle out-of-bounds cases
   if (x < xValues[0]) {
     const resistance = yValues[0];
@@ -29,7 +23,7 @@ function interpolateSorted(
 
   // Prevent division by zero
   if (xValues[hi] === xValues[lo]) {
-    throw new Error("Duplicate x-values detected, cannot interpolate.");
+    throw new Error('Duplicate x-values detected, cannot interpolate.');
   }
 
   const slope = (yValues[hi] - yValues[lo]) / (xValues[hi] - xValues[lo]);
@@ -85,12 +79,12 @@ export class BackboneCurveV2 {
       // On inbound curve
       const [resistance] = this.getAt(x);
       const dx = x - resistance / this.inboundStiffness - this.xValues[this.midIndex];
-      this.xValues = this.xValues.map((val) => val + dx);
+      this.xValues = this.xValues.map(val => val + dx);
     } else {
       // On rebound curve
       const [resistance] = this.getAt(x);
       const dx = x - resistance / this.reboundStiffness - this.xValues[this.midIndex];
-      this.xValues = this.xValues.map((val) => val + dx);
+      this.xValues = this.xValues.map(val => val + dx);
     }
   }
 

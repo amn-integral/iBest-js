@@ -1,4 +1,4 @@
-import { interpolateSorted, interpolateSortedBatch } from "./helpers";
+import { interpolateSorted, interpolateSortedBatch } from './helpers';
 
 interface DiscretizedCurve {
   t: number[];
@@ -11,10 +11,10 @@ export class ForceCurve {
 
   constructor(xValues: number[], yValues: number[]) {
     if (xValues.length !== yValues.length) {
-      throw new Error("xValues and yValues must have equal length");
+      throw new Error('xValues and yValues must have equal length');
     }
     if (xValues.length < 2) {
-      throw new Error("At least two points are required to define a curve");
+      throw new Error('At least two points are required to define a curve');
     }
 
     this.xValues = [...xValues];
@@ -27,10 +27,10 @@ export class ForceCurve {
 
   public discretizeCurve(steps: number, dt: number): DiscretizedCurve {
     if (steps <= 0) {
-      throw new Error("steps must be greater than 0");
+      throw new Error('steps must be greater than 0');
     }
     if (dt <= 0) {
-      throw new Error("dt must be greater than 0");
+      throw new Error('dt must be greater than 0');
     }
 
     const tValues = new Array<number>(steps);

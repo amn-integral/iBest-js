@@ -1,15 +1,10 @@
-export function interpolateSorted(
-  xValues: number[],
-  yValues: number[],
-  x: number,
-  extend = true,
-): number {
+export function interpolateSorted(xValues: number[], yValues: number[], x: number, extend = true): number {
   const n = xValues.length;
   if (n !== yValues.length) {
-    throw new Error("xValues and yValues must have equal length");
+    throw new Error('xValues and yValues must have equal length');
   }
   if (n < 2) {
-    throw new Error("At least two points are required for interpolation");
+    throw new Error('At least two points are required for interpolation');
   }
 
   const xMin = xValues[0];
@@ -27,8 +22,7 @@ export function interpolateSorted(
     if (!extend) {
       throw new Error(`x=${x} must be <= ${xMax}`);
     }
-    const slope =
-      (yValues[n - 1] - yValues[n - 2]) / (xValues[n - 1] - xValues[n - 2]);
+    const slope = (yValues[n - 1] - yValues[n - 2]) / (xValues[n - 1] - xValues[n - 2]);
     return yValues[n - 1] + (x - xMax) * slope;
   }
 
@@ -54,27 +48,20 @@ export function interpolateSorted(
   return yValues[lo] + (x - xLo) * slope;
 }
 
-export function interpolateSortedBatch(
-  xValues: number[],
-  yValues: number[],
-  xArray: number[],
-): number[] {
+export function interpolateSortedBatch(xValues: number[], yValues: number[], xArray: number[]): number[] {
   const n = xValues.length;
   if (n !== yValues.length) {
-    throw new Error("xValues and yValues must have equal length");
+    throw new Error('xValues and yValues must have equal length');
   }
   if (n < 2) {
-    throw new Error("At least two points are required for interpolation");
+    throw new Error('At least two points are required for interpolation');
   }
 
   const result = new Array<number>(xArray.length);
   const xMin = xValues[0];
   const xMax = xValues[n - 1];
-  const slopeLeft =
-    (yValues[1] - yValues[0]) / (xValues[1] - xValues[0]);
-  const slopeRight =
-    (yValues[n - 1] - yValues[n - 2]) /
-    (xValues[n - 1] - xValues[n - 2]);
+  const slopeLeft = (yValues[1] - yValues[0]) / (xValues[1] - xValues[0]);
+  const slopeRight = (yValues[n - 1] - yValues[n - 2]) / (xValues[n - 1] - xValues[n - 2]);
 
   for (let idx = 0; idx < xArray.length; idx += 1) {
     const val = xArray[idx];
@@ -113,13 +100,9 @@ export function interpolateSortedBatch(
   return result;
 }
 
-export function resampleCurve(
-  xValues: number[],
-  yValues: number[],
-  step: number,
-): { x: number[]; y: number[] } {
+export function resampleCurve(xValues: number[], yValues: number[], step: number): { x: number[]; y: number[] } {
   if (step <= 0) {
-    throw new Error("step must be greater than 0");
+    throw new Error('step must be greater than 0');
   }
 
   const xMin = xValues[0];
@@ -135,12 +118,7 @@ export function resampleCurve(
   return { x: xSamples, y: ySamples };
 }
 
-export function fastInterpolate(
-  xSamples: number[],
-  ySamples: number[],
-  step: number,
-  x: number,
-): number {
+export function fastInterpolate(xSamples: number[], ySamples: number[], step: number, x: number): number {
   const xMin = xSamples[0];
   const xMax = xSamples[xSamples.length - 1];
 

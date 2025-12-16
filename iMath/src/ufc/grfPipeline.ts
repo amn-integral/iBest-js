@@ -1,15 +1,15 @@
 /**
  * GRF Pipeline Module
- * 
+ *
  * Provides a pipeline-based workflow for processing GRF curves with operations like:
  * - Data fetching and filtering
  * - Interpolation at specific parameter values
  * - Combining curves by common parameters
  */
 
-import type { GRFCurve } from "./types";
-import { extractFiltersFromFilename } from "./utils";
-import { interpolateGRF, evalGRFSingleAndCache } from "./grfInterpolator";
+import type { GRFCurve } from './types';
+import { extractFiltersFromFilename } from './utils';
+import { interpolateGRF, evalGRFSingleAndCache } from './grfInterpolator';
 
 /**
  * Extended GRFCurve with filter metadata
@@ -20,7 +20,7 @@ export interface FilteredGRFCurve extends GRFCurve {
 
 /**
  * Pipeline for processing GRF curves through multiple transformation steps
- * 
+ *
  * @example
  * ```ts
  * const pipeline = new GRFPipeline(['curve1.GRF', 'curve2.GRF']);
@@ -33,26 +33,23 @@ export interface FilteredGRFCurve extends GRFCurve {
 export class GRFPipeline {
   /** Map of pipeline steps to their data */
   private data: Map<number, Record<string, FilteredGRFCurve>>;
-  
+
   /** Current step count in the pipeline */
   private pipelineStepCount: number;
-  
+
   /** List of curve names to process */
   private curveNames: string[];
-  
+
   /** Function to fetch GRF data by name */
   private fetchGRFData: (name: string) => Promise<GRFCurve> | GRFCurve;
 
   /**
    * Create a new GRF processing pipeline
-   * 
+   *
    * @param curveNames - Array of curve names/identifiers to process
    * @param fetchGRFData - Function to fetch GRF data by name (async or sync)
    */
-  constructor(
-    curveNames: string[],
-    fetchGRFData: (name: string) => Promise<GRFCurve> | GRFCurve
-  ) {
+  constructor(curveNames: string[], fetchGRFData: (name: string) => Promise<GRFCurve> | GRFCurve) {
     this.curveNames = curveNames;
     this.fetchGRFData = fetchGRFData;
     this.data = new Map();
@@ -61,7 +58,7 @@ export class GRFPipeline {
 
   /**
    * Fetch GRF data for all curve names and extract filter metadata
-   * 
+   *
    * @param filterList - List of filter keys to extract from filenames
    */
   async getData(filterList: string[]): Promise<void> {
@@ -74,7 +71,7 @@ export class GRFPipeline {
       const grfCurve = await this.fetchGRFData(name);
       const filteredCurve: FilteredGRFCurve = {
         ...grfCurve,
-        filters: extractFiltersFromFilename(grfCurve.filename, filterList),
+        filters: extractFiltersFromFilename(grfCurve.filename, filterList)
       };
       filteredCurve.filename = JSON.stringify(filteredCurve.filters);
       stepData[name] = filteredCurve;
@@ -83,28 +80,28 @@ export class GRFPipeline {
 
   /**
    * Filter curves by a specific parameter value
-   * 
+   *
    * @param filterKey - The filter parameter to match
    * @param filterValue - The value to filter by
    */
   filterData(filterKey: string, filterValue: number | string): void {
     this.pipelineStepCount++;
     const previousData = this.data.get(this.pipelineStepCount - 1)!;
-    
+
     const filtered: Record<string, FilteredGRFCurve> = {};
-    
+
     for (const [key, value] of Object.entries(previousData)) {
       if (value.filters?.[filterKey] === filterValue) {
         filtered[key] = value;
       }
     }
-    
+
     this.data.set(this.pipelineStepCount, filtered);
   }
 
   /**
    * Interpolate all curves at a specific parameter value
-   * 
+   *
    * @param interpolationValue - The value to interpolate at
    * @param interpolationName - Name of the parameter being interpolated
    */
@@ -114,10 +111,7 @@ export class GRFPipeline {
     const newData: Record<string, FilteredGRFCurve> = {};
 
     for (const [cname, grfCurve] of Object.entries(previousData)) {
-      const interpolatedCurve = interpolateGRF(
-        grfCurve,
-        String(interpolationValue)
-      );
+      const interpolatedCurve = interpolateGRF(grfCurve, String(interpolationValue));
       interpolatedCurve.curveName = String(interpolationValue);
 
       const newGrfCurve: FilteredGRFCurve = {
@@ -125,7 +119,7 @@ export class GRFPipeline {
         xlabel: grfCurve.xlabel,
         ylabel: grfCurve.ylabel,
         curves: [interpolatedCurve],
-        filters: { ...grfCurve.filters },
+        filters: { ...grfCurve.filters }
       };
 
       newData[cname] = newGrfCurve;
@@ -136,7 +130,7 @@ export class GRFPipeline {
 
   /**
    * Combine curves by grouping them by a common parameter
-   * 
+   *
    * @param combineKey - The parameter to use as the legend/grouping key
    * @param nameAppend - Text to append to the combined curve filename
    */
@@ -149,13 +143,11 @@ export class GRFPipeline {
     for (const grfCurve of Object.values(previousData)) {
       // Assert single curve per GRF
       if (grfCurve.curves.length !== 1) {
-        throw new Error(
-          `Expected single curve in GRFCurve, got ${grfCurve.curves.length}`
-        );
+        throw new Error(`Expected single curve in GRFCurve, got ${grfCurve.curves.length}`);
       }
 
       const legend = grfCurve.filters?.[combineKey];
-      
+
       // Create a copy of filters without the combine key
       const newFilters = { ...grfCurve.filters };
       delete newFilters[combineKey];
@@ -177,7 +169,7 @@ export class GRFPipeline {
           xlabel: grfCurve.xlabel,
           ylabel: grfCurve.ylabel,
           curves: [curve],
-          filters: newFilters,
+          filters: newFilters
         };
         nameSet.add(filename);
       }
@@ -188,7 +180,7 @@ export class GRFPipeline {
 
   /**
    * Evaluate the current pipeline result at a specific x-point
-   * 
+   *
    * @param xPoint - The x-value at which to evaluate
    * @param extendFactor - Optional factor to extend curve range (default 1.0)
    * @returns The interpolated y-value
@@ -196,12 +188,12 @@ export class GRFPipeline {
   evaluate(xPoint: number, extendFactor: number = 1.0): number {
     const currentData = this.data.get(this.pipelineStepCount);
     if (!currentData) {
-      throw new Error("No data available at current pipeline step");
+      throw new Error('No data available at current pipeline step');
     }
 
     const curves = Object.values(currentData);
     if (curves.length === 0) {
-      throw new Error("No curves available for evaluation");
+      throw new Error('No curves available for evaluation');
     }
 
     return evalGRFSingleAndCache(curves, xPoint, extendFactor);
@@ -216,7 +208,7 @@ export class GRFPipeline {
 
   /**
    * Get data at a specific pipeline step
-   * 
+   *
    * @param step - The step number to retrieve (defaults to current step)
    * @returns The data at the specified step
    */

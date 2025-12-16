@@ -14,15 +14,12 @@
  * @param filterKeys - Array of keys to extract from the filename
  * @returns Object containing extracted key-value pairs
  */
-export function extractFiltersFromFilename(
-  filename: string,
-  filterKeys: string[]
-): Record<string, number | string> {
+export function extractFiltersFromFilename(filename: string, filterKeys: string[]): Record<string, number | string> {
   // Replace newlines and multiple spaces so we can reliably search by text
-  let cleanName = filename.replace(/\n/g, " ").trim();
+  let cleanName = filename.replace(/\n/g, ' ').trim();
 
   // Collapse any repeated spaces
-  cleanName = cleanName.split(/\s+/).join(" ");
+  cleanName = cleanName.split(/\s+/).join(' ');
 
   const filters: Record<string, number | string> = {};
 
@@ -34,7 +31,7 @@ export function extractFiltersFromFilename(
     }
 
     // Find the '=' sign that follows this key
-    const eqPos = cleanName.indexOf("=", pos);
+    const eqPos = cleanName.indexOf('=', pos);
     if (eqPos === -1) {
       continue; // '=' missing → skip
     }
@@ -43,7 +40,7 @@ export function extractFiltersFromFilename(
 
     // Determine where the numeric value ends
     let endPos = afterEq.length;
-    for (const sep of [",", ")"]) {
+    for (const sep of [',', ')']) {
       const sepIndex = afterEq.indexOf(sep);
       if (sepIndex !== -1) {
         endPos = Math.min(endPos, sepIndex);
@@ -68,12 +65,12 @@ export function extractFiltersFromFilename(
  * Print a separator line for console output
  */
 export function breakLine(): void {
-  console.log("-".repeat(60));
+  console.log('-'.repeat(60));
 }
 
 /**
  * Print a new line to console
  */
 export function newLine(): void {
-  console.log("\n");
+  console.log('\n');
 }

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useIndexedDBData, useSaveToIndexedDB, useIndexedDBStats, SavedPage } from './storage';
+import { useIndexedDBData, useSaveToIndexedDB, useIndexedDBStats, SavedPage, db } from './storage';
 import styles from './App.module.css';
 
 function App() {
@@ -10,12 +10,14 @@ function App() {
   console.log('Fetched allData from IndexedDB:', allData);
 
   const stats = useIndexedDBStats();
-  const { deleteData } = useSaveToIndexedDB();
+  const { deleteData, updateData } = useSaveToIndexedDB();
 
   const [filterApp, setFilterApp] = useState<string>('all');
   const [filterProject, setFilterProject] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<SavedPage | null>(null);
+  const [isEditingJson, setIsEditingJson] = useState(false);
+  const [editedJson, setEditedJson] = useState('');
 
   console.log('iCalcPad render: allData =', allData, 'length =', allData?.length, 'stats =', stats);
 
@@ -75,6 +77,74 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportAll = () => {
+    const data = {
+      exportDate: new Date().toISOString(),
+      version: '1.0',
+      total: allData.length,
+      data: allData
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `iCalcPad-export-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+        
+        // Handle both single item and batch exports
+        const items = Array.isArray(imported.data) ? imported.data : [imported];
+        
+        let imported_count = 0;
+        for (const item of items) {
+          // Remove id to let IndexedDB auto-assign
+          const { id, ...itemData } = item;
+          await db.savedPages.add(itemData);
+          imported_count++;
+        }
+        
+        alert(`✅ Successfully imported ${imported_count} item(s)!`);
+      } catch (error) {
+        console.error('Import failed:', error);
+        alert('❌ Failed to import. Invalid JSON format.');
+      }
+    };
+    input.click();
+  };
+
+  const handleEditJson = () => {
+    if (!selectedItem) return;
+    setEditedJson(JSON.stringify(selectedItem.data, null, 2));
+    setIsEditingJson(true);
+  };
+
+  const handleSaveJson = async () => {
+    if (!selectedItem?.id) return;
+    
+    try {
+      const parsed = JSON.parse(editedJson);
+      await updateData(selectedItem.id, { data: parsed });
+      setIsEditingJson(false);
+      alert('✅ Data updated successfully!');
+    } catch (error) {
+      console.error('Failed to parse JSON:', error);
+      alert('❌ Invalid JSON. Please fix errors and try again.');
+    }
+  };
+
   // Show loading state while data is being fetched
   const isLoading = allData === undefined || stats === undefined;
 
@@ -82,6 +152,14 @@ function App() {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1>📊 iCalcPad - IndexedDB Manager</h1>
+        <div className={styles.headerActions}>
+          <button onClick={handleExportAll} disabled={allData.length === 0} className={styles.actionBtn}>
+            📥 Export All
+          </button>
+          <button onClick={handleImport} className={styles.actionBtn}>
+            📤 Import JSON
+          </button>
+        </div>
         <div className={styles.stats}>
           {isLoading ? (
             <span>Loading...</span>
@@ -181,6 +259,7 @@ function App() {
               <div className={styles.detailsHeader}>
                 <h2>{selectedItem.title}</h2>
                 <div className={styles.detailsActions}>
+                  <button onClick={handleEditJson}>✏️ Edit JSON</button>
                   <button onClick={() => handleExport(selectedItem)}>📥 Export JSON</button>
                   <button
                     onClick={() => {
@@ -235,7 +314,26 @@ function App() {
 
                 <section>
                   <h3>Saved Data</h3>
-                  <pre className={styles.dataPreview}>{JSON.stringify(selectedItem.data, null, 2)}</pre>
+                  {isEditingJson ? (
+                    <div className={styles.jsonEditor}>
+                      <textarea
+                        value={editedJson}
+                        onChange={(e) => setEditedJson(e.target.value)}
+                        className={styles.jsonTextarea}
+                        rows={20}
+                      />
+                      <div className={styles.editorActions}>
+                        <button onClick={handleSaveJson} className={styles.saveBtn}>
+                          💾 Save Changes
+                        </button>
+                        <button onClick={() => setIsEditingJson(false)} className={styles.cancelBtn}>
+                          ❌ Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <pre className={styles.dataPreview}>{JSON.stringify(selectedItem.data, null, 2)}</pre>
+                  )}
                 </section>
               </div>
             </>

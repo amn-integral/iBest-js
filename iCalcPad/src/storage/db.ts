@@ -7,7 +7,7 @@ export interface SavedPage {
   url: string; // Full URL when saved
   timestamp: number; // Date.now()
   title: string; // User-provided or auto-generated title
-  data: Map<string, unknown>; // App-specific serialized state (JSON)
+  data: Record<string, unknown>; // App-specific serialized state (JSON)
   metadata?: {
     version?: string; // App version
     userAgent?: string; // Browser info

@@ -91,7 +91,7 @@ export default defineConfig(({ mode }) => {
         // Multiple entry points
         input: {
           main: path.resolve(__dirname, 'index.html'),
-          'storage/save-widget': path.resolve(__dirname, 'src/widgets/save-widget.ts')
+          'storage/save-widget': path.resolve(__dirname, 'src/widgets/save-widget.tsx')
         },
         output: {
           entryFileNames: (chunkInfo) => {

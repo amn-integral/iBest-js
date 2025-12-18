@@ -1,3 +1,4 @@
+// iMath/vite.config.ts This is the Vite configuration file for building the iMath library that is generating both ES and CJS modules.
 import { defineConfig } from "vite";
 import path from "path";
 export default defineConfig({

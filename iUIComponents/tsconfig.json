@@ -1,19 +1,49 @@
+/**
+ * iUIComponents LIBRARY TYPESCRIPT CONFIGURATION
+ * ==============================================
+ * This is the TypeScript configuration for the iUIComponents library, which
+ * contains shared React components used across multiple applications.
+ * 
+ * Purpose:
+ * - Generate type declaration files (.d.ts) for React components
+ * - Enable incremental builds with composite mode
+ * - Provide type information for UI components to consuming projects
+ * 
+ * Build Strategy:
+ * - TypeScript generates ONLY .d.ts files ("emitDeclarationOnly": true)
+ * - Vite handles JavaScript bundling and component compilation
+ * - Separates type generation from code bundling
+ * 
+ * Components include:
+ * - Form inputs, buttons, controls
+ * - Layout components
+ * - Shared UI utilities
+ * 
+ * Used by:
+ * - iGSDOF (for form components and UI elements)
+ * - iCubicle (for shared UI patterns)
+ * - iCalcPad (for consistent UI)
+ */
 {
   "compilerOptions": {
-    "composite": true,
-    "forceConsistentCasingInFileNames": true,
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "skipLibCheck": true,
-    "outDir": "dist",
-    "declaration": true,
-    "jsx": "react-jsx"
+    "composite": true, // Enable composite mode for TypeScript project references
+    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo/tsconfig.tsbuild.info", // Cache incremental build info for faster rebuilds
+    "target": "ES2020", // Target ES2020 for modern JavaScript features
+    "module": "ESNext", // Use ESNext modules for tree-shaking
+    "moduleResolution": "Bundler", // Bundler module resolution works with Vite
+    "jsx": "react-jsx", // Use new React JSX transform (no React import needed)
+    "strict": true, // Enable strict type checking
+    "noUnusedLocals": true, // Error on unused variables
+    "noUnusedParameters": true, // Error on unused parameters
+    "noImplicitReturns": true, // Require explicit return in all code paths
+    "skipLibCheck": true, // Skip checking node_modules .d.ts files
+    "rootDir": "src", // Source files location
+    "outDir": "dist", // Output location for .d.ts files
+    "declaration": true, // Generate type declaration files
+    "declarationMap": true, // Generate declaration source maps for IDE navigation
+    "emitDeclarationOnly": true, // ONLY emit .d.ts files (Vite handles JS)
+    "noEmit": false // Must be false to emit declarations
   },
-  "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["src/**/*"], // Include all source files
+  "exclude": ["dist", "node_modules"] // Exclude build outputs and dependencies
 }

@@ -1,32 +1,105 @@
+/**
+ * iCalcPad APPLICATION TYPESCRIPT CONFIGURATION
+ * =============================================
+ * This is the TypeScript configuration for the iCalcPad React application,
+ * which provides a calculator/notepad interface with persistent storage.
+ * 
+ * Purpose:
+ * - Type-check React application with IndexedDB storage
+ * - Configure for browser environment with DOM APIs
+ * - Enable modern React and TypeScript features
+ * - Integrate with workspace libraries (iMath, iUIComponents)
+ * 
+ * Key Features:
+ * - Calculator/notepad functionality
+ * - IndexedDB for persistent local storage
+ * - Save/load widget for data management
+ * - Math computations integration
+ * 
+ * Build Process:
+ * - TypeScript only type-checks ("noEmit": true)
+ * - Vite handles bundling and transpilation
+ * - References iMath for calculations and iUIComponents for UI
+ */
 {
   "extends": "../tsconfig.base.json",
-  "references": [{ "path": "../iMath" }, { "path": "../iUIComponents" }],
+  
+  // Project references to library dependencies
+  "references": [
+    { "path": "../iMath" },          // Math computation library
+    { "path": "../iUIComponents" }   // Shared UI components
+  ],
+  
+  // Empty files array - includes files via "include" below
   "files": [],
+  
   "compilerOptions": {
+    // Source files are in src/
     "rootDir": "src",
+    
+    // Output would go to dist/ (though noEmit is true)
     "outDir": "dist",
+    
+    // Generate type declarations (for reference)
     "declaration": true,
+    
+    // Generate declaration source maps
     "declarationMap": true,
+    
+    // Generate JavaScript source maps for debugging
     "sourceMap": true,
+    
+    // Enable composite mode for project references
     "composite": true,
+    
+    // Don't emit if there are errors
     "noEmitOnError": true,
+    
+    // Target modern JavaScript (ES2022)
     "target": "ES2022",
+    
+    // Use standard class field behavior
     "useDefineForClassFields": true,
+    
+    // Include type definitions for ES2022, DOM, and DOM iterables
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    
+    // Use ESNext modules
     "module": "ESNext",
+    
+    // Skip checking node_modules .d.ts files
     "skipLibCheck": true,
-    /* Bundler mode */
+    
+    /* Bundler mode - optimized for Vite */
+    // Bundler-style module resolution
     "moduleResolution": "bundler",
+    
+    // Allow importing .ts files with extensions (Vite handles this)
     "allowImportingTsExtensions": true,
+    
+    // Each file is compiled independently (required for Vite)
     "isolatedModules": true,
+    
+    // Treat all files as modules
     "moduleDetection": "force",
+    
+    // Don't emit JavaScript (Vite does bundling)
     "noEmit": true,
+    
+    // Use React JSX transform (no React import needed)
     "jsx": "react-jsx",
 
-    /* Linting */
+    /* Linting - strict type checking rules */
+    // Enable all strict checks
     "strict": true,
+    
+    // Error on unused variables
     "noUnusedLocals": true,
+    
+    // Error on unused parameters
     "noUnusedParameters": true,
+    
+    // Error on switch case fallthrough
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
 

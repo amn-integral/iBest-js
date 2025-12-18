@@ -1,19 +1,44 @@
+/**
+ * iGSDOF MAIN TYPESCRIPT CONFIGURATION (Solution File)
+ * ====================================================
+ * This is the main "solution" file for the iGSDOF workspace. It doesn't compile
+ * files directly ("files": []) but instead orchestrates multiple sub-configurations
+ * using TypeScript project references.
+ *
+ * Purpose:
+ * - Coordinate compilation of multiple TypeScript projects
+ * - Enable incremental builds across project boundaries
+ * - Manage dependencies between different parts of the build
+ *
+ * How it works:
+ * - "files": [] means this config doesn't compile anything itself
+ * - "references" lists sub-projects that will be built in order
+ * - When you run "tsc -b", it builds all referenced projects
+ *
+ * References:
+ * 1. ./tsconfig.app.json - Compiles the main React application code (src/)
+ * 2. ./tsconfig.node.json - Compiles Node.js tooling files (vite.config.ts)
+ * 3. ../iMath - Dependency on the iMath library package
+ * 4. ../iUIComponents - Dependency on the UI components library
+ */
 {
   "extends": "../tsconfig.base.json",
-  "files": [],
+  "files": [], // Empty files array = this is a solution file, not a compilation config
+  // Project references enable TypeScript's project reference feature
+  // These are built in order, with dependencies resolved correctly
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" },
-    { "path": "../iMath" },
-    { "path": "../iUIComponents" }
+    { "path": "./tsconfig.app.json" }, // Main app code
+    { "path": "../iMath" }, // Math library dependency
+    { "path": "../iUIComponents" } // UI components dependency
   ],
+
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "composite": true,
-    "noEmitOnError": true
+    "rootDir": "src", // Source files ar
+    "outDir": "dist", // Output compiled files to dist/
+    "declaration": true, // Generate .d.ts declaration files for type information
+    "declarationMap": true, // Generate source maps for declarations (helps IDEs navigate to source)
+    "sourceMap": true, // Generate JavaScript source maps for debugging
+    "composite": true, // Enable incremental compilation (required for project references)
+    "noEmitOnError": true // Don't emit output if there are any errors
   }
 }

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => ({
-  logLevel: 'warn',
+  logLevel: 'info',
   base: mode === 'production' ? '/static/vite_build/' : '/',
   plugins: [react()],
   resolve: {
@@ -26,9 +26,11 @@ export default defineConfig(({ mode }) => ({
     ]
   },
   server: {
+    host: true,
     port: 5173,
     open: false, // Don't auto-open browser - let debug config handle it
-    sourcemapIgnoreList: false
+    sourcemapIgnoreList: false,
+    strictPort: true
   },
 
   optimizeDeps: {

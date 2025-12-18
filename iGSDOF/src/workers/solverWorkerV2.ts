@@ -5,7 +5,7 @@ import type { SolverWorkerInputV2, SolverWorkerErrorV2, SolverWorkerOutputV2 } f
 // Enable debugging for development
 const DEBUG = false; // Set to false for production
 
-function debugLog(message: string, data?: any) {
+function debugLog(message: string, data?: unknown) {
   if (DEBUG) {
     console.log(`[SolverWorkerV2] ${message}`, data || '');
   }

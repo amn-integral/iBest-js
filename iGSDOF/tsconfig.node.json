@@ -1,21 +1,41 @@
+/**
+ * iGSDOF NODE.JS TOOLING TYPESCRIPT CONFIGURATION
+ * ===============================================
+ * This config is specifically for Node.js-based build tools and configuration
+ * files that run in a Node.js environment (not the browser).
+ *
+ * Purpose:
+ * - Type-check vite.config.ts and other build tooling files
+ * - Use Node.js-compatible settings (not browser)
+ * - Keep tooling separate from application code
+ *
+ * Files covered:
+ * - vite.config.ts (Vite configuration)
+ * - Any future Node.js scripts in the workspace
+ *
+ * Why separate from tsconfig.app.json?
+ * - Different target environment (Node.js vs browser)
+ * - Different compiler needs (can emit, different target)
+ * - Cleaner separation of concerns
+ */
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "forceConsistentCasingInFileNames": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-    "composite": true,
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": false,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "target": "ES2018", // Target ES2018 for Node.js compatibility (older than browser target)
+    "forceConsistentCasingInFileNames": true, // Ensure consistent file name casing
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo", // Store incremental build info separately from app build
+    "composite": true, // Enable composite mode for project references
+    "module": "ESNext", // Use ESNext modules
+    "skipLibCheck": true, // Skip checking node_modules .d.ts files
+    "moduleResolution": "bundler", // Bundler mode works with Vite
+    "verbatimModuleSyntax": true, // Import statements must match exactly
+    "moduleDetection": "force", // Treat all files as modules
+    "noEmit": false, // Allow emitting files (unlike app config which uses Vite)
+    "strict": true, // Strict type checking
+    "noUnusedLocals": true, // Error on unused variables
+    "noUnusedParameters": true, // Error on unused parameters
+    "erasableSyntaxOnly": true, // Only allow erasable type-only imports
+    "noFallthroughCasesInSwitch": true, // Error on switch fallthrough
+    "noUncheckedSideEffectImports": true // Ensure imports are used or have side effects
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts"] // Only include the Vite configuration file
 }

@@ -1,29 +1,52 @@
+/**
+ * iGSDOF APPLICATION TYPESCRIPT CONFIGURATION
+ * ===========================================
+ * This config is specifically for the React application source code in src/.
+ * It's referenced by the main tsconfig.json and handles compilation of the
+ * actual application (components, hooks, utils, workers, etc.).
+ *
+ * Purpose:
+ * - Compile React/TypeScript application code
+ * - Configure for browser environment (DOM types)
+ * - Enable modern React features (JSX transform)
+ * - Type-check application code with strict rules
+ *
+ * Build Process:
+ * - TypeScript checks types but doesn't emit files ("noEmit": true)
+ * - Vite handles the actual bundling and transpilation
+ * - This config is used by "tsc -b" for type checking only
+ */
 {
   "extends": "../tsconfig.base.json",
+
+  // Project references to library dependencies
+  // These tell TypeScript to use the compiled .d.ts files from these packages
+  "references": [
+    { "path": "../iMath" }, // Math computation library
+    { "path": "../iUIComponents" } // Shared UI components
+  ],
+
   "compilerOptions": {
-    "forceConsistentCasingInFileNames": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "composite": true,
+    "forceConsistentCasingInFileNames": true, // Ensure consistent file name casing across platforms
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo", // Store incremental build info in node_modules (not in source tree)
+    "composite": true, // Enable composite mode for project references
     "target": "ES2022",
-    "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "paths": {
-      "@integralrsg/imath": ["../iMath/dist"],
-    },
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "useDefineForClassFields": true, // Use standard class field behavior (not legacy)
+    "lib": ["ES2022", "DOM", "DOM.Iterable"], // Include type definitions for ES2022, DOM APIs, and DOM iterables
+    "module": "ESNext", // Use ESNext modules for tree-shaking
+    "skipLibCheck": true, // Skip checking node_modules .d.ts files (faster builds)
+    "moduleResolution": "bundler", // Bundler mode: works with Vite's module resolution
+    "verbatimModuleSyntax": true, // Import statements must match exactly how they're written (no elision)
+    "moduleDetection": "force", // Treat all files as modules (even without imports/exports)
+    "noEmit": true, // Don't emit JavaScript (Vite handles that) - only type-check
+    "jsx": "react-jsx", // Use new React JSX transform (no need to import React)
+    "strict": true, // Strict type checking enabled
+    "noUnusedLocals": true, // Error on unused local variables
+    "noUnusedParameters": true, // Error on unused function parameters
+    "erasableSyntaxOnly": true, // Only allow type-only imports that can be safely erased
+    "noFallthroughCasesInSwitch": true, // Error on switch case fallthrough without break
+    "noUncheckedSideEffectImports": true // Ensure imports have side effects or are used
   },
-  "references": [{ "path": "../iMath" }],
-  "include": ["src/**/*"]
+  "include": ["src/**/*"], // Include all TypeScript/TSX files in src directory
+  "exclude": ["node_modules", "dist"] // Exclude build outputs and dependencies
 }

@@ -13,6 +13,7 @@ import { useSolverWorkerV2 } from './hooks/useSolverWorkerV2';
 const CHART_DIMENSIONS = { width: 600, height: 300 };
 
 export function App() {
+  const [title, setTitle] = useState('GSDOF Component');
   const [massInput, setMassInput] = useState('0.2553');
   const [rotationLengthInput, setRotationLengthInput] = useState('10.0');
   const [orientation, setOrientation] = useState<'Vertical' | 'Horizontal'>('Vertical');
@@ -235,8 +236,8 @@ export function App() {
       // MEMORY OPTIMIZATION: Clear data after solver completes
       setTimeout(() => {
         // Force garbage collection if available
-        if ((window as any).gc) {
-          (window as any).gc();
+        if (window.gc) {
+          window.gc();
         }
       }, 100);
     } catch (error) {
@@ -282,9 +283,10 @@ export function App() {
 
   // Expose state to save widget
   useEffect(() => {
-    (window as any).iGSDOFState = {
+    window.iGSDOFState = {
       getCurrentState: () => ({
         inputs: {
+          title: title,
           mass: massInput,
           rotationLength: rotationLengthInput,
           orientation,
@@ -304,9 +306,9 @@ export function App() {
     };
 
     return () => {
-      delete (window as any).iGSDOFState;
+      delete window.iGSDOFState;
     };
-  }, [massInput, rotationLengthInput, orientation, resistance, displacement, klmInput, u0Input, v0Input, force, time, selectedUnitSystemId, summary]);
+  }, [massInput, rotationLengthInput, orientation, resistance, displacement, klmInput, u0Input, v0Input, force, time, selectedUnitSystemId, summary, title]);
 
   return (
     <div className={appCss.appLayout}>
@@ -333,6 +335,16 @@ export function App() {
 
           <section className={appCss.solverInputs}>
             <div className={appCss.solverInputsTable}>
+              <UserInput
+                label="Title"
+                value={title}
+                onChange={value => setTitle(value)}
+                type="text"
+                unit={currentSystem?.mass}
+                validation={{
+                  required: true
+                }}
+              />
               <UserInput
                 label="Mass"
                 value={massInput}
@@ -454,7 +466,7 @@ export function App() {
             </div>
           </section>
 
-          <button type="button" className={appCss.appButton} onClick={runSolver} disabled={isSolverRunning}>
+          <button type="button" className={appCss.appButton} onClick={() => void runSolver} disabled={isSolverRunning}>
             {isSolverRunning ? 'Running Solver...' : 'Run GSDOF Solver'}
           </button>
 

@@ -1,39 +1,62 @@
+/**
+ * iCubicle APPLICATION TYPESCRIPT CONFIGURATION
+ * =============================================
+ * This is the TypeScript configuration for the iCubicle React application,
+ * which provides 3D cubicle blast analysis with Three.js rendering.
+ * 
+ * Purpose:
+ * - Type-check React application with Three.js 3D rendering
+ * - Configure for browser environment with DOM and 3D graphics
+ * - Enable modern React and TypeScript features
+ * - Integrate with workspace libraries (iMath, iUIComponents)
+ * 
+ * Key Features:
+ * - Three.js for 3D cubicle visualization
+ * - Blast analysis calculations
+ * - PDF report generation
+ * - React components for 3D scene management
+ * 
+ * Build Process:
+ * - TypeScript only type-checks ("noEmit": true)
+ * - Vite handles bundling and transpilation
+ * - References iMath for calculations and iUIComponents for UI
+ */
 {
   "extends": "../tsconfig.base.json",
-  "references": [{ "path": "../iMath" }, { "path": "../iUIComponents" }],
-  "files": [],
+  
+  // Project references to library dependencies
+  "references": [
+    { "path": "../iMath" },          // Math computation library
+    { "path": "../iUIComponents" }   // Shared UI components
+  ],
+  
+  "files": [], // Empty files array - not a solution file, but includes via "include" below
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "composite": true,
-    "noEmitOnError": true,
-    "target": "ES2022",
-    "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-
-    /* Path mappings for workspace packages */
-    "baseUrl": ".",
-    "paths": {}
+    "rootDir": "src", // Source files are in src/
+    "outDir": "dist", // Output would go to dist/ (though noEmit is true)
+    "declaration": true, // Generate type declarations (for reference)
+    "declarationMap": true, // Generate declaration source maps
+    "sourceMap": true, // Generate JavaScript source maps for debugging
+    "composite": true, // Enable composite mode for project references
+    "noEmitOnError": true, // Don't emit if there are errors
+    "target": "ES2022", // Target modern JavaScript (ES2022)
+    "useDefineForClassFields": true, // Use standard class field behavior
+    "lib": ["ES2022", "DOM", "DOM.Iterable"], // Include type definitions for ES2022, DOM, and DOM iterables
+    "module": "ESNext", // Use ESNext modules
+    "skipLibCheck": true, // Skip checking node_modules .d.ts files
+    "moduleResolution": "bundler", /* Bundler mode - optimized for Vite */
+    "allowImportingTsExtensions": true, // Allow importing .ts files with extensions (Vite handles this)
+    "isolatedModules": true, // Each file is compiled independently (required for Vite)
+    "moduleDetection": "force", // Treat all files as modules
+    "noEmit": true, // Don't emit JavaScript (Vite does bundling)
+    "jsx": "react-jsx", // Use React JSX transform (no React import needed)
+    "strict": true, // Enable all strict checks
+    "noUnusedLocals": true, // Error on unused variables
+    "noUnusedParameters": true, // Error on unused parameters
+    "noFallthroughCasesInSwitch": true, // Error on switch case fallthrough
+    "forceConsistentCasingInFileNames": true, // Ensure consistent file casing
+    "baseUrl": ".", /* Path mappings for workspace packages */
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"], // Include all source files and vite.config.ts
+  "exclude": ["node_modules", "dist"] // Exclude build outputs and dependencies
 }

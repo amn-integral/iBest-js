@@ -1,19 +1,41 @@
+/**
+ * iMath LIBRARY TYPESCRIPT CONFIGURATION
+ * ======================================
+ * This is the TypeScript configuration for the iMath library, which is a
+ * shared computational library used by multiple applications in the monorepo.
+ * 
+ * Purpose:
+ * - Generate type declaration files (.d.ts) for the library
+ * - Enable incremental builds with composite mode
+ * - Provide type information to consuming projects
+ * 
+ * Build Strategy:
+ * - TypeScript generates ONLY .d.ts files ("emitDeclarationOnly": true)
+ * - Vite handles JavaScript bundling separately
+ * - This separates type generation from code bundling
+ * 
+ * Used by:
+ * - iGSDOF (for Newmark solver and array utilities)
+ * - iCubicle (for mathematical computations)
+ * - Any future applications needing math functions
+ * 
+ * Build Command:
+ * - npm run build (runs both TypeScript and Vite)
+ * - Outputs .d.ts files to dist/ for type information
+ */
 {
   "extends": "../tsconfig.base.json",
+  
   "compilerOptions": {
-    "composite": true,
-    "forceConsistentCasingInFileNames": true,
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "outDir": "dist",
-    "declaration": true,
-    "declarationMap": true,
-    "rootDir": "src",
-    "emitDeclarationOnly": true
+    "composite": true, // This allows other projects to reference this one with TypeScript
+    "noEmit": false, // Must be false to emit declaration files
+    "declaration": true, // Generate .d.ts declaration files
+    "declarationMap": true, // Generate source maps for declarations (helps IDEs)
+    "emitDeclarationOnly": true, // ONLY emit .d.ts files, not .js files (Vite handles JS bundling)
+    "outDir": "./dist", // Output directory for generated .d.ts files
+    "rootDir": "./src", // Source root directory
+    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo/tsconfig.tsbuild.info" // Cache incremental build information for faster rebuilds
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"], // Include all source files in src/
+  "exclude": ["node_modules", "dist"] // Exclude build outputs and dependencies
 }

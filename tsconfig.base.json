@@ -1,15 +1,57 @@
+/**
+ * ROOT BASE TYPESCRIPT CONFIGURATION
+ * ==================================
+ * This is the root tsconfig.base.json that provides shared compiler options
+ * for all workspaces in the monorepo. All workspace-specific tsconfig files
+ * extend this base configuration.
+ * 
+ * Purpose:
+ * - Define common TypeScript compiler options across all projects
+ * - Set up path mappings for workspace packages (enabling clean imports)
+ * - Establish baseline type-checking rules
+ * 
+ * This file is extended by:
+ * - iGSDOF/tsconfig.json
+ * - iCubicle/tsconfig.json
+ * - iCalcPad/tsconfig.json
+ * - iMath/tsconfig.json
+ * - iUIComponents/tsconfig.json (indirectly)
+ */
 {
   "compilerOptions": {
+    // Ensure consistent casing in import statements (important for cross-platform dev)
     "forceConsistentCasingInFileNames": true,
+    
+    // Target ES2020 for modern JavaScript features while maintaining compatibility
     "target": "ES2020",
+    
+    // Use ESNext modules (import/export) for tree-shaking and modern bundling
     "module": "ESNext",
+    
+    // Bundler resolution works with Vite and other modern bundlers
     "moduleResolution": "Bundler",
+    
+    // Enable all strict type-checking options (recommended for safety)
     "strict": true,
+    
+    // Flag unused local variables as errors
     "noUnusedLocals": true,
+    
+    // Flag unused function parameters as errors
     "noUnusedParameters": true,
+    
+    // Require explicit return statements in all code paths
     "noImplicitReturns": true,
+    
+    // Skip type checking of declaration files (.d.ts) for faster builds
     "skipLibCheck": true,
+    
+    // Base URL for resolving non-relative module names
     "baseUrl": ".",
+    
+    // Path mappings allow importing workspace packages by name
+    // Example: import { newmarkSolverV2 } from '@integralrsg/imath'
+    // This maps to the source files for better IDE support during development
     "paths": {
       "@integralrsg/imath": ["iMath/src"],
       "@integralrsg/iuicomponents": ["iUIComponents/src"],

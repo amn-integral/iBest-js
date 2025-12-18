@@ -152,7 +152,7 @@ export const ChartJSChart: React.FC<ChartJSChartProps> = ({ title, time, values,
       canvas.width = 0;
       canvas.height = 0;
     } catch (e) {
-      /* ignore canvas cleanup errors */
+      console.warn('Canvas cleanup error:', e);
     }
 
     // Clear large arrays to free memory (mutates the passed arrays)
@@ -160,7 +160,7 @@ export const ChartJSChart: React.FC<ChartJSChartProps> = ({ title, time, values,
       time.length = 0;
       values.length = 0;
     } catch (e) {
-      /* ignore array cleanup errors */
+      console.warn('Array cleanup error:', e);
     }
   }, [time, values, color, title, xUnits, yUnits]);
 

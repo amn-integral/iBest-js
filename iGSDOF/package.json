@@ -5,11 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --mode development",
-    "build": "vite build && npm run sync",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "sync": "rsync -avz --delete --mkpath dist/ /home/projects/www/ibest-root/iGSDOF/static/vite_build/"
+    "build": "vite build --mode production && npm run sync",
+    "typecheck": "tsc -b && tsc -p tsconfig.node.json --noEmit",
+    "sync": "echo $IGSDOF_STATIC_DIR && rsync -avz --delete --mkpath dist \"${IGSDOF_STATIC_DIR:-/home/projects/www/ibest-root/iGSDOF/static/vite_build/}\""
   },
   "dependencies": {
     "@integralrsg/imath": "0.1.0",

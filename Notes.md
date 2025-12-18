@@ -1,4 +1,4 @@
-# Make sure all the projects are buildt using Vite
+# Make sure all the projects are built using Vite
 
 # Use linking to cross link projects during development
 

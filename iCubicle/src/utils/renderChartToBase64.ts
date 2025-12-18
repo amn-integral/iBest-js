@@ -3,7 +3,7 @@
  * Adapted from iGSDOF renderChartJS.ts pattern.
  */
 
-import { Chart, ChartConfiguration, registerables, Plugin, type ChartDataset, type ScatterDataPoint } from 'chart.js';
+import { Chart, type ChartConfiguration, registerables, type Plugin, type ChartDataset, type ScatterDataPoint } from 'chart.js';
 import type { GRFPipelineCurve } from '../api/types';
 
 export interface ChartRenderOptions {

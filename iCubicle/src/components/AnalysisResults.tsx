@@ -218,7 +218,7 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
                     type: 'linear',
                     title: {
                       display: true,
-                      text: props?.result?.Chart?.xlabel || 'X Axis'
+                      text: props?.result?.FinalChart?.xlabel || 'X Axis'
                     },
                     ticks: {
                       autoSkip: true,
@@ -229,7 +229,7 @@ export function AnalysisResults({ props: props }: { props: CubicleResponse | nul
                     type: 'linear',
                     title: {
                       display: true,
-                      text: props?.result?.Chart?.ylabel || 'Y Axis'
+                      text: props?.result?.FinalChart?.ylabel || 'Y Axis'
                     },
                     beginAtZero: true,
                     ticks: {

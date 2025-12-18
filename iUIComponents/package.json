@@ -18,17 +18,18 @@
       "types": "./dist/styles.d.ts",
       "default": "./dist/iuicomponents.css"
     },
-    "./dist/iuicomponents.css": "./dist/iuicomponents.css",
-    "./storage":{
-      "types": "./dist/storage/index.d.ts",
-      "import": "./dist/storage/index.js",
-      "require": "./dist/storage/index.cjs",
-      "default": "./dist/storage/index.js"
-    }
+    "./dist/iuicomponents.css": "./dist/iuicomponents.css"
   },
   "files": [
     "dist"
   ],
+  "scripts": {
+    "clean": "rm -rf dist node_modules/.cache/tsbuildinfo/tsconfig.tsbuild.info",
+    "build": "npm run clean && vite build && tsc -p tsconfig.json && npm run copy-types",
+    "copy-types": "node -e \"const fs=require('fs');const path='dist/styles.d.ts';const content='declare module \\'@integralrsg/iuicomponents/styles\\' { const styles: string; export default styles; }';fs.writeFileSync(path, content);\"",
+    "dev": "vite",
+    "typecheck": "tsc --noEmit"
+  },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -44,16 +45,5 @@
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
-  },
-  "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json && npm run copy-types",
-    "copy-types": "node -e \"const fs=require('fs');const path='dist/styles.d.ts';const content='declare module \\'@integralrsg/iuicomponents/styles\\' { const styles: string; export default styles; }';fs.writeFileSync(path, content);\"",
-    "dev": "vite",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
-  },
-  "dependencies": {
-    "dexie": "^4.2.1",
-    "dexie-react-hooks": "^4.2.0"
   }
 }

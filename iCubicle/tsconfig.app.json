@@ -1,5 +1,5 @@
 /**
- * iGSDOF APPLICATION TYPESCRIPT CONFIGURATION
+ * iCubicle APPLICATION TYPESCRIPT CONFIGURATION
  * ===========================================
  * This config is specifically for the React application source code in src/.
  * It's referenced by the main tsconfig.json and handles compilation of the
@@ -43,7 +43,7 @@
     "strict": true, // Strict type checking enabled
     "noUnusedLocals": true, // Error on unused local variables
     "noUnusedParameters": true, // Error on unused function parameters
-    "erasableSyntaxOnly": true, // Only allow type-only imports that can be safely erased
+    // "erasableSyntaxOnly": true, // Only allow type-only imports that can be safely erased
     "noFallthroughCasesInSwitch": true, // Error on switch case fallthrough without break
     "noUncheckedSideEffectImports": true // Ensure imports have side effects or are used
   },

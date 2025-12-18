@@ -49,7 +49,7 @@ export function useGeneratePDF(): GeneratePDFResult {
         throw new Error('Invalid response data for PDF generation');
       }
 
-      const { CalculatedParams, ShockPressureSteps, GasPressureSteps, ShockImpulseSteps, GasImpulseSteps, FinalChart, InputParams } = response.result;
+      const { CalculatedParams, ShockPressureSteps, GasPressureSteps, ShockImpulseSteps, GasImpulseSteps, InputParams } = response.result;
 
       if (!CalculatedParams || !InputParams) {
         throw new Error('Missing CalculatedParams or InputParams in response');

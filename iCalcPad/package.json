@@ -4,12 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "clean": "rm -rf dist node_modules/.cache/tsbuildinfo/tsconfig.tsbuild.info",
+    "build": "npm run clean && vite build --mode production && npm run sync",
     "dev": "vite --config vite.config.ts --mode development",
-    "build": "vite build && npm run sync",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "sync": "rsync -avz --delete dist /home/projects/www/ibest-root/iCalcPad/static/vite_build_icalcpad/"
+    "typecheck": "tsc -b && tsc -p tsconfig.node.json --noEmit",
+    "sync": "echo $ICALCPAD_STATIC_DIR && rsync -avz --delete --mkpath dist \"${ICALCPAD_STATIC_DIR:-/home/projects/www/iBEST/iCalcPad/static/vite_build/}\""
   },
   "dependencies": {
     "@integralrsg/iuicomponents": "0.1.0",

@@ -1,4 +1,4 @@
-import { CubicleRequest, CubicleResponse } from '.';
+import type { CubicleRequest, CubicleResponse } from '.';
 
 interface AppConfig {
   API_BASE_URL?: string;

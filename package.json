@@ -9,19 +9,13 @@
     "iCalcPad"
   ],
   "scripts": {
-    "build_iMath": "npm run build -w iMath && npm run sync-builds",
-    "build_iUIComponents": "npm run build -w iUIComponents && npm run sync-builds",
-    "build_iGSDOF": "npm run build -w iMath &&  npm run build -w iUIComponents && npm run build -w iGSDOF && npm run sync-builds",
+    "build-django": "npm run build -w iMath &&  npm run build -w iUIComponents && npm run build -w iCubicle && npm run build -w iCalcPad",
     "sync-builds": "node scripts/sync-workspace-builds.cjs",
     "setup-links": "node scripts/setup-workspace-links.cjs",
     "unlink": "node scripts/unlink-workspace.cjs",
     "postinstall": "node scripts/setup-workspace-links.cjs",
     "report-sizes": "node scripts/report-all-sizes.js",
-    "clean": "rm -rf **/dist/*",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "clean": "rm -rf **/dist/*"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.6",

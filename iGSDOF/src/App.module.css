@@ -6,7 +6,7 @@
   background: #ffffff;
   /* color: #0f172a; */
   font-family:
-    "Segoe UI",
+    'Segoe UI',
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -24,7 +24,6 @@
   color: #0281f8;
   text-decoration: underline;
 }
-
 
 .layout-content {
   flex: 1;
@@ -52,12 +51,12 @@
   font-size: x-large;
 }
 
-.panel-results{
+.panel-results {
   padding: 0rem 2rem 0rem 1rem;
   max-width: 80%;
 }
 
-.panel-results h2{
+.panel-results h2 {
   margin: 0 0 0.75rem;
   color: #000000;
   font-size: x-large;
@@ -84,7 +83,7 @@
   font-family: Arial, sans-serif;
 }
 
-.solver-inputs-row span{
+.solver-inputs-row span {
   font-weight: normal;
   font-size: medium;
   color: #000000;
@@ -96,7 +95,7 @@
   margin: 0px;
 }
 
-.orientation-selector{
+.orientation-selector {
   position: relative;
   margin: 0px;
   display: flex;
@@ -104,7 +103,7 @@
   padding: 8px;
 }
 
-.orientation-selector select{
+.orientation-selector select {
   margin: 0px;
   width: 100%;
   padding: 6px 0px;
@@ -117,7 +116,6 @@
   font-weight: normal;
   outline: none;
 }
-
 
 .solver-inputs-input:focus {
   outline: none;
@@ -145,7 +143,6 @@
   opacity: 0;
   width: 0;
   height: 0;
-  align-items: left !important;
   position: absolute;
   box-shadow: none !important;
   border: none !important;
@@ -169,7 +166,7 @@
 }
 
 .solver-inputs-toggle-slider::before {
-  content: "" !important;
+  content: '' !important;
   position: absolute !important;
   top: 2px !important;
   left: 2px !important;
@@ -183,7 +180,7 @@
 }
 
 .solver-inputs-toggle-slider::after {
-  content: "" !important;
+  content: '' !important;
   display: none !important;
 }
 
@@ -280,7 +277,6 @@
   }
 }
 
-
 /* Print container styles - hidden from view but available for PDF generation */
 .printContainer {
   position: absolute;
@@ -293,12 +289,12 @@
   z-index: -1;
 }
 
-.app-button{
+.app-button {
   background-color: #2563eb;
   color: white;
   border: none;
   padding: 0.5rem 0.5rem 0.5rem 0.5rem;
-  margin: 0.5rem 0.5rem 0.5rem 0.0rem;
+  margin: 0.5rem 0.5rem 0.5rem 0rem;
   border-radius: 0.25rem;
   cursor: pointer;
   font-size: medium;
@@ -308,7 +304,6 @@
 .hidden-input {
   display: none;
 }
-
 
 .error-list {
   color: red;

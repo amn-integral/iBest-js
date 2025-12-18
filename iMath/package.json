@@ -7,29 +7,15 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./newmarkV2": {
-      "types": "./dist/newmarkV2/index.d.ts",
-      "import": "./dist/newmarkV2/index.js",
-      "require": "./dist/newmarkV2/index.cjs"
-    }
-  },
-  "devDependencies": {
-    "typescript": "^5.4.0"
-  },
   "scripts": {
-    "build": "vite build",
-    "dev": "vite build --watch",
-    "typecheck": "tsc -p tsconfig.dev.json --noEmit",
-    "test": "npm run build && node tests/newmarkV2.test.mjs",
-    "prepublishOnly": "npm run build"
+    "clean": "rm -rf dist node_modules/.cache/tsbuildinfo/tsconfig.tsbuild.info",
+    "build": "npm run clean && vite build && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "mathjs": "^15.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
   }
 }

@@ -1,4 +1,4 @@
-import { CubicleType, TargetFaceType } from '../types';
+import type { CubicleType, TargetFaceType } from '../types';
 
 export interface CubicleRequest {
   cubicle_type: CubicleType;

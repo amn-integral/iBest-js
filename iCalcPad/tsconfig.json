@@ -34,28 +34,79 @@
   "files": [],
   
   "compilerOptions": {
-    "rootDir": "src", // Source files are in src/
-    "outDir": "dist", // Output would go to dist/ (though noEmit is true)
-    "declaration": true, // Generate type declarations (for reference)
-    "declarationMap": true, // Generate declaration source maps
-    "sourceMap": true, // Generate JavaScript source maps for debugging
-    "composite": true, // Enable composite mode for project references
-    "noEmitOnError": true, // Don't emit if there are errors
-    "target": "ES2022", // Target modern JavaScript (ES2022)
-    "useDefineForClassFields": true, // Use standard class field behavior
-    "lib": ["ES2022", "DOM", "DOM.Iterable"], // Include type definitions for ES2022, DOM, and DOM iterables
-    "module": "ESNext", // Use ESNext modules
-    "skipLibCheck": true, // Skip checking node_modules .d.ts files
-    "moduleResolution": "bundler", // Bundler-style module resolution
-    "allowImportingTsExtensions": true, // Allow importing .ts files with extensions (Vite handles this)
-    "isolatedModules": true, // Each file is compiled independently (required for Vite)
-    "moduleDetection": "force", // Treat all files as modules
-    "noEmit": true, // Don't emit JavaScript (Vite does bundling)
-    "jsx": "react-jsx", // Use React JSX transform (no React import needed)
-    "strict": true, // Enable all strict checks
-    "noUnusedLocals": true, // Error on unused variables
-    "noUnusedParameters": true, // Error on unused parameters
-    "noFallthroughCasesInSwitch": true, // Error on switch case fallthrough
-    "baseUrl": ".",     /* Path mappings for workspace packages */
-  }
+    // Source files are in src/
+    "rootDir": "src",
+    
+    // Output would go to dist/ (though noEmit is true)
+    "outDir": "dist",
+    
+    // Generate type declarations (for reference)
+    "declaration": true,
+    
+    // Generate declaration source maps
+    "declarationMap": true,
+    
+    // Generate JavaScript source maps for debugging
+    "sourceMap": true,
+    
+    // Enable composite mode for project references
+    "composite": true,
+    
+    // Don't emit if there are errors
+    "noEmitOnError": true,
+    
+    // Target modern JavaScript (ES2022)
+    "target": "ES2022",
+    
+    // Use standard class field behavior
+    "useDefineForClassFields": true,
+    
+    // Include type definitions for ES2022, DOM, and DOM iterables
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    
+    // Use ESNext modules
+    "module": "ESNext",
+    
+    // Skip checking node_modules .d.ts files
+    "skipLibCheck": true,
+    
+    /* Bundler mode - optimized for Vite */
+    // Bundler-style module resolution
+    "moduleResolution": "bundler",
+    
+    // Allow importing .ts files with extensions (Vite handles this)
+    "allowImportingTsExtensions": true,
+    
+    // Each file is compiled independently (required for Vite)
+    "isolatedModules": true,
+    
+    // Treat all files as modules
+    "moduleDetection": "force",
+    
+    // Don't emit JavaScript (Vite does bundling)
+    "noEmit": true,
+    
+    // Use React JSX transform (no React import needed)
+    "jsx": "react-jsx",
+
+    /* Linting - strict type checking rules */
+    // Enable all strict checks
+    "strict": true,
+    
+    // Error on unused variables
+    "noUnusedLocals": true,
+    
+    // Error on unused parameters
+    "noUnusedParameters": true,
+    
+    // Error on switch case fallthrough
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Path mappings for workspace packages */
+    "baseUrl": ".",
+    "paths": {}
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

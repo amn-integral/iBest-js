@@ -29,7 +29,7 @@
   "references": [
     { "path": "./tsconfig.app.json" }, // Main app code
     { "path": "../iMath" }, // Math library dependency
-    { "path": "../iUIComponents" } // UI components
+    { "path": "../iUIComponents" } // UI components dependency
   ],
 
   "compilerOptions": {

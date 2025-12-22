@@ -1,0 +1,47 @@
+{
+  "name": "ibest",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist node_modules/.cache/tsbuildinfo/tsconfig.tsbuild.info",
+    "dev": "vite --config vite.config.ts --mode development",
+    "build": "npm run clean && vite build --mode production",
+    "preview": "vite preview",
+    "typecheck": "tsc -b && tsc -p tsconfig.node.json --noEmit",
+    "analyze": "vite-bundle-visualizer"
+  },
+  "dependencies": {
+    "@integralrsg/imath": "0.1.0",
+    "@integralrsg/iuicomponents": "0.1.0",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.4.0",
+    "chart.js": "^4.4.0",
+    "dexie": "^4.2.1",
+    "dexie-react-hooks": "^4.2.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "react": "^19.1.1",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.1.1",
+    "three": "^0.181.1",
+    "webgl-plot": "^0.7.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "npm:rolldown-vite@7.2.5"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@7.2.5"
+  }
+}

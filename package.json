@@ -6,7 +6,8 @@
     "iGSDOF",
     "iUIComponents",
     "iCubicle",
-    "iCalcPad"
+    "iCalcPad",
+    "ibest"
   ],
   "scripts": {
     "build-django": "npm run build -w iMath &&  npm run build -w iUIComponents && npm run build -w iCubicle && npm run build -w iCalcPad",

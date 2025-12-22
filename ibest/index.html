@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iBEST Applications</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        width: 100%;
+      }
+
+      h1 {
+        color: white;
+        text-align: center;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        text-align: center;
+        font-size: 1.2rem;
+        margin-bottom: 3rem;
+      }
+
+      .app-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+      }
+
+      .app-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+
+      .app-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .app-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+
+      .app-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+      }
+
+      .app-description {
+        color: #666;
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 3rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>iBEST Applications</h1>
+      <p class="subtitle">Choose an application to get started</p>
+      
+      <div class="app-grid">
+        <a href="/igsdof.html" class="app-card">
+          <div class="app-icon">📊</div>
+          <h2 class="app-title">iGSDOF</h2>
+          <p class="app-description">
+            Single Degree of Freedom blast analysis with advanced solver capabilities and real-time visualization.
+          </p>
+        </a>
+
+        <a href="/icubicle.html" class="app-card">
+          <div class="app-icon">🧱</div>
+          <h2 class="app-title">iCubicle</h2>
+          <p class="app-description">
+            3D cubicle blast analysis with Three.js rendering, interactive scene controls, and comprehensive reporting.
+          </p>
+        </a>
+
+        <a href="/icalcpad.html" class="app-card">
+          <div class="app-icon">📝</div>
+          <h2 class="app-title">iCalcPad</h2>
+          <p class="app-description">
+            Calculation management system for saving, organizing, and exporting analysis results across all iBEST applications.
+          </p>
+        </a>
+      </div>
+
+      <div class="footer">
+        <p>© 2025 Integral Consulting Inc. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>
